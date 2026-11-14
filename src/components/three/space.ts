@@ -3,7 +3,7 @@ import * as THREE from "three";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-export type TextureName = "earth" | "moon" | "mars" | "venus" | "jupiter" | "saturn" | "neptune" | "stars" | "moon-normal" | "mars-normal";
+export type TextureName = "earth" | "earth-night" | "moon" | "mars" | "venus" | "jupiter" | "saturn" | "neptune" | "stars" | "milkyway" | "moon-normal" | "mars-normal";
 export const textureUrl = (name: TextureName) => `${BASE}/textures/${name}.jpg`;
 
 const loader = new THREE.TextureLoader();

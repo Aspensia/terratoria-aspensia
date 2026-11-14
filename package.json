@@ -9,7 +9,8 @@
     "test": "vitest run && node --test pipeline/",
     "copy:maplibre": "node -e \"const fs=require('fs');fs.mkdirSync('public/maplibre',{recursive:true});for(const f of ['maplibre-gl-worker.mjs','maplibre-gl-shared.mjs'])fs.copyFileSync('node_modules/maplibre-gl/dist/'+f,'public/maplibre/'+f)\"",
     "predev": "npm run copy:maplibre",
-    "prebuild": "npm run copy:maplibre"
+    "prebuild": "npm run copy:maplibre",
+    "postbuild": "node pipeline/flatten-segments.mjs out"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

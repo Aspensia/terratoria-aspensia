@@ -7,7 +7,8 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
-import { atmosphere, disposeScene, glow, makeRenderer, planet, prefersReducedMotion, starfield, type TextureName } from "./space";
+import { Lensflare, LensflareElement } from "three/examples/jsm/objects/Lensflare.js";
+import { atmosphere, disposeScene, glow, loadTexture, makeRenderer, planet, prefersReducedMotion, starfield, type TextureName } from "./space";
 
 // Illustrative only: sizes, distances and speeds are chosen to look good, not to scale.
 // Axial tilts (obliquity, degrees) and atmosphere tints are the real ones.
@@ -56,6 +57,74 @@ function saturnRing(r: number): THREE.Mesh {
   return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide, depthWrite: false, color: 0xd9ccb0 }));
 }
 
+/**
+ * Earth lit by the Sun at the origin: Blue Marble by day, VIIRS Black Marble city lights by night,
+ * a soft terminator, sunglint on the oceans and a thin blue limb.
+ */
+function earthMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { day: { value: loadTexture("earth") }, night: { value: loadTexture("earth-night") } },
+    vertexShader: `varying vec2 vUv; varying vec3 vW; varying vec3 vN;
+      void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform sampler2D day; uniform sampler2D night; varying vec2 vUv; varying vec3 vW; varying vec3 vN;
+      void main(){
+        vec3 N = normalize(vN), L = normalize(-vW), V = normalize(cameraPosition - vW);
+        float ndl = dot(N, L);
+        float lit = smoothstep(-0.08, 0.22, ndl);
+        vec3 d = texture2D(day, vUv).rgb;
+        vec3 n = texture2D(night, vUv).rgb;
+        float lum = dot(n, vec3(0.299, 0.587, 0.114));
+        vec3 lights = n * smoothstep(0.18, 0.55, lum) * vec3(1.0, 0.82, 0.55) * 2.2;
+        float ocean = smoothstep(0.02, 0.1, d.b - max(d.r, d.g)) * (1.0 - smoothstep(0.25, 0.45, dot(d, vec3(0.333))));
+        float spec = pow(max(dot(N, normalize(L + V)), 0.0), 60.0) * ocean * lit;
+        float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);
+        vec3 col = d * (0.03 + 1.15 * max(ndl, 0.0)) * lit + lights * (1.0 - lit) + vec3(1.0, 0.95, 0.85) * spec * 0.9;
+        col += vec3(0.35, 0.6, 1.0) * rim * (0.15 + 0.85 * lit) * 0.6;
+        gl_FragColor = vec4(col, 1.0);
+        #include <colorspace_fragment>
+      }`,
+  });
+}
+
+/** A soft round sprite for the lens flare, drawn once into a canvas. */
+function flareTexture(inner: string, outer: string, ring = false): THREE.CanvasTexture {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  if (ring) {
+    g.addColorStop(0.7, "rgba(0,0,0,0)");
+    g.addColorStop(0.86, inner);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+  } else {
+    g.addColorStop(0, inner);
+    g.addColorStop(0.3, outer);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+  }
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+
+/** Asteroid belt between Mars and Jupiter: irregular rocks as one instanced mesh. Illustrative density. */
+function asteroidBelt(inner: number, outer: number, count: number): THREE.InstancedMesh {
+  const geo = new THREE.IcosahedronGeometry(1, 0);
+  const mat = new THREE.MeshStandardMaterial({ color: 0x8b8379, roughness: 1, metalness: 0, flatShading: true });
+  const belt = new THREE.InstancedMesh(geo, mat, count);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), s = new THREE.Vector3();
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const r = inner + (outer - inner) * Math.pow(Math.random(), 0.8);
+    p.set(Math.cos(a) * r, (Math.random() - 0.5) * 0.35, Math.sin(a) * r);
+    e.set(Math.random() * 6.3, Math.random() * 6.3, Math.random() * 6.3);
+    const k = 0.012 + Math.pow(Math.random(), 4) * 0.05;
+    s.set(k * (0.6 + Math.random() * 0.8), k * (0.6 + Math.random() * 0.8), k * (0.6 + Math.random() * 0.8));
+    belt.setMatrixAt(i, m.compose(p, q.setFromEuler(e), s));
+  }
+  return belt;
+}
+
 /** The Sun: animated granulation and limb darkening in a small shader. */
 function sunMaterial(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
@@ -93,7 +162,19 @@ export function SolarSystem() {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 1000);
 
-    scene.add(starfield());
+    // Sky: the real Milky Way (NASA SVS Deep Star Maps 2020, from Gaia DR2) under the Hipparcos stars.
+    const milky = new THREE.Mesh(
+      new THREE.SphereGeometry(330, 64, 32),
+      new THREE.MeshBasicMaterial({ map: loadTexture("milkyway"), side: THREE.BackSide, color: 0x9a9a9a, depthWrite: false }),
+    );
+    milky.rotation.set(0.35, 0.9, 0.55);
+    scene.add(milky);
+    const stars = starfield();
+    const starSky = stars.children[0] as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+    starSky.material.blending = THREE.AdditiveBlending;
+    starSky.material.transparent = true;
+    starSky.material.color.set(0x9a9a9a);
+    scene.add(stars);
     scene.add(new THREE.AmbientLight(0xbfd4ff, 0.22));
     scene.add(new THREE.PointLight(0xfff1d6, 4, 0, 0));
 
@@ -101,6 +182,14 @@ export function SolarSystem() {
     const sun = new THREE.Mesh(new THREE.SphereGeometry(1.5, 96, 48), sunMat);
     sun.add(glow("rgba(255,190,100,0.8)", 7, 0.55), glow("rgba(255,140,60,0.45)", 20, 0.35));
     scene.add(sun);
+    const flare = new Lensflare();
+    flare.addElement(new LensflareElement(flareTexture("rgba(255,240,215,1)", "rgba(255,170,80,0.35)"), 180, 0, new THREE.Color(1, 0.9, 0.75)));
+    flare.addElement(new LensflareElement(flareTexture("rgba(255,210,150,0.12)", "rgba(255,160,80,0.03)", true), 60, 0.45));
+    flare.addElement(new LensflareElement(flareTexture("rgba(200,210,230,0.1)", "rgba(160,170,200,0.02)"), 40, 0.7));
+    flare.addElement(new LensflareElement(flareTexture("rgba(255,200,140,0.08)", "rgba(255,150,80,0.02)", true), 100, 1.0));
+    sun.add(flare);
+    const belt = asteroidBelt(9.6, 11.3, window.innerWidth < 700 ? 900 : 2200);
+    scene.add(belt);
 
     const orbitMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.07 });
     const bodies = PLANETS.map((p) => {
@@ -110,6 +199,11 @@ export function SolarSystem() {
       const holder = new THREE.Group();
       holder.rotation.z = THREE.MathUtils.degToRad(p.tilt);
       const mesh = planet(p.tex, p.r, 128, p.normal, 1.4);
+      if (p.tex === "earth") {
+        (mesh.material as THREE.MeshStandardMaterial).map?.dispose();
+        (mesh.material as THREE.Material).dispose();
+        mesh.material = earthMaterial();
+      }
       holder.add(mesh);
       if (p.air) holder.add(atmosphere(p.r * 1.04, p.air, 4.2));
       if (p.ring) {
@@ -171,6 +265,7 @@ export function SolarSystem() {
       moon.position.copy(earth.position).add(new THREE.Vector3(Math.cos(ma) * 0.95, 0.12, Math.sin(ma) * 0.95));
       sun.rotation.y = t * 0.05;
       sunMat.uniforms.t.value = t;
+      belt.rotation.y = t * 0.012;
       // Slow drift of the viewpoint; the system sits right of centre so the hero text stays readable.
       const drift = t * 0.02;
       lean.x += (lean.tx - lean.x) * 0.03;

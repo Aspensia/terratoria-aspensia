@@ -10,6 +10,7 @@ import type { Key } from "@/lib/i18n";
 import type { Place } from "@/lib/types";
 import { useApp } from "./AppState";
 import { ScrollProgress, useNavPill, usePageEnter, useSpotlight } from "./motion/Motion";
+import { SpaceBackdrop } from "./SpaceBackdrop";
 
 const NAV: { href: string; key: Key }[] = [
   { href: "/", key: "nav_home" },
@@ -172,6 +173,7 @@ export function Shell({ children }: { children: ReactNode }) {
   useSpotlight();
   return (
     <>
+      <SpaceBackdrop />
       <a href="#main" className="btn btn-primary sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
         {t("skip")}
       </a>
@@ -271,8 +273,8 @@ export function Shell({ children }: { children: ReactNode }) {
         <p className="mt-3">{t("screening_note")} {t("coverage_note")} {t("archived_note")}</p>
         <p className="mt-1">
           {tx(
-            "Data: NASA LRO LOLA and Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM. Imagery: NASA GIBS Blue Marble and NASA 3D Resources. Code written with AI assistance (Claude) from the team's concept.",
-            "ទិន្នន័យ៖ NASA LRO LOLA និង Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM។ រូបភាព៖ NASA GIBS Blue Marble និង NASA 3D Resources។ កូដត្រូវបានសរសេរដោយមានជំនួយពី AI (Claude) តាមគំនិតរបស់ក្រុម។",
+            "Data: NASA LRO LOLA and Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM. Imagery: NASA GIBS Blue Marble and Black Marble, NASA 3D Resources, NASA/Goddard SVS Deep Star Maps 2020 (Gaia DR2: ESA/Gaia/DPAC). Code written with AI assistance (Claude) from the team's concept.",
+            "ទិន្នន័យ៖ NASA LRO LOLA និង Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM។ រូបភាព៖ NASA GIBS Blue Marble និង Black Marble, NASA 3D Resources, NASA/Goddard SVS Deep Star Maps 2020 (Gaia DR2: ESA/Gaia/DPAC)។ កូដត្រូវបានសរសេរដោយមានជំនួយពី AI (Claude) តាមគំនិតរបស់ក្រុម។",
           )}
         </p>
         <span aria-hidden="true" className="footer-word">
