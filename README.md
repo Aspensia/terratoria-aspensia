@@ -59,7 +59,8 @@ The build is a plain static site in `out/`. Any static host works.
 | NASA POWER | Climatology API (MERRA-2): TS, TS_MAX, TS_MIN, WS10M | Earth temperature, wind |
 | ESA Copernicus | Copernicus DEM GLO-90 (public AWS bucket) | Earth terrain |
 | NASA GIBS | Blue Marble | Basemap display only |
-| NASA 3D Resources | Mars, Venus, Jupiter, Saturn, Neptune maps; Hipparcos star map; two Apollo photographs | 3D scenes and image viewer (display only) |
+| NASA 3D Resources | Mars, Venus, Saturn, Neptune maps; Hipparcos star map; two Apollo photographs | 3D scenes and image viewer (display only) |
+| NASA Photojournal | Cassini global map of Jupiter, PIA07782 (NASA/JPL/Space Science Institute) | Home page solar system (display only) |
 | Literature | APA reference list in `src/data/references.ts` (checked against Crossref) | Six tag-based dimensions |
 
 All are open and need no login. They are archived products, not live observations.

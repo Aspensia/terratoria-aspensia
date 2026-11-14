@@ -301,7 +301,7 @@ export const DATASET_KM: Record<string, { resolution: string; period: string; us
   nasa3d: {
     version: "ឃ្លាំង GitHub សាខា master",
     instrument: "ផែនទីផ្ទៃភព និងរូបថត Apollo",
-    resolution: "ទទឹង ៧២០ ដល់ ២៨៨០ ភីកសែល",
+    resolution: "ទទឹង ៧២០ ដល់ ៣៦០១ ភីកសែល",
     period: "ផ្សេងៗ",
     usedFor: "ឈុត 3D និងកម្មវិធីមើលរូបភាព (សម្រាប់បង្ហាញតែប៉ុណ្ណោះ មិនដាក់ពិន្ទុទេ)",
     quality: "រូបភាពសម្រាប់បរិបទ។ មិនបានប្រើក្នុងពិន្ទុភាពស្រដៀងណាមួយទេ។",
