@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useApp, useQuery } from "@/components/AppState";
-import { fmtCoord, IndexBadge, ProvenancePanel, RefList, ScoreBar, StatusBadge } from "@/components/Bits";
+import { fmtCoord, IndexBadge, PlainSummary, ProvenancePanel, RefList, ScoreBar, StatusBadge } from "@/components/Bits";
 import { ProfileChart, SlopeChart } from "@/components/Charts";
 import { ReliefCanvas } from "@/components/ReliefCanvas";
 import { getPlace, REFERENCES } from "@/data/catalog";
@@ -166,7 +166,10 @@ export default function SitePage() {
         </p>
       </header>
 
-      {mode === "simple" && <p className="no-print text-sm text-muted">{t("simple_hint")}</p>}
+      <div className="simple-only card space-y-1 p-4">
+        <PlainSummary results={results} />
+        <p className="no-print text-sm text-muted">{t("simple_hint")}</p>
+      </div>
 
       <section className="grid gap-4 lg:grid-cols-2" aria-label="Similarity by dimension">
         <Bucket title={t("strong")} items={ex.strong} tone="var(--ok)" />
@@ -182,11 +185,13 @@ export default function SitePage() {
           <ReliefCanvas place={site} />
           <ReliefCanvas place={refPlace} />
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ProfileChart refPlace={refPlace} sites={[site]} />
-          <SlopeChart refPlace={refPlace} sites={[site]} />
+        <div className="science-only space-y-4">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ProfileChart refPlace={refPlace} sites={[site]} />
+            <SlopeChart refPlace={refPlace} sites={[site]} />
+          </div>
+          <MetricsTable site={site} refPlace={refPlace} />
         </div>
-        <MetricsTable site={site} refPlace={refPlace} />
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -235,9 +240,11 @@ export default function SitePage() {
         </p>
       </section>
 
-      <ProvenancePanel places={[site, refPlace]} />
+      <div className="science-only">
+        <ProvenancePanel places={[site, refPlace]} />
+      </div>
 
-      <details className="card p-4" open={mode === "science"}>
+      <details className="science-only card p-4" open>
         <summary className="cursor-pointer font-semibold">References, APA 7th edition ({uniqueCites.length})</summary>
         <div className="mt-3">
           <RefList refs={uniqueCites} />

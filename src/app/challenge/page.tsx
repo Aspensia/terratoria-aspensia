@@ -97,7 +97,7 @@ export default function ChallengePage() {
     const key = (e: KeyboardEvent) => {
       if ((e.target as Element).closest?.("input, select, textarea")) return;
       if (!round) return;
-      const opts = round.kind === "world" ? WORLDS : round.options.map((o) => o.id);
+      const opts = round.kind === "world" ? WORLDS : round.kind === "duel" ? [round.a.id, round.b.id] : round.options.map((o) => o.id);
       const n = Number(e.key);
       if (!choice && n >= 1 && n <= opts.length) answer(opts[n - 1]);
       else if (choice && (e.key === "Enter" || e.key === "ArrowRight")) next();
@@ -196,6 +196,48 @@ export default function ChallengePage() {
               </div>
             )}
           </div>
+        </section>
+      ) : round?.kind === "duel" ? (
+        <section key={i} className="card page-enter space-y-4 p-5">
+          <div>
+            <p className="label">Round {i + 1} · Head to head</p>
+            <h2 className="mt-1 text-xl font-semibold">{round.question}</h2>
+            <p className="text-sm text-muted">Measured from mission elevation and temperature data, not guessed.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[round.a, round.b].map((p, k) => {
+              const right = p.id === round.answer;
+              const state = !choice ? "" : right ? "border-[var(--ok)] ring-2 ring-[var(--ok)]" : p.id === choice ? "border-[var(--warn)]" : "opacity-60";
+              return (
+                <button key={p.id} type="button" disabled={!!choice} onClick={(e) => answer(p.id, { x: e.clientX, y: e.clientY })} className={`card card-hover p-5 text-left disabled:cursor-default ${state}`}>
+                  <span className="flex items-start justify-between gap-2">
+                    <span className="flex items-center gap-2 text-lg font-semibold">
+                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: `var(--${p.body})` }} aria-hidden="true" />
+                      {p.name}
+                    </span>
+                    <span className="font-mono text-xs text-muted">{k + 1}</span>
+                  </span>
+                  <span className="block text-xs text-muted">
+                    {t(p.body as Key)} · {p.country ?? p.category}
+                  </span>
+                  {choice && (
+                    <span className="mt-3 block font-mono text-2xl">
+                      {round.value(p).toFixed(round.metric === "steeper" || round.metric === "rougher" ? 1 : 0)}
+                      <span className="ml-1 text-xs text-muted">{round.unit}</span>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {choice && (
+            <div className="page-enter flex flex-wrap items-center justify-between gap-3" role="status">
+              <p className="font-semibold">{choice === round.answer ? "Correct!" : "Not quite."} The numbers come straight from the Terratoria data pipeline.</p>
+              <button type="button" className="btn btn-primary" onClick={next}>
+                Next round →
+              </button>
+            </div>
+          )}
         </section>
       ) : round ? (
         <section key={i} className="card page-enter space-y-4 p-5">

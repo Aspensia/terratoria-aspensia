@@ -1,12 +1,16 @@
-// Mission Challenge: quiz rounds generated from the real catalogue and scores.
+// Mission Challenge: quiz rounds generated from the real catalogue, measurements and scores.
+// Within one game no place, Earth site option or head-to-head pairing is used twice.
 import { EARTH_SITES, PLACES, REFERENCES } from "../data/catalog";
 import { BALANCED } from "../data/presets";
 import { aggregate, scoreAll } from "./scoring";
 import type { Body, Place } from "./types";
 
+export type DuelMetric = "steeper" | "rougher" | "relief" | "colder";
+
 export type Round =
   | { kind: "world"; place: Place; answer: Body }
-  | { kind: "analogue"; ref: Place; options: Place[]; scores: number[]; answer: string };
+  | { kind: "analogue"; ref: Place; options: Place[]; scores: number[]; answer: string }
+  | { kind: "duel"; metric: DuelMetric; a: Place; b: Place; answer: string; question: string; unit: string; value: (p: Place) => number };
 
 /** Small deterministic PRNG (mulberry32) so a game can be replayed from its seed. */
 export function seeded(seed: number): () => number {
@@ -23,38 +27,72 @@ export function seeded(seed: number): () => number {
 const pickOne = <T,>(rand: () => number, xs: T[]): T => xs[Math.floor(rand() * xs.length)];
 
 function worldRound(rand: () => number, used: Set<string>): Round {
-  // Choose the world first, so the Moon and Mars come up as often as Earth.
-  const body = pickOne(rand, ["earth", "moon", "mars"] as Body[]);
-  const pool = PLACES.filter((p) => p.body === body && p.terrain);
-  const fresh = pool.filter((p) => !used.has(p.id));
-  const place = pickOne(rand, fresh.length ? fresh : pool);
+  // Choose among worlds that still have unseen places, so the Moon and Mars come up but never repeat.
+  const unseen = (b: Body) => PLACES.filter((p) => p.body === b && p.terrain && !used.has(p.id));
+  const bodies = (["earth", "moon", "mars"] as Body[]).filter((b) => unseen(b).length > 0);
+  const body = pickOne(rand, bodies);
+  const place = pickOne(rand, unseen(body));
   used.add(place.id);
   return { kind: "world", place, answer: body };
 }
 
 const MIN_MARGIN = 3; // the winner must clearly beat the runner-up
 
-function analogueRound(rand: () => number): Round {
-  for (let attempt = 0; attempt < 200; attempt++) {
-    const ref = pickOne(rand, REFERENCES);
+function analogueRound(rand: () => number, ref: Place, usedSites: Set<string>): Round {
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const pool = EARTH_SITES.filter((s) => !usedSites.has(s.id));
     const options: Place[] = [];
     while (options.length < 3) {
-      const s = pickOne(rand, EARTH_SITES);
+      const s = pickOne(rand, pool);
       if (!options.includes(s)) options.push(s);
     }
     const scores = options.map((o) => aggregate(scoreAll(ref, o), BALANCED).index);
     if (scores.some((s) => s === null)) continue;
     const sorted = [...(scores as number[])].sort((a, b) => b - a);
     if (sorted[0] - sorted[1] < MIN_MARGIN) continue;
-    const answer = options[scores.indexOf(sorted[0])].id;
-    return { kind: "analogue", ref, options, scores: scores as number[], answer };
+    options.forEach((o) => usedSites.add(o.id));
+    return { kind: "analogue", ref, options, scores: scores as number[], answer: options[scores.indexOf(sorted[0])].id };
   }
   throw new Error("could not build a fair analogue round");
 }
 
+const DUELS: Record<DuelMetric, { question: string; unit: string; value: (p: Place) => number | undefined }> = {
+  steeper: { question: "Which place has steeper ground?", unit: "° median slope", value: (p) => p.terrain?.slopeMedianDeg },
+  rougher: { question: "Which place has rougher ground?", unit: "m roughness", value: (p) => p.terrain?.roughnessM },
+  relief: { question: "Which place has the bigger height difference?", unit: "m local relief", value: (p) => p.terrain?.reliefM },
+  colder: { question: "Which place is colder on average?", unit: "K mean surface temperature", value: (p) => p.climate?.meanK },
+};
+
+function duelRound(rand: () => number, usedDuel: Set<string>): Round {
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const metric = pickOne(rand, Object.keys(DUELS) as DuelMetric[]);
+    const d = DUELS[metric];
+    const pool = PLACES.filter((p) => d.value(p) !== undefined && !usedDuel.has(p.id));
+    const a = pickOne(rand, pool);
+    const b = pickOne(rand, pool);
+    if (a === b) continue;
+    const [va, vb] = [d.value(a)!, d.value(b)!];
+    // Fair question: the two values must differ by at least 15%.
+    if (Math.abs(va - vb) < 0.15 * Math.max(Math.abs(va), Math.abs(vb))) continue;
+    usedDuel.add(a.id).add(b.id);
+    const answer = (metric === "colder" ? va < vb : va > vb) ? a.id : b.id;
+    return { kind: "duel", metric, a, b, answer, question: d.question, unit: d.unit, value: (p) => d.value(p)! };
+  }
+  throw new Error("could not build a fair duel round");
+}
+
 export function makeGame(rand: () => number, rounds = 10): Round[] {
-  const used = new Set<string>();
-  return Array.from({ length: rounds }, (_, i) => (i % 2 === 0 ? worldRound(rand, used) : analogueRound(rand)));
+  const usedWorld = new Set<string>();
+  const usedSites = new Set<string>();
+  const usedDuel = new Set<string>();
+  // Visit the reference regions in a shuffled order so analogue questions rotate through all four.
+  const refs = [...REFERENCES].sort(() => rand() - 0.5);
+  let r = 0;
+  return Array.from({ length: rounds }, (_, i) => {
+    if (i % 3 === 0) return worldRound(rand, usedWorld);
+    if (i % 3 === 1) return analogueRound(rand, refs[r++ % refs.length], usedSites);
+    return duelRound(rand, usedDuel);
+  });
 }
 
 export function rankTitle(score: number, total: number): string {

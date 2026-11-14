@@ -27,7 +27,7 @@ const ARCHIVE: ViewerImage[] = [
 const WORLDS: { id: "earth" | "moon" | "mars"; line: string }[] = [
   { id: "moon", line: "Shackleton crater at the south pole and the Marius Hills lava-tube pit." },
   { id: "mars", line: "Jezero crater's ancient lake and the cave skylights of Arsia Mons." },
-  { id: "earth", line: "20 field sites on seven continents, scored against both worlds." },
+  { id: "earth", line: "21 field sites on seven continents, scored against both worlds." },
 ];
 
 export default function Home() {
@@ -63,6 +63,9 @@ export default function Home() {
             </Link>
             <Link href="/explore/" className="btn px-5 py-2.5 text-base">
               {t("explore_3d")}
+            </Link>
+            <Link href="/plan/" className="btn px-5 py-2.5 text-base">
+              {t("nav_plan")}
             </Link>
             <Link href="/challenge/" className="btn px-5 py-2.5 text-base">
               ▶ {t("nav_challenge")}
@@ -112,7 +115,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {ARCHIVE.map((img) => (
-              <ZoomableImage key={img.src} image={img} className="aspect-square" />
+              <ZoomableImage key={img.src} image={img} className="img-frame aspect-square" />
             ))}
           </div>
         </section>

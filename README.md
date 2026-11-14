@@ -22,7 +22,7 @@ PROJECT: Terratoria was built by **Aspensia**, a team of six high school student
 ## What it does
 
 - 4 reference regions: Shackleton crater and Marius Hills pit (Moon); Jezero crater and Arsia Mons north flank (Mars).
-- 20 Earth sites: 17 established or documented analogue sites and 3 untested candidates.
+- 21 Earth sites: 18 established or documented analogue sites and 3 untested candidates. Death Valley was added from the team's research plan.
 - 8 dimensions, matching the challenge's list. Terrain, temperature and wind are **measured** from open data. Geology, illumination, water and ice, aeolian features, biology, subsurface and operations are **literature-derived** and labelled as such.
 - An "Exploratory Analogue Similarity Index": `Σ(W·Q·S) / Σ(W·Q)`. Missing data lowers coverage, never the score. It is a screening aid, not a probability.
 - A home page with an ambient 3D solar system, a Mission Challenge quiz built on the real scores, 3D terrain for every 60 km site window, and 3D explorers for Earth, the Moon and Mars with clickable sites and a data panel (Three.js).

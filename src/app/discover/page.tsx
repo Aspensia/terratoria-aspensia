@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useApp, useQuery } from "@/components/AppState";
-import { fmtCoord, IndexBadge, ScoreBar, StatusBadge } from "@/components/Bits";
+import { fmtCoord, IndexBadge, PlainSummary, ScoreBar, StatusBadge } from "@/components/Bits";
 import { ReliefCanvas } from "@/components/ReliefCanvas";
 import { EARTH_SITES, getPlace, REFERENCES } from "@/data/catalog";
 import { BALANCED, PRESETS } from "@/data/presets";
 import { DIMENSION_LABEL, DIMENSION_SIMPLE } from "@/lib/i18n";
 import { aggregate, scoreAll } from "@/lib/scoring";
+import { matchesKeywords } from "@/lib/search";
 import { parseWeights, serializeWeights } from "@/lib/storage";
 import { DIMENSIONS, type Body, type DimensionId, type Weights } from "@/lib/types";
 
@@ -21,6 +22,8 @@ const EarthMap = dynamic(() => import("@/components/EarthMap").then((m) => m.Ear
 
 type SortKey = "index" | DimensionId;
 type StatusFilter = "all" | "known" | "candidate";
+// Quick keyword chips; each matches the start of a word in a site's name, summary or documented characteristics.
+const CHIPS = ["volcanic", "lava", "crater", "desert", "ice", "polar", "dune", "salt", "cave", "life", "drilling"];
 
 const csvCell = (v: string | number | null) => {
   const s = v === null ? "" : String(v);
@@ -33,6 +36,9 @@ export default function Discover() {
   const [params, setQuery] = useQuery();
   const [sort, setSort] = useState<SortKey>("index");
   const [filter, setFilter] = useState<StatusFilter>("all");
+  const [kw, setKw] = useState("");
+  const terms = kw.toLowerCase().split(/[\s,]+/).filter(Boolean);
+  const toggleChip = (c: string) => setKw(terms.includes(c) ? terms.filter((x) => x !== c).join(" ") : [...terms, c].join(" "));
   const [picked, setPicked] = useState<string[]>([]);
   const [showHow, setShowHow] = useState(false);
 
@@ -77,11 +83,12 @@ export default function Discover() {
 
   const shown = rows.filter((r) => {
     const known = r.site.status === "established" || r.site.status === "documented";
-    return filter === "all" || (filter === "known" ? known : !known);
+    return (filter === "all" || (filter === "known" ? known : !known)) && matchesKeywords(r.site, kw);
   });
   const mapSites = useMemo(
-    () => rows.map((r) => ({ place: r.site, index: r.agg.index, rank: overallRank.get(r.site.id) ?? null })),
-    [rows, overallRank],
+    () => shown.map((r) => ({ place: r.site, index: r.agg.index, rank: overallRank.get(r.site.id) ?? null })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- shown is derived from rows, filter and kw
+    [rows, overallRank, filter, kw],
   );
   const openSite = useCallback((id: string) => router.push(`/site/?id=${id}&ref=${refValid.id}&w=${wq}`), [router, refValid.id, wq]);
   const noRanking = rows.every((r) => r.agg.index === null);
@@ -214,7 +221,7 @@ export default function Discover() {
         {activePreset && activePreset !== "balanced" && (
           <p className="mt-2 text-sm text-muted">{PRESETS.find((p) => p.id === activePreset)!.explain}</p>
         )}
-        <div className="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="science-only mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
           {DIMENSIONS.map((d) => (
             <div key={d}>
               <label htmlFor={`w-${d}`} className="flex items-baseline justify-between text-sm">
@@ -279,10 +286,39 @@ export default function Discover() {
           </div>
         </div>
 
+        <div className="card space-y-3 p-4">
+          <label className="flex items-center gap-3">
+            <span className="text-xl" aria-hidden="true">🔎</span>
+            <input
+              type="search"
+              value={kw}
+              onChange={(e) => setKw(e.target.value)}
+              placeholder="Filter Earth sites by keyword: desert, lava, ice, Chile, crater…"
+              aria-label="Filter Earth sites by keyword"
+              className="w-full rounded-lg border border-line bg-[var(--panel-solid)] px-3 py-2 text-sm placeholder:text-muted"
+            />
+            {kw && (
+              <button type="button" className="btn" onClick={() => setKw("")}>
+                Clear
+              </button>
+            )}
+          </label>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Keyword shortcuts">
+            {CHIPS.map((c) => (
+              <button key={c} type="button" className="btn min-h-0 rounded-full px-3 py-1 text-xs" aria-pressed={terms.includes(c)} onClick={() => toggleChip(c)}>
+                {c}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted" aria-live="polite">
+            Showing {shown.length} of {rows.length} Earth sites{kw && <> matching “{kw.trim()}”</>}.
+          </p>
+        </div>
+
         <EarthMap sites={mapSites} onOpen={openSite} />
 
         {noRanking && <p className="card border-warn p-4 text-sm">{t("zero_weights")}</p>}
-        {shown.length === 0 && <p className="card p-4 text-sm text-muted">No sites match this filter.</p>}
+        {shown.length === 0 && <p className="card p-4 text-sm text-muted">No sites match. Try fewer keywords or clear the filter.</p>}
 
         <ol className="grid gap-3 lg:grid-cols-2">
           {shown.map(({ site, results, agg }) => {
@@ -309,10 +345,13 @@ export default function Discover() {
                   </div>
                   <IndexBadge agg={agg} />
                 </div>
-                <div className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                <div className="science-only mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
                   {results.map((r) => (
                     <ScoreBar key={r.id} r={r} />
                   ))}
+                </div>
+                <div className="mt-3">
+                  <PlainSummary results={results} />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Link href={`/site/?id=${site.id}&ref=${refValid.id}&w=${wq}`} className="btn btn-primary">

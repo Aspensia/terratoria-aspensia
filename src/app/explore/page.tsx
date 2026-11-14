@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp, useQuery } from "@/components/AppState";
-import { fmtCoord, IndexBadge, ScoreBar, StatusBadge } from "@/components/Bits";
+import { fmtCoord, IndexBadge, PlainSummary, ScoreBar, StatusBadge } from "@/components/Bits";
 import { ZoomableImage } from "@/components/Lightbox";
 import { ReliefCanvas } from "@/components/ReliefCanvas";
 import type { GlobeMarker } from "@/components/three/Globe";
@@ -113,7 +113,8 @@ function SitePanel({ site, refId, onRef }: { site: Place; refId: string; onRef(i
         </label>
         <IndexBadge agg={agg} />
       </div>
-      <div className="space-y-2">
+      <PlainSummary results={results} />
+      <div className="science-only space-y-2">
         {results.map((r) => (
           <ScoreBar key={r.id} r={r} />
         ))}
@@ -140,6 +141,7 @@ export default function ExplorePage() {
   const [params, setQuery] = useQuery();
   const drawer = useRef<HTMLElement>(null);
   const [touring, setTouring] = useState(false);
+  const [skips, setSkips] = useState(0); // bumping this restarts the tour timer after a manual "Next"
 
   const bodyParam = params?.get("body");
   const world: World = WORLDS.includes(bodyParam as World) ? (bodyParam as World) : "moon";
@@ -175,17 +177,17 @@ export default function ExplorePage() {
 
   // Guided tour: visit every location in turn, long enough to read the panel.
   const focusId = focused?.id;
+  const nextStop = () => {
+    const i = places.findIndex((p) => p.id === new URLSearchParams(window.location.search).get("focus"));
+    select(places[(i + 1) % places.length].id);
+  };
   useEffect(() => {
     if (!touring) return;
-    const next = () => {
-      const i = places.findIndex((p) => p.id === new URLSearchParams(window.location.search).get("focus"));
-      select(places[(i + 1) % places.length].id);
-    };
-    if (!focusId) next();
-    const id = setInterval(next, 7000);
+    if (!focusId) nextStop();
+    const id = setInterval(nextStop, 7000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- restart only when the tour or world changes
-  }, [touring, places]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restart when the tour, world or a manual skip changes
+  }, [touring, places, skips]);
   useEffect(() => setTouring(false), [world]);
 
   useEffect(() => {
@@ -209,6 +211,11 @@ export default function ExplorePage() {
         <button type="button" className={`btn ${touring ? "btn-primary" : ""}`} aria-pressed={touring} onClick={() => setTouring((v) => !v)}>
           {touring ? "■ Stop tour" : "▶ Guided tour"}
         </button>
+        {touring && (
+          <button type="button" className="btn btn-primary" onClick={() => (nextStop(), setSkips((n) => n + 1))}>
+            Next ⏭
+          </button>
+        )}
         <div role="tablist" aria-label={t("step1")} className="flex gap-1 rounded-xl border border-line bg-[var(--panel)] p-1">
           {WORLDS.map((w) => (
             <button

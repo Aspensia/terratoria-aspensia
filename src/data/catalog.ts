@@ -1,4 +1,4 @@
-// The Terratoria catalogue: 4 reference regions and 20 Earth sites.
+// The Terratoria catalogue: 4 reference regions and 21 Earth sites.
 // Terrain and climate numbers are merged from pipeline output (src/data/generated).
 // Everything else here is literature-derived: each tag set carries its citations.
 // Citations come from the APA reference list in references.ts, each checked against Crossref or NASA records.
@@ -673,6 +673,33 @@ const EARTH_SEEDS: Seed[] = [
       { title: "Crater infill by wind-blown sand", because: ["dust_wind"] },
     ],
     differences: ["The crater is under 1 km wide; the terrain window measures the surrounding plain.", "No published planetary analogue campaign was found by the team; this is a screening result only."],
+  },
+  {
+    id: "death-valley",
+    body: "earth",
+    name: "Death Valley (Badwater Basin)",
+    country: "United States (California)",
+    lat: 36.25,
+    lon: -116.82,
+    category: "Hyperarid salt basin and volcanic field",
+    status: "documented",
+    statusCite: R.baldridge2004,
+    summary:
+      "The lowest, driest basin in North America. Its salt flats were used to test how orbiting instruments detect salt minerals on Mars, its salt crystals preserve trapped microbes, and the Ubehebe craters to the north formed when rising magma hit water.",
+    attributes: {
+      geology: t(["evaporites", "pyroclastics", "volcanic_cones"], R.baldridge2004, R.sasnett2012),
+      water_ice: t(["hyperarid", "brines"], R.sasnett2012, R.schubert2009),
+      biology: t(["biosignature_preservation", "dry_limit_of_life"], R.schubert2009),
+    },
+    useCases: [
+      { title: "Testing orbital mapping of salt minerals before using it on Mars", because: ["geology"] },
+      { title: "Searching for microbes preserved inside salt crystals", because: ["biology", "water_ice"] },
+      { title: "Field geology in a water-made volcanic crater (Ubehebe)", because: ["geology"] },
+    ],
+    differences: [
+      "The 60 km terrain window covers Badwater Basin; Ubehebe Crater lies about 90 km north, outside it.",
+      "Summer air is among the hottest on Earth, far warmer than anywhere on Mars.",
+    ],
   },
 ];
 

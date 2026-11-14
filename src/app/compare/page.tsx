@@ -121,7 +121,7 @@ export default function ComparePage() {
 
           <DimensionChart sites={sites} results={results} />
 
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="science-only grid gap-4 lg:grid-cols-2">
             <ProfileChart refPlace={refPlace} sites={sites} />
             <SlopeChart refPlace={refPlace} sites={sites} />
           </div>
@@ -171,7 +171,9 @@ export default function ComparePage() {
             </ul>
           </section>
 
-          <ProvenancePanel places={[refPlace, ...sites]} />
+          <div className="science-only">
+            <ProvenancePanel places={[refPlace, ...sites]} />
+          </div>
         </>
       )}
     </div>

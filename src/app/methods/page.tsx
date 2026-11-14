@@ -44,6 +44,8 @@ export default function MethodsPage() {
         </p>
       </header>
 
+      <p className="simple-only card p-5">{t("simple_methods")}</p>
+
       <section className="card p-5">
         <h2 className="text-lg font-semibold">What was analysed</h2>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
@@ -114,7 +116,7 @@ export default function MethodsPage() {
         </p>
       </section>
 
-      <section className="card p-5">
+      <section className="science-only card p-5">
         <h2 className="text-lg font-semibold">How the pipeline works</h2>
         <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm">
           <li>For each place, read a 60.2 km × 60.2 km window centred on its coordinates from the open archive (HTTP range requests; no bulk download).</li>
@@ -130,7 +132,7 @@ export default function MethodsPage() {
         </p>
       </section>
 
-      <section className="card p-5">
+      <section className="science-only card p-5">
         <h2 className="text-lg font-semibold">{t("index")}</h2>
         <p className="mt-2 font-mono text-sm">Index = Σ(Wᵢ × Qᵢ × Sᵢ) ÷ Σ(Wᵢ × Qᵢ)</p>
         <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm">
@@ -154,7 +156,7 @@ export default function MethodsPage() {
         </p>
       </section>
 
-      <section className="card p-5">
+      <section className="science-only card p-5">
         <h2 className="text-lg font-semibold">Literature tags</h2>
         <p className="mt-2 text-sm text-muted">
           For the six literature-derived parts, each place carries tags from a fixed vocabulary, and each tag set cites its sources. The score is the share of the
@@ -170,7 +172,7 @@ export default function MethodsPage() {
         </dl>
       </section>
 
-      <section className="card p-5">
+      <section className="science-only card p-5">
         <h2 className="text-lg font-semibold">Weight presets</h2>
         <dl className="mt-2 space-y-2 text-sm">
           {PRESETS.map((p) => (

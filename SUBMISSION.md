@@ -12,7 +12,11 @@ Aspensia: six high school students from Cambodia. Mak Chansereirath (lead softwa
 
 ## High-Level Project Summary
 
-Terratoria is a web application that finds places on Earth that resemble specific regions of the Moon and Mars. A user picks a reference region, such as Shackleton crater at the lunar south pole or Jezero crater on Mars, chooses which scientific properties matter, and receives a ranked list of Earth sites with a score for each property and the evidence behind it. Terrain, temperature and wind are measured from open NASA and ESA data that we processed ourselves; geology, ice, biology and other properties come from cited research. The tool shows what matches, what does not, and what is unknown, so researchers and mission planners can choose field sites for training, rover tests and instrument trials with their eyes open.
+PROJECT: Terratoria is a website that uses NASA and partner-agency datasets to study the environments of the Moon and Mars and to find places on Earth with similar features, so that experiments there can help plan bases on those worlds.
+
+Visitors can explore interactive 3D globes, terrain models and side-by-side comparisons that show how the landscapes of Earth relate to the Moon and Mars, and how lessons learned at home could help build a self-sustaining lunar base. Places such as the Atacama Desert, the Haughton impact crater and Death Valley share features with the Moon or Mars, which makes them natural test sites. NASA has worked this way before: Apollo astronauts rehearsed lunar field geology at sites on Earth that resembled the Moon (Phinney, 2015).
+
+Under the hood, Terratoria compares 21 Earth sites against four reference regions (Shackleton crater and the Marius Hills on the Moon; Jezero crater and Arsia Mons on Mars). Terrain, temperature and wind are measured from open NASA and ESA data that we processed ourselves; geology, ice, biology and other properties come from peer-reviewed research, every reference checked and cited in APA style. A Mission Plan page turns the results into a five-step plan for a lunar base, with real field campaigns as examples, and states clearly what Earth analogues cannot reproduce.
 
 ## Link to Project Demo
 
@@ -24,7 +28,7 @@ Terratoria is a web application that finds places on Earth that resemble specifi
 
 ## Detailed Project Description
 
-**What it does.** Terratoria compares 20 Earth sites against 4 reference regions: Shackleton crater and the Marius Hills pit on the Moon, and Jezero crater and the north flank of Arsia Mons on Mars. For each pair it scores eight dimensions taken from the challenge statement: terrain; geology and materials; temperature and light; water and ice; dust and wind; biology and habitability; caves and subsurface; and exploration operations. The user sets a weight for each dimension, or picks a preset such as "Lunar Base Research" or "Mars Rover Mobility", and the ranking updates at once.
+**What it does.** Terratoria compares 21 Earth sites against 4 reference regions: Shackleton crater and the Marius Hills pit on the Moon, and Jezero crater and the north flank of Arsia Mons on Mars. For each pair it scores eight dimensions taken from the challenge statement: terrain; geology and materials; temperature and light; water and ice; dust and wind; biology and habitability; caves and subsurface; and exploration operations. The user sets a weight for each dimension, or picks a preset such as "Lunar Base Research" or "Mars Rover Mobility", and the ranking updates at once.
 
 **How it works.** A data pipeline reads a 60 km window around each place from open archives: LOLA for the Moon, MOLA for Mars and Copernicus DEM for Earth. Every source is resampled to the same 463 m grid so that a slope means the same thing on each world. From each window we compute the slope distribution, local relief, roughness and hypsometry. Lunar temperatures come from the LRO Diviner cumulative product, and Earth temperatures and wind from NASA POWER. The other dimensions use a fixed vocabulary of characteristics, each backed by a citation; the score is the share of the reference region's characteristics that are also documented at the Earth site.
 

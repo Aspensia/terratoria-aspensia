@@ -8,14 +8,11 @@ import * as audio from "@/lib/audio";
 import { ripple } from "@/lib/fx";
 import { readSaved, toggleId, writeSaved } from "@/lib/storage";
 
-type Theme = "dark" | "light";
 type Mode = "simple" | "science";
 
 interface AppState {
   lang: Lang;
   setLang(l: Lang): void;
-  theme: Theme;
-  setTheme(t: Theme): void;
   mode: Mode;
   setMode(m: Mode): void;
   saved: string[];
@@ -44,14 +41,12 @@ const setPref = (key: string, value: string) => {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en");
-  const [theme, setThemeState] = useState<Theme>("dark");
   const [mode, setModeState] = useState<Mode>("science");
   const [saved, setSaved] = useState<string[]>([]);
   const [muted, setMutedState] = useState(false);
 
   useEffect(() => {
     if (pref("terratoria.lang") === "km") setLangState("km");
-    if (pref("terratoria.theme") === "light") setThemeState("light");
     if (pref("terratoria.mode") === "simple") setModeState("simple");
     if (pref("terratoria.muted") === "1") {
       setMutedState(true);
@@ -61,9 +56,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.mode = mode; // CSS shows .simple-only / .science-only accordingly
     document.documentElement.lang = lang;
-  }, [theme, lang]);
+  }, [mode, lang]);
 
   // One set of page-wide listeners gives every control its sound; components stay unaware of audio.
   useEffect(() => {
@@ -103,8 +98,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       lang,
       setLang: (l) => (setLangState(l), setPref("terratoria.lang", l)),
-      theme,
-      setTheme: (t) => (setThemeState(t), setPref("terratoria.theme", t)),
       mode,
       setMode: (m) => (setModeState(m), setPref("terratoria.mode", m)),
       saved,
@@ -113,7 +106,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMuted: (m) => (setMutedState(m), audio.setMuted(m), setPref("terratoria.muted", m ? "1" : "0")),
       t: (key) => STRINGS[lang][key],
     }),
-    [lang, theme, mode, saved, toggleSaved, muted],
+    [lang, mode, saved, toggleSaved, muted],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

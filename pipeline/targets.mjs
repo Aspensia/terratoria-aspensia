@@ -28,4 +28,5 @@ export const TARGETS = [
   { id: "harrat-khaybar", body: "earth", lat: 25.72, lon: 39.95 },
   { id: "lut-desert", body: "earth", lat: 30.6, lon: 58.9 },
   { id: "wolfe-creek", body: "earth", lat: -19.17, lon: 127.8 },
+  { id: "death-valley", body: "earth", lat: 36.25, lon: -116.82 },
 ];

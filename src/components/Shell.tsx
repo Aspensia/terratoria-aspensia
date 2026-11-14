@@ -13,6 +13,7 @@ const NAV: { href: string; key: Key }[] = [
   { href: "/", key: "nav_home" },
   { href: "/discover/", key: "nav_discover" },
   { href: "/explore/", key: "nav_explore" },
+  { href: "/plan/", key: "nav_plan" },
   { href: "/challenge/", key: "nav_challenge" },
   { href: "/compare/", key: "nav_compare" },
   { href: "/saved/", key: "nav_saved" },
@@ -146,7 +147,7 @@ function MissionStrip() {
 }
 
 export function Shell({ children }: { children: ReactNode }) {
-  const { t, lang, setLang, theme, setTheme, mode, setMode, muted, setMuted } = useApp();
+  const { t, lang, setLang, mode, setMode, muted, setMuted } = useApp();
   const path = usePathname();
   const section = NAV.find((n) => n.href !== "/" && isActive(n.href, path)) ?? (path.startsWith("/site") ? NAV[1] : null);
   return (
@@ -172,18 +173,15 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
           <div className="ml-auto flex flex-wrap items-center gap-2 md:ml-0">
             <div role="group" aria-label={t("mode_label")} className="flex">
-              <button type="button" className="btn rounded-r-none" aria-pressed={mode === "simple"} onClick={() => setMode("simple")}>
+              <button type="button" className="btn rounded-r-none" aria-pressed={mode === "simple"} title="Plain-language summaries, fewer numbers" onClick={() => setMode("simple")}>
                 {t("mode_simple")}
               </button>
-              <button type="button" className="btn -ml-px rounded-l-none" aria-pressed={mode === "science"} onClick={() => setMode("science")}>
+              <button type="button" className="btn -ml-px rounded-l-none" aria-pressed={mode === "science"} title="Every number, chart, method and reference" onClick={() => setMode("science")}>
                 {t("mode_science")}
               </button>
             </div>
             <button type="button" className="btn" aria-label={t("lang_label")} onClick={() => setLang(lang === "en" ? "km" : "en")}>
               {lang === "en" ? "ខ្មែរ" : "English"}
-            </button>
-            <button type="button" className="btn" aria-label={t("theme_label")} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-              {theme === "dark" ? t("theme_light") : t("theme_dark")}
             </button>
             <button
               type="button"

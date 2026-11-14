@@ -195,3 +195,22 @@ export function RefList({ refs }: { refs: string[] }) {
     </ul>
   );
 }
+
+/** One plain-language line for Simple mode: what matches best and what matches least. */
+export function PlainSummary({ results }: { results: DimensionResult[] }) {
+  const { t, lang } = useApp();
+  const known = results.filter((r) => r.score !== null).sort((a, b) => b.score! - a.score!);
+  if (known.length === 0) return null;
+  const best = known.slice(0, 2).map((r) => DIMENSION_LABEL[lang][r.id]).join(", ");
+  const worst = known.length > 2 ? DIMENSION_LABEL[lang][known[known.length - 1].id] : null;
+  return (
+    <p className="simple-only text-sm">
+      <span className="text-muted">{t("simple_best")}:</span> <strong className="text-[var(--ok)]">{best}</strong>
+      {worst && (
+        <>
+          <span className="text-muted"> · {t("simple_weak")}:</span> <strong className="text-[var(--warn)]">{worst}</strong>
+        </>
+      )}
+    </p>
+  );
+}

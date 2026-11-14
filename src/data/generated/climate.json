@@ -249,5 +249,16 @@
   "product": "NASA POWER Climatology API",
   "url": "https://power.larc.nasa.gov/",
   "retrieved": "2026-11-14"
+ },
+ "death-valley": {
+  "meanK": 292.7,
+  "maxK": 332.4,
+  "minK": 264.7,
+  "windMs": 2.97,
+  "basis": "measured",
+  "cite": "NASA POWER climatology (MERRA-2), Earth skin temperature TS / TS_MAX / TS_MIN and 10 m wind WS10M, annual values at the 0.5° x 0.625° grid cell containing the site",
+  "product": "NASA POWER Climatology API",
+  "url": "https://power.larc.nasa.gov/",
+  "retrieved": "2026-11-14"
  }
 }

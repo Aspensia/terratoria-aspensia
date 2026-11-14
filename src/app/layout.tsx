@@ -7,7 +7,7 @@ import "./globals.css";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 const display = Space_Grotesk({ variable: "--font-display", subsets: ["latin"], weight: ["500", "600", "700"] });
-const khmer = Noto_Sans_Khmer({ variable: "--font-khmer", subsets: ["khmer"], weight: ["400", "600"] });
+const khmer = Noto_Sans_Khmer({ variable: "--font-khmer", subsets: ["khmer"], weight: ["400", "500", "600"] });
 
 export const metadata: Metadata = {
   title: "PROJECT: Terratoria",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={`${geistSans.variable} ${geistMono.variable} ${khmer.variable} ${display.variable} antialiased`}>
+    <html lang="en" data-mode="science" className={`${geistSans.variable} ${geistMono.variable} ${khmer.variable} ${display.variable} antialiased`}>
       <body className="min-h-screen">
         <AppProvider>
           <Shell>{children}</Shell>
