@@ -2,7 +2,9 @@
 
 import { useApp } from "@/components/AppState";
 import { EARTH_SITES, REFERENCES, VOCABULARY } from "@/data/catalog";
+import { RefList } from "@/components/Bits";
 import { DATASETS, type Dataset } from "@/data/datasets";
+import { R } from "@/data/references";
 import { GENERAL_LIMITS, LIMITS } from "@/data/limits";
 import { PRESETS } from "@/data/presets";
 import { DIMENSION_LABEL } from "@/lib/i18n";
@@ -205,6 +207,17 @@ export default function MethodsPage() {
           <li>No illumination modelling; lighting conditions are literature tags.</li>
           <li>No automated global scan or machine learning. Candidates were chosen by hand and then measured.</li>
         </ul>
+      </section>
+
+      <section className="card p-5" id="references">
+        <h2 className="text-lg font-semibold">References (APA 7th edition)</h2>
+        <p className="mt-1 text-sm text-muted">
+          Data sets and literature together, in alphabetical order. Journal articles were checked against their Crossref records (authors, year, title,
+          volume, pages and DOI); NASA reports and books were checked against NASA and publisher records.
+        </p>
+        <div className="mt-4">
+          <RefList refs={[...Object.values(R), ...DATASETS.filter((d) => d.id !== "literature").map((d) => d.apa)]} />
+        </div>
       </section>
 
       <section className="card p-5">

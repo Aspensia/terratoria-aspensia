@@ -1,5 +1,5 @@
 {
-  "name": "analogatlas",
+  "name": "terratoria",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -32,5 +32,5 @@
     "vite": "^8.3.8",
     "vitest": "^5.1.0"
   },
-  "description": "AnalogAtlas: Earth analogue discovery for Moon and Mars regions. Code written with AI assistance (Claude) from the team's concept."
+  "description": "PROJECT: Terratoria by Aspensia: Earth analogue discovery for Moon and Mars regions. Code written with AI assistance (Claude) from the team's concept."
 }

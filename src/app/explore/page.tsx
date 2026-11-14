@@ -256,16 +256,17 @@ export default function ExplorePage() {
           </div>
         </aside>
 
-        <div className="card order-1 overflow-hidden p-0 lg:order-2">
+        <div className="card relative order-1 overflow-hidden p-0 lg:order-2">
           <div className="relative h-[58vh] min-h-[380px] lg:h-[72vh]">
             <Globe key={world} world={world} markers={markers} selectedId={focused?.id ?? null} onSelect={(id) => pick(id)} />
+          </div>
 
             {focused && (
               <aside
                 ref={drawer}
                 tabIndex={-1}
                 aria-label={`${t("telemetry")}: ${focused.name}`}
-                className="drawer glass-bar absolute inset-x-2 bottom-2 max-h-[62%] space-y-4 overflow-y-auto rounded-2xl border border-[var(--line-strong)] p-4 shadow-2xl md:inset-x-auto md:bottom-3 md:right-3 md:top-3 md:max-h-none md:w-[400px]"
+                className="drawer glass-bar m-2 space-y-4 rounded-2xl border border-[var(--line-strong)] p-4 shadow-2xl md:absolute md:bottom-3 md:right-3 md:top-3 md:m-0 md:w-[400px] md:overflow-y-auto"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -292,7 +293,6 @@ export default function ExplorePage() {
                 )}
               </aside>
             )}
-          </div>
         </div>
       </div>
     </div>

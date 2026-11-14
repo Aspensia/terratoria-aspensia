@@ -2,7 +2,7 @@ import { BALANCED } from "../data/presets";
 import { DIMENSIONS, type Weights } from "./types";
 
 type Store = { getItem(key: string): string | null; setItem(key: string, value: string): void };
-const KEY = "analogatlas.saved";
+const KEY = "terratoria.saved";
 
 /** Saved site ids. Never throws: blocked, missing or corrupt storage reads as empty. */
 export function readSaved(store: Store | undefined, validIds: string[]): string[] {

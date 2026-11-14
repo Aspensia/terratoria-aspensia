@@ -4,7 +4,7 @@
   "maxK": 136,
   "minK": 41.5,
   "basis": "measured",
-  "cite": "LRO Diviner Global Cumulative Product (LRO-L-DLRE-5-GCP-V1.0), bolometric brightness temperature in the 0.5° bin at -89.75°, 129.75°E over 96/96 local-time bins, 2009-07-05 to 2015-04-01 (Williams et al. 2017, Icarus 283)",
+  "cite": "LRO Diviner Global Cumulative Product (LRO-L-DLRE-5-GCP-V1.0), bolometric brightness temperature in the 0.5° bin at -89.75°, 129.75°E over 96/96 local-time bins, 2009-07-05 to 2015-04-01 (Williams et al., 2017)",
   "product": "LRO Diviner GCP global_cumul_avg_cyl",
   "url": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_gcp/global_cumul_avg_cyl_90s80s_002.tab",
   "retrieved": "2026-11-14"
@@ -14,7 +14,7 @@
   "maxK": 392,
   "minK": 96.7,
   "basis": "measured",
-  "cite": "LRO Diviner Global Cumulative Product (LRO-L-DLRE-5-GCP-V1.0), bolometric brightness temperature in the 0.5° bin at 14.25°, -56.75°E over 48/96 local-time bins, 2009-07-05 to 2015-04-01 (Williams et al. 2017, Icarus 283)",
+  "cite": "LRO Diviner Global Cumulative Product (LRO-L-DLRE-5-GCP-V1.0), bolometric brightness temperature in the 0.5° bin at 14.25°, -56.75°E over 48/96 local-time bins, 2009-07-05 to 2015-04-01 (Williams et al., 2017)",
   "product": "LRO Diviner GCP global_cumul_avg_cyl",
   "url": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_gcp/global_cumul_avg_cyl_10n20n_002.tab",
   "retrieved": "2026-11-14"
@@ -24,7 +24,7 @@
   "maxK": 245.5,
   "minK": 190.5,
   "basis": "literature",
-  "cite": "Mars 2020 MEDA near-surface air temperature at Jezero: mean about -55 °C with a typical 50-60 K daily swing (Rodriguez-Manfredi et al. 2023, Nature Geoscience 16). Air temperature at 1.45 m, not surface skin temperature.",
+  "cite": "Mars 2020 MEDA near-surface air temperature at Jezero: mean about -55 °C with a typical 50-60 K daily swing (Rodriguez-Manfredi et al., 2023). Air temperature at 1.45 m, not surface skin temperature.",
   "product": "Published in-situ summary",
   "url": "https://doi.org/10.1038/s41561-022-01084-0",
   "retrieved": "2026-11-14"

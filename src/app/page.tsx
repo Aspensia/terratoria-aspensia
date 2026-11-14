@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useApp } from "@/components/AppState";
 import { ZoomableImage, type ViewerImage } from "@/components/Lightbox";
-import { AspensiaLogo } from "@/components/Shell";
+import { TeamStrip } from "@/components/Team";
 import { textureUrl } from "@/components/three/space";
 import { EARTH_SITES, REFERENCES } from "@/data/catalog";
 import { DATASETS } from "@/data/datasets";
@@ -117,18 +117,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="card flex flex-wrap items-center gap-5 p-6">
-          <AspensiaLogo size={64} />
-          <div className="min-w-0 flex-1">
-            <p className="label">{t("made_by")}</p>
-            <p className="mt-1 max-w-2xl text-sm text-muted">
-              {t("screening_note")} {t("coverage_note")}
-            </p>
-          </div>
-          <Link href="/about/" className="btn">
-            {t("nav_about")}
-          </Link>
-        </section>
+        <TeamStrip />
       </div>
     </>
   );

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useApp, useQuery } from "@/components/AppState";
-import { fmtCoord, IndexBadge, ProvenancePanel, ScoreBar, StatusBadge } from "@/components/Bits";
+import { fmtCoord, IndexBadge, ProvenancePanel, RefList, ScoreBar, StatusBadge } from "@/components/Bits";
 import { ProfileChart, SlopeChart } from "@/components/Charts";
 import { ReliefCanvas } from "@/components/ReliefCanvas";
 import { getPlace, REFERENCES } from "@/data/catalog";
@@ -237,17 +237,13 @@ export default function SitePage() {
 
       <ProvenancePanel places={[site, refPlace]} />
 
-      {(
-        <details className="card p-4" open={mode === "science"}>
-          <summary className="cursor-pointer font-semibold">References ({uniqueCites.length})</summary>
-          <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-muted">
-            {uniqueCites.map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ol>
-          <p className="mt-2 text-xs text-muted">Citations were compiled with AI assistance. Check each against the original source before reuse.</p>
-        </details>
-      )}
+      <details className="card p-4" open={mode === "science"}>
+        <summary className="cursor-pointer font-semibold">References, APA 7th edition ({uniqueCites.length})</summary>
+        <div className="mt-3">
+          <RefList refs={uniqueCites} />
+        </div>
+        <p className="mt-3 text-xs text-muted">Each reference was checked against its Crossref or NASA record in November 2026.</p>
+      </details>
     </article>
   );
 }

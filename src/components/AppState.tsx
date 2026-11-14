@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { PLACES } from "@/data/catalog";
 import { STRINGS, type Key, type Lang } from "@/lib/i18n";
 import * as audio from "@/lib/audio";
+import { ripple } from "@/lib/fx";
 import { readSaved, toggleId, writeSaved } from "@/lib/storage";
 
 type Theme = "dark" | "light";
@@ -49,10 +50,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [muted, setMutedState] = useState(false);
 
   useEffect(() => {
-    if (pref("analogatlas.lang") === "km") setLangState("km");
-    if (pref("analogatlas.theme") === "light") setThemeState("light");
-    if (pref("analogatlas.mode") === "simple") setModeState("simple");
-    if (pref("analogatlas.muted") === "1") {
+    if (pref("terratoria.lang") === "km") setLangState("km");
+    if (pref("terratoria.theme") === "light") setThemeState("light");
+    if (pref("terratoria.mode") === "simple") setModeState("simple");
+    if (pref("terratoria.muted") === "1") {
       setMutedState(true);
       audio.setMuted(true);
     }
@@ -76,7 +77,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const down = (e: PointerEvent | KeyboardEvent) => {
       audio.unlock();
       if (e instanceof KeyboardEvent && e.key !== "Enter" && e.key !== " ") return;
-      if ((e.target as Element).closest?.(SEL)) audio.sfx("click");
+      const el = (e.target as Element).closest?.(SEL);
+      if (el) audio.sfx("click");
+      if (e instanceof PointerEvent && el?.classList.contains("btn")) ripple(el as HTMLElement, e.clientX, e.clientY);
     };
     document.addEventListener("pointerover", over);
     document.addEventListener("pointerdown", down);
@@ -99,15 +102,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppState>(
     () => ({
       lang,
-      setLang: (l) => (setLangState(l), setPref("analogatlas.lang", l)),
+      setLang: (l) => (setLangState(l), setPref("terratoria.lang", l)),
       theme,
-      setTheme: (t) => (setThemeState(t), setPref("analogatlas.theme", t)),
+      setTheme: (t) => (setThemeState(t), setPref("terratoria.theme", t)),
       mode,
-      setMode: (m) => (setModeState(m), setPref("analogatlas.mode", m)),
+      setMode: (m) => (setModeState(m), setPref("terratoria.mode", m)),
       saved,
       toggleSaved,
       muted,
-      setMuted: (m) => (setMutedState(m), audio.setMuted(m), setPref("analogatlas.muted", m ? "1" : "0")),
+      setMuted: (m) => (setMutedState(m), audio.setMuted(m), setPref("terratoria.muted", m ? "1" : "0")),
       t: (key) => STRINGS[lang][key],
     }),
     [lang, theme, mode, saved, toggleSaved, muted],

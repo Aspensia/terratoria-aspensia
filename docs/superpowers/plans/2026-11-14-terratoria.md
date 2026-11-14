@@ -1,4 +1,4 @@
-# AnalogAtlas Implementation Plan
+# PROJECT: Terratoria Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node 26, Next.js (App Router, `output: 'export'`), TypeScript, Tailwind, MapLibre GL JS, Recharts, Vitest, `geotiff` (pipeline only).
 
-**Spec:** `docs/superpowers/specs/2026-11-14-analogatlas-design.md`
+**Spec:** `docs/superpowers/specs/2026-11-14-terratoria-design.md`
 
 ## Global Constraints
 

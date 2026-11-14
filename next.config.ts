@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 // Static export: the whole app is HTML/CSS/JS plus JSON, with no server.
-// Set NEXT_PUBLIC_BASE_PATH (e.g. "/analogatlas") when hosting under a sub-path such as GitHub Pages.
+// Set NEXT_PUBLIC_BASE_PATH (e.g. "/terratoria") when hosting under a sub-path such as GitHub Pages.
 const nextConfig: NextConfig = {
   output: "export",
   trailingSlash: true,

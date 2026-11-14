@@ -1,4 +1,4 @@
-// Every place the pipeline analyses. This list IS the geographic coverage of AnalogAtlas:
+// Every place the pipeline analyses. This list IS the geographic coverage of PROJECT: Terratoria:
 // 4 reference regions and the Earth sites below, one 60 km window each. Nothing else was searched.
 // lon is east-positive; Moon/Mars use 0-360 E planetocentric.
 export const TARGETS = [

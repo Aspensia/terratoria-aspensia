@@ -154,7 +154,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <a href="#main" className="btn btn-primary sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
         {t("skip")}
       </a>
-      <header className="glass-bar no-print sticky top-0 z-40">
+      <header className="glass-bar no-print relative z-40 md:sticky md:top-0">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
           <Link href="/" className="brand flex items-center gap-2.5" aria-label="PROJECT: Terratoria, home">
             <svg width="32" height="32" viewBox="0 0 30 30" aria-hidden="true" className="brand-mark">
@@ -238,7 +238,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <AspensiaLogo size={44} />
           <div>
             <p className="text-sm font-semibold text-text">PROJECT: Terratoria · {t("made_by")}</p>
-            <p>NASA Space Apps Challenge 2026. Not affiliated with or endorsed by NASA or ESA.</p>
+            <p>A team of six high school students from Cambodia. NASA Space Apps Challenge 2026. Not affiliated with or endorsed by NASA or ESA.</p>
           </div>
         </div>
         <p className="mt-3">{t("screening_note")} {t("coverage_note")} {t("archived_note")}</p>

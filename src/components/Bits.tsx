@@ -169,3 +169,29 @@ export function ProvenancePanel({ places, open = false }: { places: Place[]; ope
     </details>
   );
 }
+
+/** APA reference list: alphabetical, hanging indent, live DOI and URL links. */
+export function RefList({ refs }: { refs: string[] }) {
+  const sorted = [...new Set(refs)].sort((a, b) => a.localeCompare(b));
+  return (
+    <ul className="space-y-2 text-sm">
+      {sorted.map((r) => {
+        const m = r.match(/^(.*?)(https?:\/\/\S+)$/);
+        return (
+          <li key={r} className="pl-8 -indent-8 break-words text-muted">
+            {m ? (
+              <>
+                {m[1]}
+                <a href={m[2]} target="_blank" rel="noreferrer" className="text-accent underline decoration-dotted underline-offset-2">
+                  {m[2]}
+                </a>
+              </>
+            ) : (
+              r
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}

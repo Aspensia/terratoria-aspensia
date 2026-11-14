@@ -1,3 +1,5 @@
+import { R } from "./references";
+
 // Provenance for every data product Terratoria uses. Shown on the Data and Methods page
 // and in each site's provenance panel. Archived products — none of this is live or real-time.
 export interface Dataset {
@@ -14,7 +16,11 @@ export interface Dataset {
   url: string;
   usedFor: string;
   quality: string;
+  /** APA 7 data citation. Organisation authors are used where the archive names no individual. */
+  apa: string;
 }
+
+const RETRIEVED = "Retrieved November 14, 2026, from";
 
 export const DATASETS: Dataset[] = [
   {
@@ -31,6 +37,7 @@ export const DATASETS: Dataset[] = [
     url: "https://pds-geosciences.wustl.edu/missions/lro/lola.htm",
     usedFor: "Moon terrain: slope, relief, roughness, hypsometry and elevation profile",
     quality: "Gridded product; interpolated between laser tracks. Resampled to 463 m by block-averaging.",
+    apa: "LRO LOLA Science Team. (2019). Lunar Reconnaissance Orbiter Lunar Orbiter Laser Altimeter gridded data records (LRO-L-LOLA-4-GDR-V1.0; LDEM_64 v3.1, LDEM_80S_80M) [Data set]. NASA Planetary Data System Geosciences Node. https://pds-geosciences.wustl.edu/missions/lro/lola.htm",
   },
   {
     id: "diviner",
@@ -46,6 +53,7 @@ export const DATASETS: Dataset[] = [
     url: "https://pds-geosciences.wustl.edu/missions/lro/diviner.htm",
     usedFor: "Moon thermal: mean, maximum and minimum surface temperature over the lunar day",
     quality: "Bins with no nadir observations (-9999) are excluded; at least 48 of 96 local-time bins are required. A 0.5° bin at the pole mixes sunlit rim and shadowed floor.",
+    apa: "Williams, J.-P. (2016). LRO Diviner Lunar Radiometer Experiment global cumulative products (LRO-L-DLRE-5-GCP-V1.0) [Data set]. NASA Planetary Data System Geosciences Node. https://pds-geosciences.wustl.edu/missions/lro/diviner.htm",
   },
   {
     id: "mola",
@@ -61,6 +69,7 @@ export const DATASETS: Dataset[] = [
     url: "https://pds-geosciences.wustl.edu/missions/mgs/megdr.html",
     usedFor: "Mars terrain: slope, relief, roughness, hypsometry and elevation profile",
     quality: "Gridded product with interpolation between tracks, widest near the equator. Sets the 463 m common baseline for all worlds.",
+    apa: "MGS MOLA Science Team. (2003). Mars Global Surveyor Mars Orbiter Laser Altimeter mission experiment gridded data records (MGS-M-MOLA-5-MEGDR-L3-V1.0) [Data set]. NASA Planetary Data System Geosciences Node. https://pds-geosciences.wustl.edu/missions/mgs/megdr.html",
   },
   {
     id: "power",
@@ -76,6 +85,7 @@ export const DATASETS: Dataset[] = [
     url: "https://power.larc.nasa.gov/",
     usedFor: "Earth thermal and wind: skin temperature mean and extremes, 10 m wind speed",
     quality: "Reanalysis, not a direct observation. One grid cell (about 50 km) per site, so local microclimates such as crater floors or valley bottoms are not resolved.",
+    apa: `NASA Langley Research Center. (n.d.). Prediction Of Worldwide Energy Resources (POWER) climatology API [Data set]. ${RETRIEVED} https://power.larc.nasa.gov/`,
   },
   {
     id: "copdem",
@@ -91,6 +101,7 @@ export const DATASETS: Dataset[] = [
     url: "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM",
     usedFor: "Earth terrain: slope, relief, roughness, hypsometry and elevation profile",
     quality: "Surface model: includes vegetation and buildings. Water is stored as 0 m and is excluded. Chosen over NASADEM because it needs no login and covers the polar sites.",
+    apa: "European Space Agency. (2022). Copernicus DEM [Data set]. https://doi.org/10.5270/ESA-c5d3d65",
   },
   {
     id: "meda",
@@ -106,6 +117,7 @@ export const DATASETS: Dataset[] = [
     url: "https://doi.org/10.1038/s41561-022-01084-0",
     usedFor: "Mars thermal at Jezero: near-surface air temperature mean and daily swing",
     quality: "Literature value, not processed by us. Air temperature at 1.45 m, compared against surface skin temperature on Earth. No thermal data were used for Arsia Mons.",
+    apa: R.rodriguezmanfredi2023,
   },
   {
     id: "literature",
@@ -120,6 +132,39 @@ export const DATASETS: Dataset[] = [
     level: "literature",
     url: "https://www.usgs.gov/data/known-terrestrial-analog-sites-planetary-science",
     usedFor: "Six literature-derived dimensions and site status",
-    quality: "Citations were compiled with AI assistance and have not all been checked against the original papers. Treat as a starting bibliography.",
+    quality: "Every journal reference was checked against its Crossref record (author, year, title, volume, pages, DOI) in November 2026; four reports and books were checked against NASA and publisher records. Formatted in APA 7th edition.",
+    apa: "See the full reference list on this page.",
+  },
+  {
+    id: "gibs",
+    group: "nasa",
+    agency: "NASA",
+    mission: "Earth Observing System Data and Information System",
+    instrument: "Global Imagery Browse Services (GIBS)",
+    product: "BlueMarble_ShadedRelief_Bathymetry",
+    version: "Static composite",
+    resolution: "500 m native; 4096 × 2048 px used for the 3D globe",
+    period: "Composite, not time-specific",
+    level: "processed",
+    url: "https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api",
+    usedFor: "Earth map basemap and the 3D Earth texture (display only, not scored)",
+    quality: "Imagery for context. Not used in any similarity score.",
+    apa: `NASA Global Imagery Browse Services. (n.d.). Blue Marble shaded relief and bathymetry [Image layer]. ${RETRIEVED} https://gibs.earthdata.nasa.gov/`,
+  },
+  {
+    id: "nasa3d",
+    group: "nasa",
+    agency: "NASA",
+    mission: "NASA 3D Resources",
+    instrument: "Planetary texture maps and Apollo photographs",
+    product: "Mars, Venus, Jupiter, Saturn and Neptune maps; Hipparcos star map; two Apollo images",
+    version: "GitHub repository, master branch",
+    resolution: "720 to 2880 px wide",
+    period: "Various",
+    level: "processed",
+    url: "https://github.com/nasa/NASA-3D-Resources",
+    usedFor: "3D scenes and the image viewer (display only, not scored)",
+    quality: "Imagery for context. Not used in any similarity score.",
+    apa: `National Aeronautics and Space Administration. (n.d.). NASA 3D resources [Image collection]. GitHub. ${RETRIEVED} https://github.com/nasa/NASA-3D-Resources`,
   },
 ];

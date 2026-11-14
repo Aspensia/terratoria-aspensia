@@ -1,4 +1,4 @@
-# AnalogAtlas — design
+# PROJECT: Terratoria — design
 
 Date: 2026-11-14. Submission deadline: Sunday 2026-11-15, 23:59 local.
 

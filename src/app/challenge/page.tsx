@@ -6,6 +6,7 @@ import { useApp } from "@/components/AppState";
 import { fmtCoord, useCountUp } from "@/components/Bits";
 import { ReliefCanvas } from "@/components/ReliefCanvas";
 import { sfx } from "@/lib/audio";
+import { confetti } from "@/lib/fx";
 import { makeGame, rankTitle, seeded, type Round } from "@/lib/challenge";
 import type { Key } from "@/lib/i18n";
 import type { Body } from "@/lib/types";
@@ -58,11 +59,12 @@ export default function ChallengePage() {
   const done = game.length > 0 && i >= game.length;
 
   const answer = useCallback(
-    (c: string) => {
+    (c: string, at?: { x: number; y: number }) => {
       if (!round || choice) return;
       setChoice(c);
       const right = c === round.answer;
-      sfx(right ? "select" : "close");
+      sfx(right ? "correct" : "wrong");
+      if (right) confetti(at?.x ?? window.innerWidth / 2, at?.y ?? window.innerHeight / 2);
       setScore((s) => s + (right ? 1 : 0));
       setStreak((s) => {
         const n = right ? s + 1 : 0;
@@ -169,7 +171,7 @@ export default function ChallengePage() {
               {WORLDS.map((w, k) => {
                 const state = !choice ? "" : w === round.answer ? "border-[var(--ok)] ring-2 ring-[var(--ok)]" : w === choice ? "border-[var(--warn)] opacity-80" : "opacity-50";
                 return (
-                  <button key={w} type="button" disabled={!!choice} onClick={() => answer(w)} className={`btn justify-between py-3 text-base ${state}`}>
+                  <button key={w} type="button" disabled={!!choice} onClick={(e) => answer(w, { x: e.clientX, y: e.clientY })} className={`btn justify-between py-3 text-base ${state}`}>
                     <span className="flex items-center gap-2">
                       <span className="h-3 w-3 rounded-full" style={{ background: `var(--${w})` }} aria-hidden="true" />
                       {t(w as Key)}
@@ -211,7 +213,7 @@ export default function ChallengePage() {
               const right = o.id === round.answer;
               const state = !choice ? "" : right ? "border-[var(--ok)] ring-2 ring-[var(--ok)]" : o.id === choice ? "border-[var(--warn)]" : "opacity-60";
               return (
-                <button key={o.id} type="button" disabled={!!choice} onClick={() => answer(o.id)} className={`card card-hover p-4 text-left disabled:cursor-default ${state}`}>
+                <button key={o.id} type="button" disabled={!!choice} onClick={(e) => answer(o.id, { x: e.clientX, y: e.clientY })} className={`card card-hover p-4 text-left disabled:cursor-default ${state}`}>
                   <span className="flex items-start justify-between gap-2">
                     <span className="font-semibold">{o.name}</span>
                     <span className="font-mono text-xs text-muted">{k + 1}</span>

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { EARTH_SITES, PLACES, REFERENCES, VOCABULARY, getPlace } from "./catalog";
 import { DATASETS } from "./datasets";
+import { R } from "./references";
 import { PRESETS } from "./presets";
 import { aggregate, scoreAll } from "../lib/scoring";
 import { DIMENSIONS, type DimensionId } from "../lib/types";
@@ -30,6 +31,11 @@ describe("catalogue integrity", () => {
         }
       }
     }
+  });
+
+  test("every literature citation is an entry of the checked APA reference list", () => {
+    const apa = new Set<string>(Object.values(R));
+    for (const p of PLACES) for (const set of Object.values(p.attributes)) for (const c of set!.cites) expect(apa.has(c), `${p.id}: ${c.slice(0, 60)}`).toBe(true);
   });
 
   test("every Earth site has a status with a source", () => {

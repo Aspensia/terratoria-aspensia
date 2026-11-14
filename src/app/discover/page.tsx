@@ -38,7 +38,7 @@ export default function Discover() {
 
   useEffect(() => {
     try {
-      setShowHow(window.localStorage.getItem("analogatlas.how") !== "done");
+      setShowHow(window.localStorage.getItem("terratoria.how") !== "done");
     } catch {
       setShowHow(true);
     }
@@ -46,7 +46,7 @@ export default function Discover() {
   const dismissHow = () => {
     setShowHow(false);
     try {
-      window.localStorage.setItem("analogatlas.how", "done");
+      window.localStorage.setItem("terratoria.how", "done");
     } catch {
       // not remembered
     }
