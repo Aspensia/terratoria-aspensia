@@ -17,7 +17,7 @@ const GROUPS: { id: Dataset["group"]; title: string; note: string }[] = [
 
 const GLOSSARY: [string, string, string][] = [
   ["Analogue environment", "A place on Earth that resembles part of another world in some specific, useful way.", "No analogue matches in every respect; each is chosen for particular properties such as rock type, temperature or terrain."],
-  ["Digital elevation model (DEM)", "A grid of ground heights, like a map made of height numbers.", "AnalogAtlas uses LOLA (Moon), MOLA (Mars) and Copernicus DEM (Earth), all resampled to 463 m cells."],
+  ["Digital elevation model (DEM)", "A grid of ground heights, like a map made of height numbers.", "Terratoria uses LOLA (Moon), MOLA (Mars) and Copernicus DEM (Earth), all resampled to 463 m cells."],
   ["Spatial resolution", "The size of the smallest detail a dataset can show.", "Comparing data at different resolutions is misleading, so everything is brought to one baseline first."],
   ["Surface roughness", "How bumpy the ground is at a chosen scale.", "Here: the standard deviation of elevation after subtracting the local 5 × 5 cell mean, at 463 m."],
   ["Hypsometric integral", "Whether a landscape is mostly high ground with deep cuts, or mostly low ground with peaks.", "(mean − minimum) ÷ (maximum − minimum) elevation in the window; 0.5 is evenly balanced."],
@@ -25,7 +25,7 @@ const GLOSSARY: [string, string, string][] = [
   ["Permanently shadowed region", "A crater floor near a pole that sunlight never reaches.", "Temperatures stay near 40 K, cold enough to trap water ice for billions of years."],
   ["Thermal inertia", "How slowly a surface heats up and cools down.", "Rock has high thermal inertia and dust has low. It was not compared in this version."],
   ["Aeolian processes", "Shaping of the land by wind: dunes, ripples, sand-blasted rock.", "Active on Mars and Earth; absent on the airless Moon."],
-  ["Mineral spectroscopy", "Identifying minerals from the colours of light they reflect or emit.", "AnalogAtlas does not process spectra; mineral tags come from published studies."],
+  ["Mineral spectroscopy", "Identifying minerals from the colours of light they reflect or emit.", "Terratoria does not process spectra; mineral tags come from published studies."],
   ["Bolometric brightness temperature", "A single surface temperature worked out from all the heat an instrument measures.", "The Diviner value used for the Moon's temperature."],
   ["Reanalysis", "A weather model continually corrected with real observations to fill in a complete global record.", "MERRA-2, behind NASA POWER, is the source of Earth temperatures and wind here."],
 ];
@@ -38,7 +38,7 @@ export default function MethodsPage() {
       <header>
         <h1 className="text-2xl font-semibold">{t("nav_methods")}</h1>
         <p className="mt-2 max-w-3xl text-muted">
-          Everything AnalogAtlas shows can be traced to an open dataset or a citation. This page lists the data, the exact scoring rules and the limits of the method.
+          Everything Terratoria shows can be traced to an open dataset or a citation. This page lists the data, the exact scoring rules and the limits of the method.
         </p>
       </header>
 
@@ -107,7 +107,7 @@ export default function MethodsPage() {
         ))}
         <p className="text-sm text-muted">
           Levels: <strong>raw</strong> = instrument readings; <strong>processed</strong> = calibrated, gridded products from the mission team; <strong>derived</strong> =
-          model or reanalysis output; <strong>literature</strong> = values taken from papers. AnalogAtlas computes its own derived indicators (slope, relief, roughness,
+          model or reanalysis output; <strong>literature</strong> = values taken from papers. Terratoria computes its own derived indicators (slope, relief, roughness,
           similarity scores) from the processed products. Basemap imagery is NASA GIBS Blue Marble, used for display only.
         </p>
       </section>

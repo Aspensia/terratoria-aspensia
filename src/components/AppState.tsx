@@ -1,8 +1,10 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import { PLACES } from "@/data/catalog";
 import { STRINGS, type Key, type Lang } from "@/lib/i18n";
+import * as audio from "@/lib/audio";
 import { readSaved, toggleId, writeSaved } from "@/lib/storage";
 
 type Theme = "dark" | "light";
@@ -17,6 +19,8 @@ interface AppState {
   setMode(m: Mode): void;
   saved: string[];
   toggleSaved(id: string): void;
+  muted: boolean;
+  setMuted(m: boolean): void;
   t(key: Key): string;
 }
 
@@ -42,11 +46,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("dark");
   const [mode, setModeState] = useState<Mode>("science");
   const [saved, setSaved] = useState<string[]>([]);
+  const [muted, setMutedState] = useState(false);
 
   useEffect(() => {
     if (pref("analogatlas.lang") === "km") setLangState("km");
     if (pref("analogatlas.theme") === "light") setThemeState("light");
     if (pref("analogatlas.mode") === "simple") setModeState("simple");
+    if (pref("analogatlas.muted") === "1") {
+      setMutedState(true);
+      audio.setMuted(true);
+    }
     setSaved(readSaved(store(), PLACES.map((p) => p.id)));
   }, []);
 
@@ -54,6 +63,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset.theme = theme;
     document.documentElement.lang = lang;
   }, [theme, lang]);
+
+  // One set of page-wide listeners gives every control its sound; components stay unaware of audio.
+  useEffect(() => {
+    const SEL = "button, a[href], select, input[type=range], [role=tab]";
+    let last: Element | null = null;
+    const over = (e: PointerEvent) => {
+      const el = (e.target as Element).closest?.(SEL) ?? null;
+      if (el && el !== last && !(el as HTMLButtonElement).disabled) audio.sfx("hover");
+      last = el;
+    };
+    const down = (e: PointerEvent | KeyboardEvent) => {
+      audio.unlock();
+      if (e instanceof KeyboardEvent && e.key !== "Enter" && e.key !== " ") return;
+      if ((e.target as Element).closest?.(SEL)) audio.sfx("click");
+    };
+    document.addEventListener("pointerover", over);
+    document.addEventListener("pointerdown", down);
+    document.addEventListener("keydown", down);
+    return () => {
+      document.removeEventListener("pointerover", over);
+      document.removeEventListener("pointerdown", down);
+      document.removeEventListener("keydown", down);
+    };
+  }, []);
 
   const toggleSaved = useCallback((id: string) => {
     setSaved((ids) => {
@@ -73,9 +106,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMode: (m) => (setModeState(m), setPref("analogatlas.mode", m)),
       saved,
       toggleSaved,
+      muted,
+      setMuted: (m) => (setMutedState(m), audio.setMuted(m), setPref("analogatlas.muted", m ? "1" : "0")),
       t: (key) => STRINGS[lang][key],
     }),
-    [lang, theme, mode, saved, toggleSaved],
+    [lang, theme, mode, saved, toggleSaved, muted],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -87,12 +122,9 @@ export function useApp(): AppState {
   return v;
 }
 
-/** URL query as state, read after mount so pages can be statically exported. */
+/** URL query as state. Follows every URL change (links, search, replaceState); pages using it need a Suspense parent. */
 export function useQuery(): [URLSearchParams | null, (patch: Record<string, string | null>) => void] {
-  const [params, setParams] = useState<URLSearchParams | null>(null);
-  useEffect(() => {
-    setParams(new URLSearchParams(window.location.search));
-  }, []);
+  const params = useSearchParams();
   const update = useCallback((patch: Record<string, string | null>) => {
     const next = new URLSearchParams(window.location.search);
     for (const [k, v] of Object.entries(patch)) {
@@ -101,7 +133,6 @@ export function useQuery(): [URLSearchParams | null, (patch: Record<string, stri
     }
     const qs = next.toString();
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-    setParams(next);
   }, []);
   return [params, update];
 }

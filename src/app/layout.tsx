@@ -9,9 +9,11 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const khmer = Noto_Sans_Khmer({ variable: "--font-khmer", subsets: ["khmer"], weight: ["400", "600"] });
 
 export const metadata: Metadata = {
-  title: "AnalogAtlas",
+  title: "PROJECT: Terratoria",
   description:
-    "Find Earth sites that are analogues of specific Moon and Mars regions, with explainable similarity scores built on open NASA and ESA data. Code written with AI assistance.",
+    "Find Earth sites that are analogues of specific Moon and Mars regions, with explainable similarity scores built on open NASA and ESA data. Made by Aspensia. Code written with AI assistance.",
+  authors: [{ name: "Aspensia" }],
+  icons: { icon: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/aspensia-logo.png` },
   other: { generator: "Built with AI assistance (Claude) from the team's concept" },
 };
 

@@ -18,7 +18,7 @@ function NotFound() {
   return (
     <div className="card mx-auto max-w-lg p-8 text-center">
       <h1 className="text-xl font-semibold">{t("not_found")}</h1>
-      <Link href="/" className="btn btn-primary mt-4">
+      <Link href="/discover/" className="btn btn-primary mt-4">
         {t("back_discover")}
       </Link>
     </div>

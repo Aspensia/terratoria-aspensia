@@ -74,7 +74,7 @@ export default function ComparePage() {
       {sites.length === 0 ? (
         <div className="card p-8 text-center">
           <p>Choose up to three Earth sites above, or pick them from the ranking.</p>
-          <Link href={`/?ref=${refPlace.id}&w=${wq}`} className="btn btn-primary mt-4">
+          <Link href={`/discover/?ref=${refPlace.id}&w=${wq}`} className="btn btn-primary mt-4">
             {t("back_discover")}
           </Link>
         </div>

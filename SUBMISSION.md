@@ -4,11 +4,11 @@ Draft for the team to edit. Every field must be in English. Replace anything in 
 
 ## Project Name
 
-AnalogAtlas
+PROJECT: Terratoria (made by Aspensia)
 
 ## High-Level Project Summary
 
-AnalogAtlas is a web application that finds places on Earth that resemble specific regions of the Moon and Mars. A user picks a reference region, such as Shackleton crater at the lunar south pole or Jezero crater on Mars, chooses which scientific properties matter, and receives a ranked list of Earth sites with a score for each property and the evidence behind it. Terrain, temperature and wind are measured from open NASA and ESA data that we processed ourselves; geology, ice, biology and other properties come from cited research. The tool shows what matches, what does not, and what is unknown, so researchers and mission planners can choose field sites for training, rover tests and instrument trials with their eyes open.
+Terratoria is a web application that finds places on Earth that resemble specific regions of the Moon and Mars. A user picks a reference region, such as Shackleton crater at the lunar south pole or Jezero crater on Mars, chooses which scientific properties matter, and receives a ranked list of Earth sites with a score for each property and the evidence behind it. Terrain, temperature and wind are measured from open NASA and ESA data that we processed ourselves; geology, ice, biology and other properties come from cited research. The tool shows what matches, what does not, and what is unknown, so researchers and mission planners can choose field sites for training, rover tests and instrument trials with their eyes open.
 
 ## Link to Project Demo
 
@@ -20,7 +20,7 @@ AnalogAtlas is a web application that finds places on Earth that resemble specif
 
 ## Detailed Project Description
 
-**What it does.** AnalogAtlas compares 20 Earth sites against 4 reference regions: Shackleton crater and the Marius Hills pit on the Moon, and Jezero crater and the north flank of Arsia Mons on Mars. For each pair it scores eight dimensions taken from the challenge statement: terrain; geology and materials; temperature and light; water and ice; dust and wind; biology and habitability; caves and subsurface; and exploration operations. The user sets a weight for each dimension, or picks a preset such as "Lunar Base Research" or "Mars Rover Mobility", and the ranking updates at once.
+**What it does.** Terratoria compares 20 Earth sites against 4 reference regions: Shackleton crater and the Marius Hills pit on the Moon, and Jezero crater and the north flank of Arsia Mons on Mars. For each pair it scores eight dimensions taken from the challenge statement: terrain; geology and materials; temperature and light; water and ice; dust and wind; biology and habitability; caves and subsurface; and exploration operations. The user sets a weight for each dimension, or picks a preset such as "Lunar Base Research" or "Mars Rover Mobility", and the ranking updates at once.
 
 **How it works.** A data pipeline reads a 60 km window around each place from open archives: LOLA for the Moon, MOLA for Mars and Copernicus DEM for Earth. Every source is resampled to the same 463 m grid so that a slope means the same thing on each world. From each window we compute the slope distribution, local relief, roughness and hypsometry. Lunar temperatures come from the LRO Diviner cumulative product, and Earth temperatures and wind from NASA POWER. The other dimensions use a fixed vocabulary of characteristics, each backed by a citation; the score is the share of the reference region's characteristics that are also documented at the Earth site.
 
@@ -34,7 +34,7 @@ The overall "Exploratory Analogue Similarity Index" is a weighted mean: Σ(weigh
 
 **What we hope to achieve.** A reusable, transparent way to shortlist analogue sites, extendable to more regions, more sites, spectral data and an automated global scan.
 
-**Tools.** TypeScript, Next.js (static export), Tailwind CSS, MapLibre GL JS, Recharts, Node.js data pipeline with geotiff.js, Vitest. [Add hosting platform.]
+**Tools.** TypeScript, Next.js (static export), Tailwind CSS, Three.js, MapLibre GL JS, Recharts, Web Audio API, Node.js data pipeline with geotiff.js, Vitest. [Add hosting platform.]
 
 ## Use of Artificial Intelligence
 
@@ -46,7 +46,8 @@ Yes. We used an AI coding assistant (Claude, by Anthropic) to write the applicat
 - **Lunar Reconnaissance Orbiter, Diviner** Global Cumulative Product (LRO-L-DLRE-5-GCP-V1.0), bolometric brightness temperature by local time. Used for lunar mean, minimum and maximum surface temperature. https://pds-geosciences.wustl.edu/missions/lro/diviner.htm
 - **Mars Global Surveyor, MOLA** MEGDR topography at 128 pixels per degree, from the PDS Geosciences Node. Used for Martian terrain and to set the common 463 m baseline. https://pds-geosciences.wustl.edu/missions/mgs/megdr.html
 - **NASA POWER** climatology API (MERRA-2 reanalysis): Earth skin temperature mean, maximum, minimum and 10 m wind speed. Used for Earth thermal and wind comparisons. https://power.larc.nasa.gov/
-- **NASA GIBS** Blue Marble imagery, as the basemap of the Earth map. https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api
+- **NASA GIBS** Blue Marble imagery, as the basemap of the Earth map and the texture of the 3D Earth.
+- **NASA 3D Resources** planet maps, Hipparcos star map and two Apollo photographs, for the 3D scenes and image viewer. https://github.com/nasa/NASA-3D-Resources https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api
 - **Mars 2020 MEDA** results as published (Rodriguez-Manfredi et al. 2023, Nature Geoscience) for Jezero air temperature.
 
 ## Space Agency Partner Data and Other References

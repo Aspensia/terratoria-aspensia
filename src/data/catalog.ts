@@ -1,4 +1,4 @@
-// The AnalogAtlas catalogue: 4 reference regions and 20 Earth sites.
+// The Terratoria catalogue: 4 reference regions and 20 Earth sites.
 // Terrain and climate numbers are merged from pipeline output (src/data/generated).
 // Everything else here is literature-derived: each tag set carries its citations.
 // Citations were compiled with AI assistance and must be checked before scientific reuse.
@@ -46,7 +46,7 @@ const C = {
   qaidam: "Xiao et al. (2017), A new terrestrial analogue site for Mars research: the Qaidam Basin, Earth-Science Reviews 164",
   dallol: "Cavalazzi et al. (2019), The Dallol Geothermal Area, Northern Afar (Ethiopia), Astrobiology 19(4)",
   riotinto: "Fernández-Remolar et al. (2005), The Río Tinto Basin, Spain: mineralogy, sedimentary geobiology and implications for Meridiani Planum, EPSL 240",
-  ownSelection: "Selected by the AnalogAtlas team from its geological setting. Not checked against a full literature review; needs field validation.",
+  ownSelection: "Selected by the Aspensia team from its geological setting. Not checked against a full literature review; needs field validation.",
 };
 
 type Seed = Omit<Place, "terrain" | "climate">;

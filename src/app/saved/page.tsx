@@ -15,7 +15,7 @@ export default function SavedPage() {
       {places.length === 0 ? (
         <div className="card p-8 text-center">
           <p>{t("saved_empty")}</p>
-          <Link href="/" className="btn btn-primary mt-4">
+          <Link href="/discover/" className="btn btn-primary mt-4">
             {t("back_discover")}
           </Link>
         </div>

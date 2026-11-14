@@ -1,4 +1,4 @@
-// Provenance for every data product AnalogAtlas uses. Shown on the Data and Methods page
+// Provenance for every data product Terratoria uses. Shown on the Data and Methods page
 // and in each site's provenance panel. Archived products — none of this is live or real-time.
 export interface Dataset {
   id: string;

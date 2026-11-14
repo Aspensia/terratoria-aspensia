@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState, type ReactNode } from "react";
+import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { PLACES } from "@/data/catalog";
 import type { Key } from "@/lib/i18n";
 import type { Place } from "@/lib/types";
 import { useApp } from "./AppState";
 
 const NAV: { href: string; key: Key }[] = [
-  { href: "/", key: "nav_discover" },
+  { href: "/", key: "nav_home" },
+  { href: "/discover/", key: "nav_discover" },
+  { href: "/explore/", key: "nav_explore" },
   { href: "/compare/", key: "nav_compare" },
   { href: "/saved/", key: "nav_saved" },
   { href: "/methods/", key: "nav_methods" },
@@ -17,7 +19,7 @@ const NAV: { href: string; key: Key }[] = [
 ];
 
 export const placeHref = (p: Place, ref?: string) =>
-  p.body === "earth" ? `/site/?id=${p.id}${ref ? `&ref=${ref}` : ""}` : `/?ref=${p.id}`;
+  p.body === "earth" ? `/site/?id=${p.id}${ref ? `&ref=${ref}` : ""}` : `/explore/?body=${p.body}&focus=${p.id}`;
 
 /** "19.6, -155.5" style input → nearest catalogue place on Earth. */
 function nearestByCoords(q: string): Place | null {
@@ -92,25 +94,44 @@ function Search() {
   );
 }
 
+const isActive = (href: string, path: string) => (href === "/" ? path === "/" : path.startsWith(href.replace(/\/$/, "")));
+
+export function AspensiaLogo({ size = 28 }: { size?: number }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- static export: no image optimiser
+    <img src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/aspensia-logo.png`} alt="Aspensia" width={size} height={size} className="logo-chip" />
+  );
+}
+
+function SoundIcon({ muted }: { muted: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor" />
+      {muted ? <path d="M17 9l5 6M22 9l-5 6" /> : <path d="M16.5 8.5a5 5 0 010 7M19.5 5.5a9 9 0 010 13" />}
+    </svg>
+  );
+}
+
 export function Shell({ children }: { children: ReactNode }) {
-  const { t, lang, setLang, theme, setTheme, mode, setMode } = useApp();
+  const { t, lang, setLang, theme, setTheme, mode, setMode, muted, setMuted } = useApp();
   const path = usePathname();
+  const section = NAV.find((n) => n.href !== "/" && isActive(n.href, path)) ?? (path.startsWith("/site") ? NAV[1] : null);
   return (
     <>
       <a href="#main" className="btn btn-primary sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
         {t("skip")}
       </a>
-      <header className="no-print border-b border-line bg-panel">
+      <header className="glass-bar no-print sticky top-0 z-40">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
-          <Link href="/" className="flex items-center gap-2.5">
-            <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+          <Link href="/" className="brand flex items-center gap-2.5" aria-label="PROJECT: Terratoria, home">
+            <svg width="32" height="32" viewBox="0 0 30 30" aria-hidden="true" className="brand-mark">
               <circle cx="12" cy="15" r="9" fill="none" stroke="var(--earth)" strokeWidth="2" />
               <circle cx="18" cy="15" r="9" fill="none" stroke="var(--mars)" strokeWidth="2" />
               <circle cx="15" cy="15" r="2.4" fill="var(--moon)" />
             </svg>
             <span>
-              <span className="block text-lg font-semibold leading-tight tracking-tight">AnalogAtlas</span>
-              <span className="block text-[11px] leading-tight text-muted">{t("tagline")}</span>
+              <span className="block font-mono text-[10px] leading-tight tracking-[0.3em] text-accent">PROJECT:</span>
+              <span className="block text-lg font-semibold leading-tight tracking-tight">Terratoria</span>
             </span>
           </Link>
           <div className="order-last w-full md:order-none md:ml-auto md:w-auto md:flex-1 md:max-w-xs">
@@ -131,34 +152,64 @@ export function Shell({ children }: { children: ReactNode }) {
             <button type="button" className="btn" aria-label={t("theme_label")} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
               {theme === "dark" ? t("theme_light") : t("theme_dark")}
             </button>
+            <button
+              type="button"
+              className="btn"
+              aria-pressed={!muted}
+              aria-label={muted ? t("sound_off") : t("sound_on")}
+              title={muted ? t("sound_off") : t("sound_on")}
+              onClick={() => setMuted(!muted)}
+            >
+              <SoundIcon muted={muted} />
+            </button>
           </div>
         </div>
-        <nav aria-label="Main" className="mx-auto max-w-7xl overflow-x-auto px-4">
-          <ul className="flex gap-1 text-sm">
+        <nav aria-label="Main" className="mx-auto flex max-w-7xl items-center gap-3 px-4">
+          <ul className="flex flex-1 gap-1 overflow-x-auto text-sm">
             {NAV.map((n) => {
-              const active = n.href === "/" ? path === "/" : path.startsWith(n.href.replace(/\/$/, ""));
+              const active = isActive(n.href, path);
               return (
                 <li key={n.href}>
-                  <Link
-                    href={n.href}
-                    aria-current={active ? "page" : undefined}
-                    className={`block whitespace-nowrap border-b-2 px-3 py-2 ${active ? "border-accent font-semibold text-text" : "border-transparent text-muted hover:text-text"}`}
-                  >
+                  <Link href={n.href} aria-current={active ? "page" : undefined} className={`nav-link ${active ? "is-active" : ""}`}>
                     {t(n.key)}
                   </Link>
                 </li>
               );
             })}
           </ul>
+          <a href="#credits" className="hidden items-center gap-2 text-[11px] text-muted hover:text-text sm:flex" title={t("made_by")}>
+            <AspensiaLogo size={22} />
+            <span>by Aspensia</span>
+          </a>
         </nav>
       </header>
+      {section && (
+        <nav aria-label="Breadcrumb" className="no-print mx-auto max-w-7xl px-4 pt-4 text-xs text-muted">
+          <ol className="flex items-center gap-1.5">
+            <li>
+              <Link href="/" className="hover:text-text">{t("nav_home")}</Link>
+            </li>
+            <li aria-hidden="true">›</li>
+            <li aria-current="page" className="text-text">{t(section.key)}</li>
+          </ol>
+        </nav>
+      )}
       <main id="main" className="mx-auto max-w-7xl px-4 py-6">
-        {children}
+        <Suspense fallback={<div className="card h-96 animate-pulse" />}>
+          <div key={path} className="page-enter">{children}</div>
+        </Suspense>
       </main>
-      <footer className="mx-auto max-w-7xl border-t border-line px-4 py-5 text-xs text-muted">
-        <p>{t("screening_note")} {t("coverage_note")} {t("archived_note")}</p>
+      <footer id="credits" className="relative z-10 mx-auto max-w-7xl border-t border-line px-4 py-6 text-xs text-muted">
+        <div className="flex flex-wrap items-center gap-4">
+          <AspensiaLogo size={44} />
+          <div>
+            <p className="text-sm font-semibold text-text">PROJECT: Terratoria · {t("made_by")}</p>
+            <p>NASA Space Apps Challenge 2026. Not affiliated with or endorsed by NASA or ESA.</p>
+          </div>
+        </div>
+        <p className="mt-3">{t("screening_note")} {t("coverage_note")} {t("archived_note")}</p>
         <p className="mt-1">
-          Data: NASA LRO LOLA and Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM. Basemap imagery: NASA GIBS Blue Marble. Code written with AI
+          Data: NASA LRO LOLA and Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM. Imagery: NASA GIBS Blue Marble and NASA 3D Resources. Code written with AI
           assistance (Claude) from the team&apos;s concept.
         </p>
       </footer>

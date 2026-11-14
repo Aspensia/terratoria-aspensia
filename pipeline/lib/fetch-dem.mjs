@@ -33,7 +33,7 @@ export const PRODUCTS = {
   },
 };
 
-async function cachedFetch(url, range) {
+export async function cachedFetch(url, range) {
   const key = createHash("sha1").update(url + (range ?? "")).digest("hex");
   const file = join(CACHE, key);
   if (existsSync(file)) {

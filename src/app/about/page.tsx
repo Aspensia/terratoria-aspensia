@@ -20,7 +20,7 @@ export default function AboutPage() {
           Space agencies use analogues to train crews, test rovers and drills, and learn how to read landscapes before a mission arrives.
         </p>
         <p className="mt-2">
-          Most analogue sites were chosen from field experience. AnalogAtlas asks the question the other way round: start from a specific region on the Moon or Mars,
+          Most analogue sites were chosen from field experience. Terratoria asks the question the other way round: start from a specific region on the Moon or Mars,
           say which properties matter, and rank Earth sites by how well the measurements and the published evidence agree.
         </p>
       </section>
@@ -53,7 +53,7 @@ export default function AboutPage() {
       <section className="card p-5">
         <h2 className="text-lg font-semibold">Use of AI</h2>
         <p className="mt-2">
-          The idea and direction for AnalogAtlas are the team&apos;s. The application code, the data pipeline, the catalogue text and the Khmer interface strings were
+          The idea and direction for Terratoria are the team&apos;s. The application code, the data pipeline, the catalogue text and the Khmer interface strings were
           written with an AI coding assistant (Claude, by Anthropic) and reviewed by the team.
         </p>
         <ul className="mt-2 list-disc space-y-1.5 pl-5 text-muted">
@@ -68,7 +68,7 @@ export default function AboutPage() {
         <p className="mt-2 text-muted">
           Lunar topography: LOLA Science Team, NASA GSFC. Lunar temperature: Diviner team, UCLA. Mars topography: MOLA Science Team. Earth climate: NASA Langley POWER
           Project. Earth elevation: Copernicus DEM © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union
-          and ESA. Basemap: NASA Global Imagery Browse Services. AnalogAtlas is not affiliated with or endorsed by NASA or ESA.
+          and ESA. Basemap: NASA Global Imagery Browse Services. Terratoria is not affiliated with or endorsed by NASA or ESA.
         </p>
       </section>
     </div>

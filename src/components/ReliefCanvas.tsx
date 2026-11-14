@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Place } from "@/lib/types";
 import { useApp } from "./AppState";
+import { Lightbox } from "./Lightbox";
 
 interface Grid {
   n: number;
@@ -22,6 +23,7 @@ export function ReliefCanvas({ place }: { place: Place }) {
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
   const [range, setRange] = useState<[number, number] | null>(null);
+  const [zoomSrc, setZoomSrc] = useState<string | null>(null);
 
   useEffect(() => {
     if (!place.terrain) return;
@@ -93,6 +95,16 @@ export function ReliefCanvas({ place }: { place: Place }) {
           </div>
         )}
         {state === "ok" && (
+          <button
+            type="button"
+            className="btn no-print absolute right-2 top-2 min-h-0 px-2 py-1 text-xs"
+            onClick={() => setZoomSrc(ref.current!.toDataURL("image/png"))}
+            aria-label={`${t("view_image")}: ${place.name}`}
+          >
+            ⤢
+          </button>
+        )}
+        {state === "ok" && (
           <div className="absolute bottom-2 left-2 text-[11px] text-white" style={{ width: `${(10 / place.terrain.windowKm) * 100}%` }}>
             <div className="h-1.5 border-x-2 border-b-2 border-white drop-shadow" />
             <span className="rounded bg-black/65 px-1">10 km</span>
@@ -104,6 +116,17 @@ export function ReliefCanvas({ place }: { place: Place }) {
         {range && <> · {Math.round(range[0])} to {Math.round(range[1])} m</>}
         <span className="block">{place.terrain.product}</span>
       </figcaption>
+      {zoomSrc && (
+        <Lightbox
+          image={{
+            src: zoomSrc,
+            alt: `Shaded relief of ${place.name}`,
+            pixelated: true,
+            caption: `${place.name}: ${place.terrain.windowKm} km window, one pixel = ${place.terrain.baselineM} m. Derived from ${place.terrain.product}.`,
+          }}
+          onClose={() => setZoomSrc(null)}
+        />
+      )}
     </figure>
   );
 }
