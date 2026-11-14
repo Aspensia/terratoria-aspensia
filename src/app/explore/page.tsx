@@ -11,6 +11,7 @@ import type { GlobeMarker } from "@/components/three/Globe";
 import { textureUrl } from "@/components/three/space";
 import { EARTH_SITES, getPlace, REFERENCES } from "@/data/catalog";
 import { BALANCED } from "@/data/presets";
+import { local } from "@/data/km";
 import { sfx } from "@/lib/audio";
 import type { Key } from "@/lib/i18n";
 import { aggregate, scoreAll } from "@/lib/scoring";
@@ -24,19 +25,30 @@ const Globe = dynamic(() => import("@/components/three/Globe").then((m) => m.Glo
 type World = "earth" | "moon" | "mars";
 const WORLDS: World[] = ["earth", "moon", "mars"];
 
-const SOURCE: Record<World, string> = {
-  earth: "NASA Blue Marble with shaded relief and bathymetry, served by NASA GIBS. A static composite, not a live image.",
-  moon: "Shaded relief computed by Terratoria from NASA LRO LOLA elevation (LDEM_16). Brightness shows slope and height, not true colour.",
-  mars: "NASA 3D Resources Mars colour mosaic (equirectangular).",
+const SOURCE: Record<World, { en: string; km: string }> = {
+  earth: {
+    en: "NASA Blue Marble with shaded relief and bathymetry, served by NASA GIBS. A static composite, not a live image.",
+    km: "NASA Blue Marble ដែលមានស្រមោលសណ្ឋានដី និងជម្រៅសមុទ្រ ពី NASA GIBS។ ជារូបភាពផ្គុំ មិនមែនរូបភាពផ្ទាល់ទេ។",
+  },
+  moon: {
+    en: "Shaded relief computed by Terratoria from NASA LRO LOLA elevation (LDEM_16). Brightness shows slope and height, not true colour.",
+    km: "ស្រមោលសណ្ឋានដីដែល Terratoria គណនាពីទិន្នន័យកម្ពស់ NASA LRO LOLA (LDEM_16)។ ពន្លឺបង្ហាញជម្រាល និងកម្ពស់ មិនមែនពណ៌ពិតទេ។",
+  },
+  mars: { en: "NASA 3D Resources Mars colour mosaic (equirectangular).", km: "រូបភាពពណ៌ផ្គុំនៃភពអង្គារពី NASA 3D Resources (equirectangular)។" },
 };
 
 const K = (v?: number) => (v === undefined ? "–" : `${v.toFixed(0)} K`);
 
 function Telemetry({ place }: { place: Place }) {
-  const { t } = useApp();
+  const { t, tx } = useApp();
   const rows: [string, string][] = [];
   if (place.terrain) {
-    rows.push(["Median slope", `${place.terrain.slopeMedianDeg.toFixed(1)}°`], ["Local relief", `${place.terrain.reliefM} m`], ["Roughness", `${place.terrain.roughnessM.toFixed(1)} m`]);
+    const m = tx("m", "ម.");
+    rows.push(
+      [tx("Median slope", "ជម្រាលមធ្យម"), `${place.terrain.slopeMedianDeg.toFixed(1)}°`],
+      [tx("Local relief", "កម្ពស់ខុសគ្នា"), `${place.terrain.reliefM} ${m}`],
+      [tx("Roughness", "ភាពរដិបរដុប"), `${place.terrain.roughnessM.toFixed(1)} ${m}`],
+    );
   }
   if (place.climate) {
     rows.push([`${t("temperature")}: ${t("mean")}`, K(place.climate.meanK)], [`${t("min")} / ${t("max")}`, `${K(place.climate.minK)} / ${K(place.climate.maxK)}`]);
@@ -56,7 +68,7 @@ function Telemetry({ place }: { place: Place }) {
 }
 
 function RegionPanel({ region }: { region: Place }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const top = useMemo(
     () =>
       EARTH_SITES.map((s) => ({ s, a: aggregate(scoreAll(region, s), BALANCED) }))
@@ -76,8 +88,8 @@ function RegionPanel({ region }: { region: Place }) {
             <li key={s.id}>
               <Link href={`/explore/?body=earth&focus=${s.id}&ref=${region.id}`} className="card card-hover flex items-center justify-between gap-2 px-3 py-2 text-sm">
                 <span className="min-w-0">
-                  <span className="font-mono text-muted">#{i + 1}</span> <span className="font-medium">{s.name}</span>
-                  <span className="block text-xs text-muted">{s.country}</span>
+                  <span className="font-mono text-muted">#{i + 1}</span> <span className="font-medium">{local(s, lang).name}</span>
+                  <span className="block text-xs text-muted">{local(s, lang).country}</span>
                 </span>
                 <span className="font-mono text-lg tabular-nums">{a.index!.toFixed(0)}</span>
               </Link>
@@ -94,7 +106,7 @@ function RegionPanel({ region }: { region: Place }) {
 }
 
 function SitePanel({ site, refId, onRef }: { site: Place; refId: string; onRef(id: string): void }) {
-  const { t, saved, toggleSaved } = useApp();
+  const { t, lang, saved, toggleSaved } = useApp();
   const ref = getPlace(refId) ?? REFERENCES[0];
   const results = useMemo(() => scoreAll(ref, site), [ref, site]);
   const agg = aggregate(results, BALANCED);
@@ -106,7 +118,7 @@ function SitePanel({ site, refId, onRef }: { site: Place; refId: string; onRef(i
           <select className="btn max-w-full" value={ref.id} onChange={(e) => onRef(e.target.value)}>
             {REFERENCES.map((r) => (
               <option key={r.id} value={r.id}>
-                {t(r.body as Key)}: {r.name}
+                {t(r.body as Key)}: {local(r, lang).name}
               </option>
             ))}
           </select>
@@ -137,7 +149,7 @@ function SitePanel({ site, refId, onRef }: { site: Place; refId: string; onRef(i
 }
 
 export default function ExplorePage() {
-  const { t } = useApp();
+  const { t, tx, lang } = useApp();
   const [params, setQuery] = useQuery();
   const drawer = useRef<HTMLElement>(null);
   const [touring, setTouring] = useState(false);
@@ -158,12 +170,12 @@ export default function ExplorePage() {
           id: p.id,
           lat: p.lat,
           lon: p.lon,
-          label: p.name,
+          label: local(p, lang).name,
           color: p.body === "earth" ? (known ? "#4fc3a1" : "#e6b34d") : "#e69f00",
           shape: p.body === "earth" && !known ? "diamond" : "circle",
         };
       }),
-    [places],
+    [places, lang],
   );
 
   const select = (id: string | null) => {
@@ -209,11 +221,11 @@ export default function ExplorePage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
         <button type="button" className={`btn ${touring ? "btn-primary" : ""}`} aria-pressed={touring} onClick={() => setTouring((v) => !v)}>
-          {touring ? "■ Stop tour" : "▶ Guided tour"}
+          {touring ? tx("■ Stop tour", "■ បញ្ឈប់ដំណើរទស្សនា") : tx("▶ Guided tour", "▶ ដំណើរទស្សនាមានការណែនាំ")}
         </button>
         {touring && (
           <button type="button" className="btn btn-primary" onClick={() => (nextStop(), setSkips((n) => n + 1))}>
-            Next ⏭
+            {tx("Next ⏭", "បន្ទាប់ ⏭")}
           </button>
         )}
         <div role="tablist" aria-label={t("step1")} className="flex gap-1 rounded-xl border border-line bg-[var(--panel)] p-1">
@@ -248,8 +260,8 @@ export default function ExplorePage() {
                   aria-current={p.id === focused?.id ? "true" : undefined}
                   className={`w-full rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-[var(--panel-2)] ${p.id === focused?.id ? "bg-[var(--panel-2)] text-text ring-1 ring-[var(--line-strong)]" : "text-muted"}`}
                 >
-                  <span className="block font-medium text-text">{p.name}</span>
-                  <span className="block text-xs">{p.country ?? p.category}</span>
+                  <span className="block font-medium text-text">{local(p, lang).name}</span>
+                  <span className="block text-xs">{local(p, lang).country ?? local(p, lang).category}</span>
                 </button>
               </li>
             ))}
@@ -257,7 +269,7 @@ export default function ExplorePage() {
           <div className="mt-3 border-t border-line pt-3">
             <ZoomableImage
               className="aspect-[2/1] w-full"
-              image={{ src: textureUrl(world), alt: `Source map of ${t(world as Key)}`, caption: SOURCE[world] }}
+              image={{ src: textureUrl(world), alt: tx(`Source map of ${t(world as Key)}`, `ផែនទីប្រភពនៃ${t(world as Key)}`), caption: SOURCE[world][lang] }}
             />
             <p className="mt-1 text-xs text-muted">{t("view_map")}</p>
           </div>
@@ -272,15 +284,15 @@ export default function ExplorePage() {
               <aside
                 ref={drawer}
                 tabIndex={-1}
-                aria-label={`${t("telemetry")}: ${focused.name}`}
+                aria-label={`${t("telemetry")}: ${local(focused, lang).name}`}
                 className="drawer glass-bar m-2 space-y-4 rounded-2xl border border-[var(--line-strong)] p-4 shadow-2xl md:absolute md:bottom-3 md:right-3 md:top-3 md:m-0 md:w-[400px] md:overflow-y-auto"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="label">{t("telemetry")}</p>
-                    <h2 className="text-xl font-semibold leading-tight">{focused.name}</h2>
+                    <h2 className="text-xl font-semibold leading-tight">{local(focused, lang).name}</h2>
                     <p className="text-sm text-muted">
-                      {focused.country ?? focused.category} · <span className="font-mono text-xs">{fmtCoord(focused)}</span>
+                      {local(focused, lang).country ?? local(focused, lang).category} · <span className="font-mono text-xs">{fmtCoord(focused)}</span>
                     </p>
                     {focused.status && (
                       <div className="mt-1.5">
@@ -292,7 +304,7 @@ export default function ExplorePage() {
                     ✕
                   </button>
                 </div>
-                <p className="text-sm">{focused.summary}</p>
+                <p className="text-sm">{local(focused, lang).summary}</p>
                 {focused.body === "earth" ? (
                   <SitePanel site={focused} refId={refId} onRef={(id) => setQuery({ ref: id })} />
                 ) : (

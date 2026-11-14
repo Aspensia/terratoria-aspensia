@@ -8,13 +8,14 @@ import { DimensionChart, ProfileChart, SERIES, SlopeChart } from "@/components/C
 import { ReliefCanvas } from "@/components/ReliefCanvas";
 import { EARTH_SITES, getPlace, REFERENCES } from "@/data/catalog";
 import { LIMITS } from "@/data/limits";
+import { LIMITS_KM, local } from "@/data/km";
 import { DIMENSION_LABEL, type Key } from "@/lib/i18n";
 import { aggregate, explain, scoreAll } from "@/lib/scoring";
 import { parseWeights, serializeWeights } from "@/lib/storage";
 import type { Place } from "@/lib/types";
 
 export default function ComparePage() {
-  const { t, lang } = useApp();
+  const { t, tx, lang } = useApp();
   const [params, setQuery] = useQuery();
 
   const refParam = getPlace(params?.get("ref"));
@@ -46,7 +47,7 @@ export default function ComparePage() {
             <select className="btn" value={refPlace.id} onChange={(e) => setQuery({ ref: e.target.value })}>
               {REFERENCES.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {t(r.body as Key)}: {r.name}
+                  {t(r.body as Key)}: {local(r, lang).name}
                 </option>
               ))}
             </select>
@@ -59,10 +60,10 @@ export default function ComparePage() {
               disabled={sites.length >= 3}
               onChange={(e) => e.target.value && setSites([...sites.map((s) => s.id), e.target.value])}
             >
-              <option value="">{sites.length >= 3 ? t("compare_limit") : "Choose an Earth site"}</option>
+              <option value="">{sites.length >= 3 ? t("compare_limit") : tx("Choose an Earth site", "ជ្រើសរើសទីតាំងផែនដី")}</option>
               {available.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name}
+                  {local(s, lang).name}
                 </option>
               ))}
             </select>
@@ -73,7 +74,7 @@ export default function ComparePage() {
 
       {sites.length === 0 ? (
         <div className="card p-8 text-center">
-          <p>Choose up to three Earth sites above, or pick them from the ranking.</p>
+          <p>{tx("Choose up to three Earth sites above, or pick them from the ranking.", "ជ្រើសរើសទីតាំងផែនដីរហូតដល់បីខាងលើ ឬជ្រើសពីចំណាត់ថ្នាក់។")}</p>
           <Link href={`/discover/?ref=${refPlace.id}&w=${wq}`} className="btn btn-primary mt-4">
             {t("back_discover")}
           </Link>
@@ -83,7 +84,7 @@ export default function ComparePage() {
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label={t("relief_view")}>
             <div className="card p-4" style={{ borderTop: "3px solid #E69F00" }}>
               <p className="label">{t("target")}</p>
-              <h2 className="font-semibold">{refPlace.name}</h2>
+              <h2 className="font-semibold">{local(refPlace, lang).name}</h2>
               <p className="mb-3 font-mono text-xs text-muted">{fmtCoord(refPlace)}</p>
               <ReliefCanvas place={refPlace} />
             </div>
@@ -96,7 +97,7 @@ export default function ComparePage() {
                       <p className="label">{t("earth")}</p>
                       <h2 className="font-semibold leading-tight">
                         <Link href={`/site/?id=${s.id}&ref=${refPlace.id}&w=${wq}`} className="hover:underline">
-                          {s.name}
+                          {local(s, lang).name}
                         </Link>
                       </h2>
                       <p className="font-mono text-xs text-muted">{fmtCoord(s)}</p>
@@ -115,8 +116,10 @@ export default function ComparePage() {
             })}
           </section>
           <p className="text-sm text-muted">
-            Every panel shows a 60 km window at the same pixel size, so sizes can be compared directly. Maps are not synchronised for panning because they are on
-            different worlds and projections; the shared scale is the fair comparison.
+            {tx(
+              "Every panel shows a 60 km window at the same pixel size, so sizes can be compared directly. Maps are not synchronised for panning because they are on different worlds and projections; the shared scale is the fair comparison.",
+              "ផ្ទាំងនីមួយៗបង្ហាញតំបន់ ៦០ គ.ម. ក្នុងទំហំភីកសែលដូចគ្នា ដូច្នេះអាចប្រៀបធៀបទំហំដោយផ្ទាល់។ ផែនទីមិនរំកិលជាមួយគ្នាទេ ព្រោះវានៅលើពិភព និងប្រព័ន្ធផែនទីខុសគ្នា ការប្រើមាត្រដ្ឋានរួមគឺជាការប្រៀបធៀបដ៏យុត្តិធម៌។",
+            )}
           </p>
 
           <DimensionChart sites={sites} results={results} />
@@ -126,13 +129,13 @@ export default function ComparePage() {
             <SlopeChart refPlace={refPlace} sites={sites} />
           </div>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Strengths and weaknesses">
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label={tx("Strengths and weaknesses", "ចំណុចខ្លាំង និងចំណុចខ្សោយ")}>
             {sites.map((s, i) => {
               const ex = explain(results[i]);
-              const names = (rs: typeof ex.strong) => rs.map((r) => `${DIMENSION_LABEL[lang][r.id]} (${r.score!.toFixed(0)})`).join(", ") || "none";
+              const names = (rs: typeof ex.strong) => rs.map((r) => `${DIMENSION_LABEL[lang][r.id]} (${r.score!.toFixed(0)})`).join(", ") || tx("none", "គ្មាន");
               return (
                 <div key={s.id} className="card p-4 text-sm">
-                  <h3 className="font-semibold" style={{ borderLeft: `3px solid ${SERIES[i]}`, paddingLeft: 8 }}>{s.name}</h3>
+                  <h3 className="font-semibold" style={{ borderLeft: `3px solid ${SERIES[i]}`, paddingLeft: 8 }}>{local(s, lang).name}</h3>
                   <dl className="mt-2 space-y-2">
                     <div>
                       <dt className="label">{t("strong")}</dt>
@@ -148,11 +151,11 @@ export default function ComparePage() {
                     </div>
                     <div>
                       <dt className="label">{t("unknown")}</dt>
-                      <dd>{ex.unknown.map((r) => DIMENSION_LABEL[lang][r.id]).join(", ") || "none"}</dd>
+                      <dd>{ex.unknown.map((r) => DIMENSION_LABEL[lang][r.id]).join(", ") || tx("none", "គ្មាន")}</dd>
                     </div>
                     <div>
                       <dt className="label">{t("differences")}</dt>
-                      <dd className="text-muted">{(s.differences ?? []).join(" ")}</dd>
+                      <dd className="text-muted">{local(s, lang).differences.join(" ")}</dd>
                     </div>
                   </dl>
                 </div>
@@ -165,7 +168,7 @@ export default function ComparePage() {
               {t("limits_title")} ({t(refPlace.body as Key)})
             </h2>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
-              {LIMITS[refPlace.body as "moon" | "mars"].map((d) => (
+              {(lang === "km" ? LIMITS_KM : LIMITS)[refPlace.body as "moon" | "mars"].map((d) => (
                 <li key={d}>{d}</li>
               ))}
             </ul>

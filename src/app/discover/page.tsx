@@ -12,6 +12,7 @@ import { BALANCED, PRESETS } from "@/data/presets";
 import { DIMENSION_LABEL, DIMENSION_SIMPLE } from "@/lib/i18n";
 import { aggregate, scoreAll } from "@/lib/scoring";
 import { matchesKeywords } from "@/lib/search";
+import { local, PRESET_KM } from "@/data/km";
 import { parseWeights, serializeWeights } from "@/lib/storage";
 import { DIMENSIONS, type Body, type DimensionId, type Weights } from "@/lib/types";
 
@@ -24,6 +25,10 @@ type SortKey = "index" | DimensionId;
 type StatusFilter = "all" | "known" | "candidate";
 // Quick keyword chips; each matches the start of a word in a site's name, summary or documented characteristics.
 const CHIPS = ["volcanic", "lava", "crater", "desert", "ice", "polar", "dune", "salt", "cave", "life", "drilling"];
+const CHIP_KM: Record<string, string> = {
+  volcanic: "ភ្នំភ្លើង", lava: "កម្អែ", crater: "រណ្តៅ", desert: "វាលខ្សាច់", ice: "ទឹកកក", polar: "ប៉ូល",
+  dune: "ទួលខ្សាច់", salt: "អំបិល", cave: "រូងភ្នំ", life: "ជីវិត", drilling: "ការខួង",
+};
 
 const csvCell = (v: string | number | null) => {
   const s = v === null ? "" : String(v);
@@ -31,7 +36,9 @@ const csvCell = (v: string | number | null) => {
 };
 
 export default function Discover() {
-  const { t, lang, mode, saved, toggleSaved } = useApp();
+  const { t, tx, lang, mode, saved, toggleSaved } = useApp();
+  const presetName = (p: (typeof PRESETS)[number]) => (lang === "km" ? PRESET_KM[p.id].name : p.name);
+  const presetExplain = (p: (typeof PRESETS)[number]) => (lang === "km" ? PRESET_KM[p.id].explain : p.explain);
   const router = useRouter();
   const [params, setQuery] = useQuery();
   const [sort, setSort] = useState<SortKey>("index");
@@ -160,8 +167,8 @@ export default function Discover() {
                 onClick={() => setQuery({ ref: r.id })}
                 className={`card p-3 text-left ${r.id === refValid.id ? "border-accent ring-1 ring-accent" : "hover:border-accent"}`}
               >
-                <span className="block font-semibold">{r.name}</span>
-                <span className="block text-xs text-muted">{r.category}</span>
+                <span className="block font-semibold">{local(r, lang).name}</span>
+                <span className="block text-xs text-muted">{local(r, lang).category}</span>
                 <span className="mt-1 block font-mono text-xs text-muted">{fmtCoord(r)}</span>
               </button>
             ))}
@@ -172,15 +179,17 @@ export default function Discover() {
           <ReliefCanvas place={refValid} />
           <div>
             <p className="label">{t("target")}</p>
-            <h3 className="text-xl font-semibold">{refValid.name}</h3>
-            <p className="mt-1 text-sm text-muted">{refValid.summary}</p>
+            <h3 className="text-xl font-semibold">{local(refValid, lang).name}</h3>
+            <p className="mt-1 text-sm text-muted">{local(refValid, lang).summary}</p>
             <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               {refValid.terrain && (
                 <>
-                  <dt className="text-muted">Median slope</dt>
+                  <dt className="text-muted">{tx("Median slope", "ជម្រាលមធ្យម")}</dt>
                   <dd className="font-mono">{refValid.terrain.slopeMedianDeg.toFixed(1)}°</dd>
-                  <dt className="text-muted">Local relief</dt>
-                  <dd className="font-mono">{refValid.terrain.reliefM} m</dd>
+                  <dt className="text-muted">{tx("Local relief", "កម្ពស់ខុសគ្នា")}</dt>
+                  <dd className="font-mono">
+                    {refValid.terrain.reliefM} {tx("m", "ម.")}
+                  </dd>
                 </>
               )}
               {refValid.climate ? (
@@ -213,20 +222,20 @@ export default function Discover() {
             {t("balanced")}
           </button>
           {PRESETS.map((p) => (
-            <button key={p.id} type="button" className="btn" aria-pressed={activePreset === p.id} title={p.explain} onClick={() => setWeights(p.weights)}>
-              {p.name}
+            <button key={p.id} type="button" className="btn" aria-pressed={activePreset === p.id} title={presetExplain(p)} onClick={() => setWeights(p.weights)}>
+              {presetName(p)}
             </button>
           ))}
         </div>
         {activePreset && activePreset !== "balanced" && (
-          <p className="mt-2 text-sm text-muted">{PRESETS.find((p) => p.id === activePreset)!.explain}</p>
+          <p className="mt-2 text-sm text-muted">{presetExplain(PRESETS.find((p) => p.id === activePreset)!)}</p>
         )}
         <div className="science-only mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
           {DIMENSIONS.map((d) => (
             <div key={d}>
               <label htmlFor={`w-${d}`} className="flex items-baseline justify-between text-sm">
                 <span className="font-medium">{DIMENSION_LABEL[lang][d]}</span>
-                <span className="font-mono text-muted">{weights[d] === 0 ? "off" : weights[d]}</span>
+                <span className="font-mono text-muted">{weights[d] === 0 ? tx("off", "បិទ") : weights[d]}</span>
               </label>
               <input
                 id={`w-${d}`}
@@ -237,7 +246,7 @@ export default function Discover() {
                 value={weights[d]}
                 onChange={(e) => setWeights({ ...weights, [d]: Number(e.target.value) })}
                 className="w-full"
-                aria-valuetext={weights[d] === 0 ? "off" : String(weights[d])}
+                aria-valuetext={weights[d] === 0 ? tx("off", "បិទ") : String(weights[d])}
               />
               {mode === "simple" && <p className="text-xs text-muted">{DIMENSION_SIMPLE[lang][d]}</p>}
             </div>
@@ -250,12 +259,12 @@ export default function Discover() {
           <div>
             <h2 id="s4" className="label">{t("step4")}</h2>
             <p className="text-sm text-muted">
-              {refValid.name} · {t("coverage_note")}
+              {local(refValid, lang).name} · {t("coverage_note")}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <label className="flex items-center gap-1.5">
-              <span className="text-muted">Sort</span>
+              <span className="text-muted">{tx("Sort", "តម្រៀប")}</span>
               <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className="btn">
                 <option value="index">{t("overall")}</option>
                 {DIMENSIONS.map((d) => (
@@ -266,9 +275,9 @@ export default function Discover() {
               </select>
             </label>
             <label className="flex items-center gap-1.5">
-              <span className="text-muted">Show</span>
+              <span className="text-muted">{tx("Show", "បង្ហាញ")}</span>
               <select value={filter} onChange={(e) => setFilter(e.target.value as StatusFilter)} className="btn">
-                <option value="all">All sites</option>
+                <option value="all">{tx("All sites", "ទីតាំងទាំងអស់")}</option>
                 <option value="known">{t("legend_known")}</option>
                 <option value="candidate">{t("legend_new")}</option>
               </select>
@@ -293,32 +302,33 @@ export default function Discover() {
               type="search"
               value={kw}
               onChange={(e) => setKw(e.target.value)}
-              placeholder="Filter Earth sites by keyword: desert, lava, ice, Chile, crater…"
-              aria-label="Filter Earth sites by keyword"
+              placeholder={tx("Filter Earth sites by keyword: desert, lava, ice, Chile, crater…", "ច្រោះទីតាំងផែនដីតាមពាក្យគន្លឹះ៖ វាលខ្សាច់ កម្អែ ទឹកកក ឈីលី រណ្តៅ…")}
+              aria-label={tx("Filter Earth sites by keyword", "ច្រោះទីតាំងផែនដីតាមពាក្យគន្លឹះ")}
               className="w-full rounded-lg border border-line bg-[var(--panel-solid)] px-3 py-2 text-sm placeholder:text-muted"
             />
             {kw && (
               <button type="button" className="btn" onClick={() => setKw("")}>
-                Clear
+                {tx("Clear", "សម្អាត")}
               </button>
             )}
           </label>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Keyword shortcuts">
+          <div className="flex flex-wrap gap-2" role="group" aria-label={tx("Keyword shortcuts", "ពាក្យគន្លឹះរហ័ស")}>
             {CHIPS.map((c) => (
               <button key={c} type="button" className="btn min-h-0 rounded-full px-3 py-1 text-xs" aria-pressed={terms.includes(c)} onClick={() => toggleChip(c)}>
-                {c}
+                {lang === "km" ? CHIP_KM[c] : c}
               </button>
             ))}
           </div>
           <p className="text-xs text-muted" aria-live="polite">
-            Showing {shown.length} of {rows.length} Earth sites{kw && <> matching “{kw.trim()}”</>}.
+            {tx(`Showing ${shown.length} of ${rows.length} Earth sites`, `បង្ហាញ ${shown.length} ក្នុងចំណោម ${rows.length} ទីតាំងផែនដី`)}
+            {kw && <> {tx(`matching “${kw.trim()}”`, `ដែលត្រូវនឹង “${kw.trim()}”`)}</>}.
           </p>
         </div>
 
         <EarthMap sites={mapSites} onOpen={openSite} />
 
         {noRanking && <p className="card border-warn p-4 text-sm">{t("zero_weights")}</p>}
-        {shown.length === 0 && <p className="card p-4 text-sm text-muted">No sites match. Try fewer keywords or clear the filter.</p>}
+        {shown.length === 0 && <p className="card p-4 text-sm text-muted">{tx("No sites match. Try fewer keywords or clear the filter.", "គ្មានទីតាំងត្រូវគ្នាទេ។ សូមប្រើពាក្យគន្លឹះតិចជាងនេះ ឬសម្អាតតម្រង។")}</p>}
 
         <ol className="grid gap-3 lg:grid-cols-2">
           {shown.map(({ site, results, agg }) => {
@@ -332,12 +342,12 @@ export default function Discover() {
                       <span className="font-mono text-sm text-muted">{rank ? `#${rank}` : "–"}</span>
                       <h3 className="text-lg font-semibold leading-tight">
                         <Link href={`/site/?id=${site.id}&ref=${refValid.id}&w=${wq}`} className="hover:underline">
-                          {site.name}
+                          {local(site, lang).name}
                         </Link>
                       </h3>
                     </div>
                     <p className="text-sm text-muted">
-                      {site.country} · <span className="font-mono text-xs">{fmtCoord(site)}</span>
+                      {local(site, lang).country} · <span className="font-mono text-xs">{fmtCoord(site)}</span>
                     </p>
                     <div className="mt-1.5">
                       <StatusBadge status={site.status} />

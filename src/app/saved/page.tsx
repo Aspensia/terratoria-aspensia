@@ -4,14 +4,15 @@ import Link from "next/link";
 import { useApp } from "@/components/AppState";
 import { fmtCoord, StatusBadge } from "@/components/Bits";
 import { getPlace } from "@/data/catalog";
+import { local } from "@/data/km";
 
 export default function SavedPage() {
-  const { t, saved, toggleSaved } = useApp();
+  const { t, tx, lang, saved, toggleSaved } = useApp();
   const places = saved.map((id) => getPlace(id)).filter((p) => !!p);
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">{t("nav_saved")}</h1>
-      <p className="text-sm text-muted">Saved in this browser only. Nothing is sent to a server and no account is needed.</p>
+      <p className="text-sm text-muted">{tx("Saved in this browser only. Nothing is sent to a server and no account is needed.", "រក្សាទុកក្នុងកម្មវិធីរុករកនេះតែប៉ុណ្ណោះ។ គ្មានអ្វីត្រូវបានផ្ញើទៅម៉ាស៊ីនមេទេ ហើយមិនត្រូវការគណនីទេ។")}</p>
       {places.length === 0 ? (
         <div className="card p-8 text-center">
           <p>{t("saved_empty")}</p>
@@ -27,11 +28,11 @@ export default function SavedPage() {
                 <div className="min-w-0">
                   <h2 className="font-semibold">
                     <Link href={`/site/?id=${p.id}`} className="hover:underline">
-                      {p.name}
+                      {local(p, lang).name}
                     </Link>
                   </h2>
                   <p className="text-sm text-muted">
-                    {p.country} · <span className="font-mono text-xs">{fmtCoord(p)}</span>
+                    {local(p, lang).country} · <span className="font-mono text-xs">{fmtCoord(p)}</span>
                   </p>
                   <div className="mt-1.5">
                     <StatusBadge status={p.status} />
