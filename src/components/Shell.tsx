@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { EARTH_SITES, PLACES, REFERENCES } from "@/data/catalog";
+import { local } from "@/data/km";
 import terrain from "@/data/generated/terrain.json";
 import type { Key } from "@/lib/i18n";
 import type { Place } from "@/lib/types";
@@ -44,7 +45,7 @@ function nearestByCoords(q: string): Place | null {
 }
 
 function Search() {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const router = useRouter();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
@@ -53,7 +54,11 @@ function Search() {
     if (!s) return [];
     const near = nearestByCoords(s);
     if (near) return [near];
-    return PLACES.filter((p) => `${p.name} ${p.country ?? ""} ${p.category} ${p.body}`.toLowerCase().includes(s)).slice(0, 7);
+    // Match English and Khmer names, so either language finds the place.
+    return PLACES.filter((p) => {
+      const k = local(p, "km");
+      return `${p.name} ${p.country ?? ""} ${p.category} ${p.body} ${k.name} ${k.country ?? ""} ${k.category}`.toLowerCase().includes(s);
+    }).slice(0, 7);
   }, [q]);
   const go = (p: Place) => {
     setOpen(false);
@@ -84,9 +89,9 @@ function Search() {
           {results.map((p) => (
             <li key={p.id} role="option" aria-selected="false">
               <button type="button" onMouseDown={() => go(p)} className="block w-full px-3 py-2 text-left hover:bg-panel-2">
-                <span className="font-medium">{p.name}</span>
+                <span className="font-medium">{local(p, lang).name}</span>
                 <span className="block text-xs text-muted">
-                  {t(p.body)} · {p.country ?? p.category}
+                  {t(p.body)} · {local(p, lang).country ?? local(p, lang).category}
                 </span>
               </button>
             </li>
@@ -122,6 +127,7 @@ const PIPELINE_RUN = Object.values(terrain).find((v) => v && "retrieved" in v)?.
 
 /** Mission-control style status line. Everything it shows is true: archive data, real counts, a real clock. */
 function MissionStrip() {
+  const { tx } = useApp();
   const [now, setNow] = useState<string>("");
   useEffect(() => {
     const tick = () => setNow(new Date().toISOString().slice(11, 19));
@@ -133,12 +139,19 @@ function MissionStrip() {
     <div className="mission-strip no-print">
       <div className="mx-auto flex max-w-7xl items-center gap-x-5 overflow-x-auto whitespace-nowrap px-4 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted">
         <span className="flex items-center gap-2 text-text">
-          <span className="live" aria-hidden="true" /> Archive data online
+          <span className="live" aria-hidden="true" /> {tx("Archive data online", "ទិន្នន័យបណ្ណសារដំណើរការ")}
         </span>
-        <span>Targets {REFERENCES.length + EARTH_SITES.length}</span>
-        <span>Moon {REFERENCES.filter((r) => r.body === "moon").length} · Mars {REFERENCES.filter((r) => r.body === "mars").length} · Earth {EARTH_SITES.length}</span>
-        <span>Pipeline run {PIPELINE_RUN}</span>
-        <span className="ml-auto text-text" aria-label="Coordinated Universal Time">
+        <span>
+          {tx("Targets", "គោលដៅ")} {REFERENCES.length + EARTH_SITES.length}
+        </span>
+        <span>
+          {tx("Moon", "ព្រះច័ន្ទ")} {REFERENCES.filter((r) => r.body === "moon").length} · {tx("Mars", "ភពអង្គារ")} {REFERENCES.filter((r) => r.body === "mars").length} ·{" "}
+          {tx("Earth", "ផែនដី")} {EARTH_SITES.length}
+        </span>
+        <span>
+          {tx("Pipeline run", "ដំណើរការទិន្នន័យ")} {PIPELINE_RUN}
+        </span>
+        <span className="ml-auto text-text" aria-label={tx("Coordinated Universal Time", "ម៉ោងសកល UTC")}>
           UTC {now}
         </span>
       </div>
@@ -147,7 +160,7 @@ function MissionStrip() {
 }
 
 export function Shell({ children }: { children: ReactNode }) {
-  const { t, lang, setLang, mode, setMode, muted, setMuted } = useApp();
+  const { t, tx, lang, setLang, mode, setMode, muted, setMuted } = useApp();
   const path = usePathname();
   const section = NAV.find((n) => n.href !== "/" && isActive(n.href, path)) ?? (path.startsWith("/site") ? NAV[1] : null);
   return (
@@ -173,10 +186,10 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
           <div className="ml-auto flex flex-wrap items-center gap-2 md:ml-0">
             <div role="group" aria-label={t("mode_label")} className="flex">
-              <button type="button" className="btn rounded-r-none" aria-pressed={mode === "simple"} title="Plain-language summaries, fewer numbers" onClick={() => setMode("simple")}>
+              <button type="button" className="btn rounded-r-none" aria-pressed={mode === "simple"} title={tx("Plain-language summaries, fewer numbers", "សេចក្តីសង្ខេបភាសាងាយៗ មានតួលេខតិច")} onClick={() => setMode("simple")}>
                 {t("mode_simple")}
               </button>
-              <button type="button" className="btn -ml-px rounded-l-none" aria-pressed={mode === "science"} title="Every number, chart, method and reference" onClick={() => setMode("science")}>
+              <button type="button" className="btn -ml-px rounded-l-none" aria-pressed={mode === "science"} title={tx("Every number, chart, method and reference", "តួលេខ គំនូសតាង វិធីសាស្ត្រ និងឯកសារយោងទាំងអស់")} onClick={() => setMode("science")}>
                 {t("mode_science")}
               </button>
             </div>
@@ -210,7 +223,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </ul>
           <a href="#credits" className="hidden items-center gap-2 text-[11px] text-muted hover:text-text sm:flex" title={t("made_by")}>
             <AspensiaLogo size={22} />
-            <span>by Aspensia</span>
+            <span>{tx("by Aspensia", "ដោយ Aspensia")}</span>
           </a>
         </nav>
         <MissionStrip />
@@ -236,13 +249,20 @@ export function Shell({ children }: { children: ReactNode }) {
           <AspensiaLogo size={44} />
           <div>
             <p className="text-sm font-semibold text-text">PROJECT: Terratoria · {t("made_by")}</p>
-            <p>A team of six high school students from Cambodia. NASA Space Apps Challenge 2026. Not affiliated with or endorsed by NASA or ESA.</p>
+            <p>
+              {tx(
+                "A team of six high school students from Cambodia. NASA Space Apps Challenge 2026. Not affiliated with or endorsed by NASA or ESA.",
+                "ក្រុមសិស្សវិទ្យាល័យប្រាំមួយនាក់មកពីប្រទេសកម្ពុជា។ NASA Space Apps Challenge 2026។ មិនមានទំនាក់ទំនង ឬការគាំទ្រពី NASA ឬ ESA ទេ។",
+              )}
+            </p>
           </div>
         </div>
         <p className="mt-3">{t("screening_note")} {t("coverage_note")} {t("archived_note")}</p>
         <p className="mt-1">
-          Data: NASA LRO LOLA and Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM. Imagery: NASA GIBS Blue Marble and NASA 3D Resources. Code written with AI
-          assistance (Claude) from the team&apos;s concept.
+          {tx(
+            "Data: NASA LRO LOLA and Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM. Imagery: NASA GIBS Blue Marble and NASA 3D Resources. Code written with AI assistance (Claude) from the team's concept.",
+            "ទិន្នន័យ៖ NASA LRO LOLA និង Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM។ រូបភាព៖ NASA GIBS Blue Marble និង NASA 3D Resources។ កូដត្រូវបានសរសេរដោយមានជំនួយពី AI (Claude) តាមគំនិតរបស់ក្រុម។",
+          )}
         </p>
       </footer>
     </>

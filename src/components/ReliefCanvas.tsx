@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import type { Place } from "@/lib/types";
 import { useApp } from "./AppState";
+import { local } from "@/data/km";
 import { Lightbox } from "./Lightbox";
 
 import type { Grid } from "./three/Terrain3D";
@@ -18,7 +19,8 @@ const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
  * Every place is drawn at the same ground scale and pixel size; nothing is stretched to look alike.
  */
 export function ReliefCanvas({ place, blind = false }: { place: Place; blind?: boolean }) {
-  const { t } = useApp();
+  const { t, tx, lang } = useApp();
+  const name = local(place, lang).name;
   const ref = useRef<HTMLCanvasElement>(null);
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
@@ -87,8 +89,8 @@ export function ReliefCanvas({ place, blind = false }: { place: Place; blind?: b
   return (
     <figure>
       <div className="relative aspect-square overflow-hidden rounded-lg border border-line bg-panel-2">
-        <canvas ref={ref} className="h-full w-full" style={{ imageRendering: "auto" }} role="img" aria-label={blind ? "Shaded relief of a mystery site" : `Shaded relief of ${place.name}`} />
-        {three && grid && <Terrain3D grid={grid} body={place.body} label={place.name} />}
+        <canvas ref={ref} className="h-full w-full" style={{ imageRendering: "auto" }} role="img" aria-label={blind ? tx("Shaded relief of a mystery site", "រូបសណ្ឋានដីនៃទីតាំងអាថ៌កំបាំង") : tx(`Shaded relief of ${name}`, `រូបសណ្ឋានដីនៃ ${name}`)} />
+        {three && grid && <Terrain3D grid={grid} body={place.body} label={name} />}
         {state === "loading" && <div className="absolute inset-0 animate-pulse bg-panel-2" aria-label={t("loading")} />}
         {state === "error" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-panel-2 text-sm">
@@ -99,7 +101,7 @@ export function ReliefCanvas({ place, blind = false }: { place: Place; blind?: b
           </div>
         )}
         {state === "ok" && !blind && (
-          <div className="no-print absolute left-2 top-2 flex overflow-hidden rounded-lg border border-line text-[11px]" role="group" aria-label="View mode">
+          <div className="no-print absolute left-2 top-2 flex overflow-hidden rounded-lg border border-line text-[11px]" role="group" aria-label={tx("View mode", "របៀបមើល")}>
             <button type="button" className={`px-2 py-1 ${!three ? "btn-primary" : "bg-black/50 text-white"}`} aria-pressed={!three} onClick={() => setThree(false)}>
               2D
             </button>
@@ -113,7 +115,7 @@ export function ReliefCanvas({ place, blind = false }: { place: Place; blind?: b
             type="button"
             className="btn no-print absolute right-2 top-2 min-h-0 px-2 py-1 text-xs"
             onClick={() => setZoomSrc(ref.current!.toDataURL("image/png"))}
-            aria-label={`${t("view_image")}: ${place.name}`}
+            aria-label={`${t("view_image")}: ${name}`}
           >
             ⤢
           </button>
@@ -127,8 +129,11 @@ export function ReliefCanvas({ place, blind = false }: { place: Place; blind?: b
       </div>
       {!blind && (
       <figcaption className="mt-1.5 text-xs text-muted">
-        {place.name} · {place.terrain.windowKm} km window at {place.terrain.baselineM} m
-        {range && <> · {Math.round(range[0])} to {Math.round(range[1])} m</>}
+        {tx(
+          `${name} · ${place.terrain.windowKm} km window at ${place.terrain.baselineM} m`,
+          `${name} · តំបន់វិភាគ ${place.terrain.windowKm} គ.ម. នៅមាត្រដ្ឋាន ${place.terrain.baselineM} ម.`,
+        )}
+        {range && <> · {tx(`${Math.round(range[0])} to ${Math.round(range[1])} m`, `${Math.round(range[0])} ដល់ ${Math.round(range[1])} ម.`)}</>}
         <span className="block">{place.terrain.product}</span>
       </figcaption>
       )}
@@ -136,9 +141,12 @@ export function ReliefCanvas({ place, blind = false }: { place: Place; blind?: b
         <Lightbox
           image={{
             src: zoomSrc,
-            alt: `Shaded relief of ${place.name}`,
+            alt: tx(`Shaded relief of ${name}`, `រូបសណ្ឋានដីនៃ ${name}`),
             pixelated: true,
-            caption: `${place.name}: ${place.terrain.windowKm} km window, one pixel = ${place.terrain.baselineM} m. Derived from ${place.terrain.product}.`,
+            caption: tx(
+              `${name}: ${place.terrain.windowKm} km window, one pixel = ${place.terrain.baselineM} m. Derived from ${place.terrain.product}.`,
+              `${name}៖ តំបន់វិភាគ ${place.terrain.windowKm} គ.ម. មួយភីកសែល = ${place.terrain.baselineM} ម.។ ទាញយកពី ${place.terrain.product}។`,
+            ),
           }}
           onClose={() => setZoomSrc(null)}
         />

@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContai
 import { DIMENSION_LABEL } from "@/lib/i18n";
 import { DIMENSIONS, type DimensionResult, type Place } from "@/lib/types";
 import { useApp } from "./AppState";
+import { local } from "@/data/km";
 
 // Okabe-Ito colours: distinguishable with the common forms of colour blindness.
 // The reference region is always orange and dashed; Earth sites are solid.
@@ -41,7 +42,7 @@ function Frame({ title, children, note }: { title: string; children: React.React
 }
 
 export function ProfileChart({ refPlace, sites }: { refPlace: Place; sites: Place[] }) {
-  const { t } = useApp();
+  const { t, tx, lang } = useApp();
   const all = [refPlace, ...sites].filter((p) => p.terrain);
   if (all.length === 0) return null;
   const dist = all[0].terrain!.profile.distKm;
@@ -51,16 +52,16 @@ export function ProfileChart({ refPlace, sites }: { refPlace: Place; sites: Plac
     return row;
   });
   return (
-    <Frame title={t("profile_chart")} note="Each profile crosses the full 60 km window. Heights are relative to each window's own mean, so shapes are compared, not absolute elevations.">
+    <Frame title={t("profile_chart")} note={tx("Each profile crosses the full 60 km window. Heights are relative to each window's own mean, so shapes are compared, not absolute elevations.", "ទម្រង់នីមួយៗកាត់ពេញតំបន់វិភាគ ៦០ គ.ម.។ កម្ពស់ធៀបនឹងមធ្យមនៃតំបន់នីមួយៗ ដូច្នេះយើងប្រៀបធៀបរូបរាង មិនមែនកម្ពស់ពិតទេ។")}>
       <LineChart data={data} margin={{ top: 5, right: 12, bottom: 18, left: 8 }}>
         <CartesianGrid stroke="var(--line)" strokeDasharray="2 4" />
         <XAxis dataKey="d" type="number" domain={[0, 60]} tickCount={7} {...axis} label={{ value: t("dist_km"), position: "insideBottom", offset: -10, fill: "var(--muted)", fontSize: 12 }} />
         <YAxis {...axis} width={56} label={{ value: t("elev_m"), angle: -90, position: "insideLeft", fill: "var(--muted)", fontSize: 12, style: { textAnchor: "middle" } }} />
         <Tooltip {...tip} formatter={(v) => [`${v} m`]} labelFormatter={(l) => `${l} km`} />
         <Legend verticalAlign="top" height={30} wrapperStyle={{ fontSize: 12 }} />
-        <Line dataKey={refPlace.id} name={refPlace.name} stroke={REF_COLOR} strokeWidth={2} strokeDasharray="6 4" dot={false} isAnimationActive={false} connectNulls={false} />
+        <Line dataKey={refPlace.id} name={local(refPlace, lang).name} stroke={REF_COLOR} strokeWidth={2} strokeDasharray="6 4" dot={false} isAnimationActive={false} connectNulls={false} />
         {sites.filter((s) => s.terrain).map((s, i) => (
-          <Line key={s.id} dataKey={s.id} name={s.name} stroke={SERIES[i]} strokeWidth={2} strokeDasharray={DASH[i]} dot={false} isAnimationActive={false} connectNulls={false} />
+          <Line key={s.id} dataKey={s.id} name={local(s, lang).name} stroke={SERIES[i]} strokeWidth={2} strokeDasharray={DASH[i]} dot={false} isAnimationActive={false} connectNulls={false} />
         ))}
       </LineChart>
     </Frame>
@@ -68,7 +69,7 @@ export function ProfileChart({ refPlace, sites }: { refPlace: Place; sites: Plac
 }
 
 export function SlopeChart({ refPlace, sites }: { refPlace: Place; sites: Place[] }) {
-  const { t } = useApp();
+  const { t, tx, lang } = useApp();
   const all = [refPlace, ...sites].filter((p) => p.terrain);
   if (all.length === 0) return null;
   const bins = all[0].terrain!.slopeBinsDeg;
@@ -78,7 +79,7 @@ export function SlopeChart({ refPlace, sites }: { refPlace: Place; sites: Place[
     return row;
   });
   return (
-    <Frame title={t("slope_chart")} note="Slopes measured over a 463 m baseline on every world. Short, steep features smaller than that are averaged out.">
+    <Frame title={t("slope_chart")} note={tx("Slopes measured over a 463 m baseline on every world. Short, steep features smaller than that are averaged out.", "ជម្រាលត្រូវបានវាស់លើមាត្រដ្ឋាន ៤៦៣ ម. នៅគ្រប់ពិភព។ លក្ខណៈចោតខ្លីៗដែលតូចជាងនោះត្រូវបានយកមធ្យម។")}>
       <BarChart data={data} margin={{ top: 5, right: 12, bottom: 18, left: 8 }}>
         <CartesianGrid stroke="var(--line)" strokeDasharray="2 4" vertical={false} />
         <XAxis dataKey="bin" {...axis} label={{ value: t("slope_deg"), position: "insideBottom", offset: -10, fill: "var(--muted)", fontSize: 12 }} />
@@ -86,9 +87,9 @@ export function SlopeChart({ refPlace, sites }: { refPlace: Place; sites: Place[
         <Tooltip {...tip} formatter={(v) => [`${v}%`]} cursor={{ fill: "var(--panel-2)" }} />
         <Legend verticalAlign="top" height={30} wrapperStyle={{ fontSize: 12 }} />
         <defs>{gradients()}</defs>
-        <Bar dataKey={refPlace.id} name={refPlace.name} fill="url(#g-ref)" radius={[3, 3, 0, 0]} animationDuration={700} />
+        <Bar dataKey={refPlace.id} name={local(refPlace, lang).name} fill="url(#g-ref)" radius={[3, 3, 0, 0]} animationDuration={700} />
         {sites.filter((s) => s.terrain).map((s, i) => (
-          <Bar key={s.id} dataKey={s.id} name={s.name} fill={`url(#g-${i})`} radius={[3, 3, 0, 0]} animationDuration={700} />
+          <Bar key={s.id} dataKey={s.id} name={local(s, lang).name} fill={`url(#g-${i})`} radius={[3, 3, 0, 0]} animationDuration={700} />
         ))}
       </BarChart>
     </Frame>
@@ -96,7 +97,7 @@ export function SlopeChart({ refPlace, sites }: { refPlace: Place; sites: Place[
 }
 
 export function DimensionChart({ sites, results }: { sites: Place[]; results: DimensionResult[][] }) {
-  const { lang } = useApp();
+  const { lang, tx } = useApp();
   const data = DIMENSIONS.map((d) => {
     const row: Record<string, number | string | null> = { dim: DIMENSION_LABEL[lang][d] };
     sites.forEach((s, i) => (row[s.id] = results[i].find((r) => r.id === d)?.score ?? null));
@@ -104,23 +105,23 @@ export function DimensionChart({ sites, results }: { sites: Place[]; results: Di
   });
   return (
     <figure className="card p-4">
-      <figcaption className="mb-2 text-sm font-semibold">Similarity by dimension (0 to 100)</figcaption>
+      <figcaption className="mb-2 text-sm font-semibold">{tx("Similarity by dimension (0 to 100)", "ភាពស្រដៀងតាមវិមាត្រ (០ ដល់ ១០០)")}</figcaption>
       <div className="h-96">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 5, right: 16, bottom: 5, left: 8 }}>
             <CartesianGrid stroke="var(--line)" strokeDasharray="2 4" horizontal={false} />
             <XAxis type="number" domain={[0, 100]} {...axis} />
             <YAxis type="category" dataKey="dim" width={150} {...axis} />
-            <Tooltip {...tip} formatter={(v) => [v === null ? "no data" : Number(v).toFixed(0)]} cursor={{ fill: "var(--panel-2)" }} />
+            <Tooltip {...tip} formatter={(v) => [v === null ? tx("no data", "គ្មានទិន្នន័យ") : Number(v).toFixed(0)]} cursor={{ fill: "var(--panel-2)" }} />
             <Legend verticalAlign="top" height={30} wrapperStyle={{ fontSize: 12 }} />
             <defs>{gradients("h")}</defs>
             {sites.map((s, i) => (
-              <Bar key={s.id} dataKey={s.id} name={s.name} fill={`url(#gh-${i})`} radius={[0, 3, 3, 0]} animationDuration={700} />
+              <Bar key={s.id} dataKey={s.id} name={local(s, lang).name} fill={`url(#gh-${i})`} radius={[0, 3, 3, 0]} animationDuration={700} />
             ))}
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-2 text-xs text-muted">A missing bar means no data for that dimension, not a score of zero.</p>
+      <p className="mt-2 text-xs text-muted">{tx("A missing bar means no data for that dimension, not a score of zero.", "របារដែលបាត់មានន័យថាគ្មានទិន្នន័យសម្រាប់វិមាត្រនោះ មិនមែនពិន្ទុសូន្យទេ។")}</p>
     </figure>
   );
 }

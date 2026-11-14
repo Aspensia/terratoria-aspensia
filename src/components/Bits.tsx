@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DATASETS, type Dataset } from "@/data/datasets";
+import { DATASET_KM } from "@/data/km";
 import { DIMENSION_LABEL, DIMENSION_SIMPLE } from "@/lib/i18n";
 import type { Aggregate, Basis, DimensionResult, Place, Status } from "@/lib/types";
 import { useApp } from "./AppState";
@@ -111,6 +112,9 @@ export function ScoreBar({ r, detail = false }: { r: DimensionResult; detail?: b
   );
 }
 
+const LEVEL_KM: Record<Dataset["level"], string> = { raw: "ទិន្នន័យដើម", processed: "បានដំណើរការ", derived: "ទាញយកពីម៉ូដែល", literature: "ឯកសារស្រាវជ្រាវ" };
+export const levelLabel = (level: Dataset["level"], lang: string) => (lang === "km" ? LEVEL_KM[level] : level);
+
 const datasetsFor = (places: Place[]): Dataset[] => {
   const ids = new Set<string>(["literature"]);
   for (const p of places) {
@@ -121,7 +125,8 @@ const datasetsFor = (places: Place[]): Dataset[] => {
 };
 
 export function ProvenancePanel({ places, open = false }: { places: Place[]; open?: boolean }) {
-  const { t } = useApp();
+  const { t, tx, lang } = useApp();
+  const km = (d: Dataset) => (lang === "km" ? DATASET_KM[d.id] : undefined);
   const retrieved = places.map((p) => p.terrain?.retrieved).find(Boolean);
   return (
     <details className="card p-4" open={open}>
@@ -130,11 +135,11 @@ export function ProvenancePanel({ places, open = false }: { places: Place[]; ope
         <table className="w-full min-w-[640px] text-left text-sm">
           <thead className="label">
             <tr>
-              <th className="py-1 pr-3">Agency / mission</th>
-              <th className="py-1 pr-3">Instrument and product</th>
-              <th className="py-1 pr-3">Resolution / period</th>
-              <th className="py-1 pr-3">Level</th>
-              <th className="py-1">Quality notes</th>
+              <th className="py-1 pr-3">{tx("Agency / mission", "ទីភ្នាក់ងារ / បេសកកម្ម")}</th>
+              <th className="py-1 pr-3">{tx("Instrument and product", "ឧបករណ៍ និងផលិតផល")}</th>
+              <th className="py-1 pr-3">{tx("Resolution / period", "ភាពច្បាស់ / រយៈពេល")}</th>
+              <th className="py-1 pr-3">{tx("Level", "កម្រិត")}</th>
+              <th className="py-1">{tx("Quality notes", "កំណត់សម្គាល់គុណភាព")}</th>
             </tr>
           </thead>
           <tbody>
@@ -152,18 +157,18 @@ export function ProvenancePanel({ places, open = false }: { places: Place[]; ope
                   <span className="text-muted">{d.version}</span>
                 </td>
                 <td className="py-2 pr-3">
-                  {d.resolution}
-                  <span className="block text-muted">{d.period}</span>
+                  {km(d)?.resolution ?? d.resolution}
+                  <span className="block text-muted">{km(d)?.period ?? d.period}</span>
                 </td>
-                <td className="py-2 pr-3 capitalize">{d.level}</td>
-                <td className="py-2 text-muted">{d.quality}</td>
+                <td className="py-2 pr-3 capitalize">{levelLabel(d.level, lang)}</td>
+                <td className="py-2 text-muted">{km(d)?.quality ?? d.quality}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <p className="mt-2 text-xs text-muted">
-        {retrieved && <>Retrieved and processed {retrieved}. </>}
+        {retrieved && <>{tx(`Retrieved and processed ${retrieved}.`, `ទាញយក និងដំណើរការនៅ ${retrieved}។`)} </>}
         {t("archived_note")}
       </p>
     </details>

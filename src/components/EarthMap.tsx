@@ -5,6 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState } from "react";
 import type { Place } from "@/lib/types";
 import { useApp } from "./AppState";
+import { local } from "@/data/km";
 
 export interface MapSite {
   place: Place;
@@ -19,7 +20,7 @@ maplibregl.setWorkerUrl(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/maplibre/map
 const HOME = { center: [10, 22] as [number, number], zoom: 0.9 };
 
 export function EarthMap({ sites, onOpen }: { sites: MapSite[]; onOpen(id: string): void }) {
-  const { t } = useApp();
+  const { t, tx, lang } = useApp();
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markers = useRef<maplibregl.Marker[]>([]);
@@ -69,13 +70,14 @@ export function EarthMap({ sites, onOpen }: { sites: MapSite[]; onOpen(id: strin
       const known = place.status === "established" || place.status === "documented";
       const b = document.createElement("button");
       b.type = "button";
-      b.setAttribute("aria-label", `${place.name}, ${place.country}. ${index === null ? "No index" : `Index ${index.toFixed(0)}`}`);
+      const L = local(place, lang);
+      b.setAttribute("aria-label", `${L.name}, ${L.country}. ${index === null ? tx("No index", "គ្មានសន្ទស្សន៍") : `${t("index_short")} ${index.toFixed(0)}`}`);
       b.style.cssText = `width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;border:none;padding:0;`;
       const size = rank !== null && rank <= 3 ? 20 : 15;
       // Circle = known site, diamond = candidate. Shape carries the meaning; colour only reinforces it.
       b.innerHTML = `<span style="display:block;width:${size}px;height:${size}px;background:${known ? "#4fc3a1" : "#e6b34d"};border:2px solid #06111f;box-shadow:0 0 0 1.5px #fff;${known ? "border-radius:50%" : "transform:rotate(45deg)"};font:600 10px/1 sans-serif;color:#06111f;display:flex;align-items:center;justify-content:center"><span style="${known ? "" : "transform:rotate(-45deg)"}">${rank !== null && rank <= 3 ? rank : ""}</span></span>`;
       const popup = new maplibregl.Popup({ offset: 14, closeButton: false }).setHTML(
-        `<strong>${place.name}</strong><br><span style="opacity:.75">${place.country ?? ""}</span><br>${index === null ? "No index (insufficient data)" : `Similarity index ${index.toFixed(0)} / 100`}`,
+        `<strong>${L.name}</strong><br><span style="opacity:.75">${L.country ?? ""}</span><br>${index === null ? tx("No index (insufficient data)", "គ្មានសន្ទស្សន៍ (ទិន្នន័យមិនគ្រប់គ្រាន់)") : `${t("index_short")} ${index.toFixed(0)} / 100`}`,
       );
       const mk = new maplibregl.Marker({ element: b }).setLngLat([place.lon, place.lat]).setPopup(popup).addTo(m);
       b.addEventListener("mouseenter", () => popup.addTo(m));
@@ -88,7 +90,8 @@ export function EarthMap({ sites, onOpen }: { sites: MapSite[]; onOpen(id: strin
       });
       return mk;
     });
-  }, [sites, onOpen, attempt]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t and tx follow lang
+  }, [sites, onOpen, attempt, lang]);
 
   return (
     <div className="card overflow-hidden">
@@ -117,7 +120,7 @@ export function EarthMap({ sites, onOpen }: { sites: MapSite[]; onOpen(id: strin
           <svg width="12" height="12" aria-hidden="true"><rect x="2" y="2" width="8" height="8" transform="rotate(45 6 6)" fill="#e6b34d" stroke="#fff" /></svg>
           {t("legend_new")}
         </span>
-        <span className="text-muted">1–3 = top ranked</span>
+        <span className="text-muted">{tx("1–3 = top ranked", "១–៣ = ចំណាត់ថ្នាក់កំពូល")}</span>
       </div>
     </div>
   );

@@ -20,6 +20,8 @@ interface AppState {
   muted: boolean;
   setMuted(m: boolean): void;
   t(key: Key): string;
+  /** Inline bilingual text: tx("English", "ខ្មែរ"). */
+  tx(en: string, km: string): string;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -105,6 +107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       muted,
       setMuted: (m) => (setMutedState(m), audio.setMuted(m), setPref("terratoria.muted", m ? "1" : "0")),
       t: (key) => STRINGS[lang][key],
+      tx: (en, km) => (lang === "km" ? km : en),
     }),
     [lang, mode, saved, toggleSaved, muted],
   );

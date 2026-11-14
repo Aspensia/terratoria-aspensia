@@ -10,7 +10,10 @@ export type DuelMetric = "steeper" | "rougher" | "relief" | "colder";
 export type Round =
   | { kind: "world"; place: Place; answer: Body }
   | { kind: "analogue"; ref: Place; options: Place[]; scores: number[]; answer: string }
-  | { kind: "duel"; metric: DuelMetric; a: Place; b: Place; answer: string; question: string; unit: string; value: (p: Place) => number };
+  | { kind: "duel"; metric: DuelMetric; a: Place; b: Place; answer: string; question: Text; unit: Text; value: (p: Place) => number };
+
+/** Text in both interface languages. */
+export type Text = { en: string; km: string };
 
 /** Small deterministic PRNG (mulberry32) so a game can be replayed from its seed. */
 export function seeded(seed: number): () => number {
@@ -56,11 +59,27 @@ function analogueRound(rand: () => number, ref: Place, usedSites: Set<string>): 
   throw new Error("could not build a fair analogue round");
 }
 
-const DUELS: Record<DuelMetric, { question: string; unit: string; value: (p: Place) => number | undefined }> = {
-  steeper: { question: "Which place has steeper ground?", unit: "° median slope", value: (p) => p.terrain?.slopeMedianDeg },
-  rougher: { question: "Which place has rougher ground?", unit: "m roughness", value: (p) => p.terrain?.roughnessM },
-  relief: { question: "Which place has the bigger height difference?", unit: "m local relief", value: (p) => p.terrain?.reliefM },
-  colder: { question: "Which place is colder on average?", unit: "K mean surface temperature", value: (p) => p.climate?.meanK },
+const DUELS: Record<DuelMetric, { question: Text; unit: Text; value: (p: Place) => number | undefined }> = {
+  steeper: {
+    question: { en: "Which place has steeper ground?", km: "តើទីតាំងណាមានដីចោតជាង?" },
+    unit: { en: "° median slope", km: "° ជម្រាលមធ្យម" },
+    value: (p) => p.terrain?.slopeMedianDeg,
+  },
+  rougher: {
+    question: { en: "Which place has rougher ground?", km: "តើទីតាំងណាមានដីរដិបរដុបជាង?" },
+    unit: { en: "m roughness", km: "ម. ភាពរដិបរដុប" },
+    value: (p) => p.terrain?.roughnessM,
+  },
+  relief: {
+    question: { en: "Which place has the bigger height difference?", km: "តើទីតាំងណាមានកម្ពស់ខុសគ្នាធំជាង?" },
+    unit: { en: "m local relief", km: "ម. កម្ពស់ខុសគ្នាក្នុងតំបន់" },
+    value: (p) => p.terrain?.reliefM,
+  },
+  colder: {
+    question: { en: "Which place is colder on average?", km: "តើទីតាំងណាត្រជាក់ជាងជាមធ្យម?" },
+    unit: { en: "K mean surface temperature", km: "K សីតុណ្ហភាពផ្ទៃមធ្យម" },
+    value: (p) => p.climate?.meanK,
+  },
 };
 
 function duelRound(rand: () => number, usedDuel: Set<string>): Round {
@@ -95,10 +114,15 @@ export function makeGame(rand: () => number, rounds = 10): Round[] {
   });
 }
 
-export function rankTitle(score: number, total: number): string {
+const RANKS_KM: Record<string, string> = {
+  "Flight Director": "នាយកការហោះហើរ",
+  "Mission Specialist": "អ្នកឯកទេសបេសកកម្ម",
+  "Field Geologist": "អ្នកភូគព្ភវិទ្យាទីវាល",
+  Cadet: "សិក្ខាកាម",
+};
+
+export function rankTitle(score: number, total: number, lang: "en" | "km" = "en"): string {
   const k = score / total;
-  if (k >= 0.9) return "Flight Director";
-  if (k >= 0.7) return "Mission Specialist";
-  if (k >= 0.4) return "Field Geologist";
-  return "Cadet";
+  const en = k >= 0.9 ? "Flight Director" : k >= 0.7 ? "Mission Specialist" : k >= 0.4 ? "Field Geologist" : "Cadet";
+  return lang === "km" ? RANKS_KM[en] : en;
 }

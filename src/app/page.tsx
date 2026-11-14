@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useApp } from "@/components/AppState";
-import { ZoomableImage, type ViewerImage } from "@/components/Lightbox";
+import { ZoomableImage } from "@/components/Lightbox";
 import { TeamStrip } from "@/components/Team";
 import { textureUrl } from "@/components/three/space";
 import { EARTH_SITES, REFERENCES } from "@/data/catalog";
@@ -17,21 +17,60 @@ const SolarSystem = dynamic(() => import("@/components/three/SolarSystem").then(
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-const ARCHIVE: ViewerImage[] = [
-  { src: `${BASE}/images/apollo-full-moon.jpg`, alt: "Full Moon photographed during the Apollo programme", caption: "Full Moon photographed during the Apollo programme. Source: NASA 3D Resources (public domain)." },
-  { src: `${BASE}/images/apollo-lunar-surface.jpg`, alt: "Lunar surface seen from orbit", caption: "Lunar surface photographed from orbit during the Apollo programme. Source: NASA 3D Resources (public domain)." },
-  { src: textureUrl("earth"), alt: "NASA Blue Marble map of Earth", caption: "NASA Blue Marble with shaded relief and bathymetry, served by NASA GIBS. A static composite, not a live image." },
-  { src: textureUrl("mars"), alt: "Global colour mosaic of Mars", caption: "Global colour mosaic of Mars. Source: NASA 3D Resources (public domain)." },
+type Bi = { en: string; km: string };
+
+const ARCHIVE: { src: string; alt: Bi; caption: Bi }[] = [
+  {
+    src: `${BASE}/images/apollo-full-moon.jpg`,
+    alt: { en: "Full Moon photographed during the Apollo programme", km: "ព្រះច័ន្ទពេញវង់ ថតក្នុងកម្មវិធី Apollo" },
+    caption: {
+      en: "Full Moon photographed during the Apollo programme. Source: NASA 3D Resources (public domain).",
+      km: "ព្រះច័ន្ទពេញវង់ ថតក្នុងកម្មវិធី Apollo។ ប្រភព៖ NASA 3D Resources (សាធារណៈ)។",
+    },
+  },
+  {
+    src: `${BASE}/images/apollo-lunar-surface.jpg`,
+    alt: { en: "Lunar surface seen from orbit", km: "ផ្ទៃព្រះច័ន្ទមើលពីគន្លងគោចរ" },
+    caption: {
+      en: "Lunar surface photographed from orbit during the Apollo programme. Source: NASA 3D Resources (public domain).",
+      km: "ផ្ទៃព្រះច័ន្ទ ថតពីគន្លងគោចរក្នុងកម្មវិធី Apollo។ ប្រភព៖ NASA 3D Resources (សាធារណៈ)។",
+    },
+  },
+  {
+    src: textureUrl("earth"),
+    alt: { en: "NASA Blue Marble map of Earth", km: "ផែនទីផែនដី Blue Marble របស់ NASA" },
+    caption: {
+      en: "NASA Blue Marble with shaded relief and bathymetry, served by NASA GIBS. A static composite, not a live image.",
+      km: "NASA Blue Marble ដែលមានស្រមោលសណ្ឋានដី និងជម្រៅសមុទ្រ ពី NASA GIBS។ ជារូបភាពផ្គុំ មិនមែនរូបភាពផ្ទាល់ទេ។",
+    },
+  },
+  {
+    src: textureUrl("mars"),
+    alt: { en: "Global colour mosaic of Mars", km: "រូបភាពពណ៌ផ្គុំទូទាំងភពអង្គារ" },
+    caption: {
+      en: "Global colour mosaic of Mars. Source: NASA 3D Resources (public domain).",
+      km: "រូបភាពពណ៌ផ្គុំទូទាំងភពអង្គារ។ ប្រភព៖ NASA 3D Resources (សាធារណៈ)។",
+    },
+  },
 ];
 
-const WORLDS: { id: "earth" | "moon" | "mars"; line: string }[] = [
-  { id: "moon", line: "Shackleton crater at the south pole and the Marius Hills lava-tube pit." },
-  { id: "mars", line: "Jezero crater's ancient lake and the cave skylights of Arsia Mons." },
-  { id: "earth", line: "21 field sites on seven continents, scored against both worlds." },
+const WORLDS: { id: "earth" | "moon" | "mars"; line: Bi }[] = [
+  {
+    id: "moon",
+    line: { en: "Shackleton crater at the south pole and the Marius Hills lava-tube pit.", km: "រណ្តៅ Shackleton នៅប៉ូលខាងត្បូង និងរណ្តៅស្រុតបំពង់កម្អែ Marius Hills។" },
+  },
+  {
+    id: "mars",
+    line: { en: "Jezero crater's ancient lake and the cave skylights of Arsia Mons.", km: "បឹងបុរាណនៃរណ្តៅ Jezero និងរន្ធធ្លុះរូងភ្នំនៃ Arsia Mons។" },
+  },
+  {
+    id: "earth",
+    line: { en: "21 field sites on seven continents, scored against both worlds.", km: "ទីតាំងទីវាល ២១ នៅលើទ្វីបទាំងប្រាំពីរ ដែលដាក់ពិន្ទុធៀបនឹងពិភពទាំងពីរ។" },
+  },
 ];
 
 export default function Home() {
-  const { t } = useApp();
+  const { t, lang } = useApp();
 
   useEffect(() => {
     ambient(true);
@@ -98,7 +137,7 @@ export default function Home() {
                 />
                 <span>
                   <span className="block text-lg font-semibold">{t(w.id)}</span>
-                  <span className="block text-sm text-muted">{w.line}</span>
+                  <span className="block text-sm text-muted">{w.line[lang]}</span>
                   <span className="mt-1 block text-sm text-accent transition-transform group-hover:translate-x-1">{t("explore_3d")} →</span>
                 </span>
               </Link>
@@ -115,7 +154,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {ARCHIVE.map((img) => (
-              <ZoomableImage key={img.src} image={img} className="img-frame aspect-square" />
+              <ZoomableImage key={img.src} image={{ src: img.src, alt: img.alt[lang], caption: img.caption[lang] }} className="img-frame aspect-square" />
             ))}
           </div>
         </section>

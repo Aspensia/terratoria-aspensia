@@ -9,6 +9,8 @@ import {
   type Place,
   type Weights,
 } from "./types";
+import { tagLabel } from "../data/km";
+import type { Lang } from "./i18n";
 
 export const MIN_VALID_DIMENSIONS = 3;
 const Q_TAGS = 0.6;
@@ -29,27 +31,28 @@ const ratio = (a: number, b: number) => {
 };
 const decay = (delta: number, scale: number) => 100 * Math.exp(-Math.abs(delta) / scale);
 const f = (n: number, d = 0) => n.toFixed(d);
-const label = (t: string) => t.replace(/_/g, " ");
 
-function tagPart(id: DimensionId, ref: Place, site: Place, weight = 1): Part | null {
+function tagPart(id: DimensionId, ref: Place, site: Place, lang: Lang): Part | null {
   const r = ref.attributes[id];
   const s = site.attributes[id];
   if (!r || !s || r.tags.length === 0) return null;
   const shared = r.tags.filter((t) => s.tags.includes(t));
   const missing = r.tags.filter((t) => !s.tags.includes(t));
   const evidence = [];
-  if (shared.length) evidence.push(`Shared: ${shared.map(label).join(", ")}`);
-  if (missing.length) evidence.push(`Not reproduced on Earth site: ${missing.map(label).join(", ")}`);
+  const km = lang === "km";
+  const names = (ts: string[]) => ts.map((x) => tagLabel(x, lang)).join(", ");
+  if (shared.length) evidence.push(`${km ? "ដូចគ្នា" : "Shared"}: ${names(shared)}`);
+  if (missing.length) evidence.push(`${km ? "មិនមាននៅទីតាំងផែនដី" : "Not reproduced on Earth site"}: ${names(missing)}`);
   return {
     score: (100 * shared.length) / r.tags.length,
     quality: Q_TAGS,
-    weight,
+    weight: 1,
     basis: "literature",
     evidence,
   };
 }
 
-function terrainPart(ref: Place, site: Place): Part | null {
+function terrainPart(ref: Place, site: Place, lang: Lang): Part | null {
   const a = ref.terrain;
   const b = site.terrain;
   if (!a || !b) return null;
@@ -63,16 +66,24 @@ function terrainPart(ref: Place, site: Place): Part | null {
     quality: Math.min(a.validFraction, b.validFraction),
     weight: 1,
     basis: "measured",
-    evidence: [
-      `Slope distribution overlap ${f(hist)}% (median ${f(b.slopeMedianDeg, 1)}° vs ${f(a.slopeMedianDeg, 1)}°)`,
-      `Local relief ${f(b.reliefM)} m vs ${f(a.reliefM)} m`,
-      `Roughness ${f(b.roughnessM, 1)} m vs ${f(a.roughnessM, 1)} m at a ${f(a.baselineM)} m baseline`,
-      `Hypsometric integral ${f(b.hypsometricIntegral, 2)} vs ${f(a.hypsometricIntegral, 2)}`,
-    ],
+    evidence:
+      lang === "km"
+        ? [
+            `របាយជម្រាលត្រួតគ្នា ${f(hist)}% (មធ្យម ${f(b.slopeMedianDeg, 1)}° ធៀបនឹង ${f(a.slopeMedianDeg, 1)}°)`,
+            `កម្ពស់ខុសគ្នាក្នុងតំបន់ ${f(b.reliefM)} ម. ធៀបនឹង ${f(a.reliefM)} ម.`,
+            `ភាពរដិបរដុប ${f(b.roughnessM, 1)} ម. ធៀបនឹង ${f(a.roughnessM, 1)} ម. នៅមាត្រដ្ឋាន ${f(a.baselineM)} ម.`,
+            `សន្ទស្សន៍ hypsometric ${f(b.hypsometricIntegral, 2)} ធៀបនឹង ${f(a.hypsometricIntegral, 2)}`,
+          ]
+        : [
+            `Slope distribution overlap ${f(hist)}% (median ${f(b.slopeMedianDeg, 1)}° vs ${f(a.slopeMedianDeg, 1)}°)`,
+            `Local relief ${f(b.reliefM)} m vs ${f(a.reliefM)} m`,
+            `Roughness ${f(b.roughnessM, 1)} m vs ${f(a.roughnessM, 1)} m at a ${f(a.baselineM)} m baseline`,
+            `Hypsometric integral ${f(b.hypsometricIntegral, 2)} vs ${f(a.hypsometricIntegral, 2)}`,
+          ],
   };
 }
 
-function climatePart(ref: Place, site: Place): Part | null {
+function climatePart(ref: Place, site: Place, lang: Lang): Part | null {
   const a = ref.climate;
   const b = site.climate;
   if (!a || !b) return null;
@@ -84,14 +95,14 @@ function climatePart(ref: Place, site: Place): Part | null {
     quality: measured ? Q_CLIMATE_MEASURED : Q_CLIMATE_LITERATURE,
     weight: 3,
     basis: measured ? "measured" : "literature",
-    evidence: [
-      `Mean surface temperature ${f(b.meanK)} K vs ${f(a.meanK)} K`,
-      `Temperature range ${f(rangeB)} K vs ${f(rangeA)} K`,
-    ],
+    evidence:
+      lang === "km"
+        ? [`សីតុណ្ហភាពផ្ទៃមធ្យម ${f(b.meanK)} K ធៀបនឹង ${f(a.meanK)} K`, `គម្លាតសីតុណ្ហភាព ${f(rangeB)} K ធៀបនឹង ${f(rangeA)} K`]
+        : [`Mean surface temperature ${f(b.meanK)} K vs ${f(a.meanK)} K`, `Temperature range ${f(rangeB)} K vs ${f(rangeA)} K`],
   };
 }
 
-function windPart(ref: Place, site: Place): Part | null {
+function windPart(ref: Place, site: Place, lang: Lang): Part | null {
   const a = ref.climate?.windMs;
   const b = site.climate?.windMs;
   if (a == null || b == null) return null;
@@ -101,11 +112,11 @@ function windPart(ref: Place, site: Place): Part | null {
     quality: measured ? Q_CLIMATE_MEASURED : Q_CLIMATE_LITERATURE,
     weight: 1,
     basis: measured ? "measured" : "literature",
-    evidence: [`Mean near-surface wind ${f(b, 1)} m/s vs ${f(a, 1)} m/s`],
+    evidence: [lang === "km" ? `ល្បឿនខ្យល់មធ្យមជិតផ្ទៃដី ${f(b, 1)} ម./វិ. ធៀបនឹង ${f(a, 1)} ម./វិ.` : `Mean near-surface wind ${f(b, 1)} m/s vs ${f(a, 1)} m/s`],
   };
 }
 
-function mobilityPart(ref: Place, site: Place): Part | null {
+function mobilityPart(ref: Place, site: Place, lang: Lang): Part | null {
   const a = ref.terrain;
   const b = site.terrain;
   if (!a || !b) return null;
@@ -114,9 +125,20 @@ function mobilityPart(ref: Place, site: Place): Part | null {
     quality: Math.min(a.validFraction, b.validFraction),
     weight: 1,
     basis: "measured",
-    evidence: [`90th-percentile slope ${f(b.slopeP90Deg, 1)}° vs ${f(a.slopeP90Deg, 1)}°`],
+    evidence: [lang === "km" ? `ជម្រាលភាគរយទី ៩០ ${f(b.slopeP90Deg, 1)}° ធៀបនឹង ${f(a.slopeP90Deg, 1)}°` : `90th-percentile slope ${f(b.slopeP90Deg, 1)}° vs ${f(a.slopeP90Deg, 1)}°`],
   };
 }
+
+const METHODS_KM: Record<DimensionId, string> = {
+  terrain: "មធ្យមនៃការប្រៀបធៀបវាស់វែងបួន លើផែនទីកម្ពស់ដែលកែទៅមាត្រដ្ឋានរួម៖ ការត្រួតគ្នានៃរបាយជម្រាល ផលធៀបកម្ពស់ខុសគ្នាក្នុងតំបន់ ផលធៀបភាពរដិបរដុប និងភាពខុសគ្នានៃសន្ទស្សន៍ hypsometric។",
+  geology: "ចំណែកនៃលក្ខណៈភូគព្ភវិទ្យាដែលមានឯកសារនៃតំបន់យោង ដែលក៏មានឯកសារនៅទីតាំងផែនដីដែរ។",
+  thermal: "ភាពខុសគ្នានៃសីតុណ្ហភាពផ្ទៃមធ្យម (មាត្រដ្ឋាន ៦០ K) និងភាពខុសគ្នានៃគម្លាតសីតុណ្ហភាព (មាត្រដ្ឋាន ៨០ K) លាយ ៧៥/២៥ ជាមួយលក្ខណៈពន្លឺដែលដូចគ្នា ពេលមានឯកសារ។",
+  water_ice: "ចំណែកនៃលក្ខណៈទឹក ទឹកកក និងសារធាតុងាយហួតនៃតំបន់យោង ដែលក៏មានឯកសារនៅទីតាំងផែនដីដែរ។",
+  dust_wind: "លក្ខណៈខ្យល់ និងធូលីដែលដូចគ្នា លាយ ៥០/៥០ ជាមួយផលធៀបល្បឿនខ្យល់មធ្យមជិតផ្ទៃដី ពេលមានទិន្នន័យទាំងសងខាង។",
+  biology: "ចំណែកនៃលក្ខណៈពាក់ព័ន្ធនឹងលទ្ធភាពរស់នៅ និងសញ្ញាជីវិតនៃតំបន់យោង ដែលទីតាំងផែនដីអនុញ្ញាតឱ្យអ្នកស្រាវជ្រាវសិក្សា។",
+  subsurface: "ចំណែកនៃលក្ខណៈក្រោមដីដែលមានឯកសារ (រូងភ្នំ បំពង់កម្អែ រណ្តៅស្រុត) នៃតំបន់យោង ដែលក៏មានឯកសារនៅទីតាំងផែនដីដែរ។",
+  operations: "លក្ខណៈប្រតិបត្តិការដែលដូចគ្នាពីយុទ្ធនាការទីវាល លាយ ៥០/៥០ ជាមួយភាពស្រដៀងនៃជម្រាលចោត (ភាគរយទី ៩០)។",
+};
 
 const METHODS: Record<DimensionId, string> = {
   terrain:
@@ -131,10 +153,11 @@ const METHODS: Record<DimensionId, string> = {
   operations: "Shared operational characteristics from field campaigns, blended 50/50 with similarity of steep-slope (90th percentile) terrain.",
 };
 
-function combine(id: DimensionId, required: (Part | null)[], optional: (Part | null)[] = []): DimensionResult {
+function combine(id: DimensionId, lang: Lang, required: (Part | null)[], optional: (Part | null)[] = []): DimensionResult {
+  const method = (lang === "km" ? METHODS_KM : METHODS)[id];
   const base = required.filter((p): p is Part => p !== null);
   if (base.length === 0) {
-    return { id, score: null, quality: 0, basis: "none", method: METHODS[id], evidence: [] };
+    return { id, score: null, quality: 0, basis: "none", method, evidence: [] };
   }
   const parts = [...base, ...optional.filter((p): p is Part => p !== null)];
   const total = parts.reduce((s, p) => s + p.weight, 0);
@@ -145,42 +168,42 @@ function combine(id: DimensionId, required: (Part | null)[], optional: (Part | n
     score: parts.reduce((s, p) => s + p.score * p.weight, 0) / total,
     quality: parts.reduce((s, p) => s + p.quality * p.weight, 0) / total,
     basis,
-    method: METHODS[id],
+    method,
     evidence: parts.flatMap((p) => p.evidence),
   };
 }
 
-export function scoreDimension(id: DimensionId, ref: Place, site: Place): DimensionResult {
+export function scoreDimension(id: DimensionId, ref: Place, site: Place, lang: Lang = "en"): DimensionResult {
   switch (id) {
     case "terrain":
-      return combine(id, [terrainPart(ref, site)]);
+      return combine(id, lang, [terrainPart(ref, site, lang)]);
     case "thermal": {
-      const r = combine(id, [climatePart(ref, site)], [tagPart(id, ref, site)]);
+      const r = combine(id, lang, [climatePart(ref, site, lang)], [tagPart(id, ref, site, lang)]);
       // One literature-derived side makes the whole comparison mixed-basis.
       if (r.score !== null && (ref.climate!.basis !== site.climate!.basis)) r.basis = "mixed";
       return r;
     }
     case "dust_wind":
-      return combine(id, [tagPart(id, ref, site)], [windPart(ref, site)]);
+      return combine(id, lang, [tagPart(id, ref, site, lang)], [windPart(ref, site, lang)]);
     case "operations": {
-      const tags = tagPart(id, ref, site);
-      const mob = mobilityPart(ref, site);
-      if (tags) return combine(id, [tags], [mob]);
+      const tags = tagPart(id, ref, site, lang);
+      const mob = mobilityPart(ref, site, lang);
+      if (tags) return combine(id, lang, [tags], [mob]);
       // No documented field history: slope alone is weak evidence, so halve its quality.
-      const r = combine(id, [mob]);
+      const r = combine(id, lang, [mob]);
       if (r.score !== null) {
         r.quality *= 0.5;
-        r.evidence.push("No documented field campaigns; based on slope similarity only");
+        r.evidence.push(lang === "km" ? "គ្មានយុទ្ធនាការទីវាលដែលមានឯកសារ ដូច្នេះផ្អែកលើភាពស្រដៀងនៃជម្រាលតែប៉ុណ្ណោះ" : "No documented field campaigns; based on slope similarity only");
       }
       return r;
     }
     default:
-      return combine(id, [tagPart(id, ref, site)]);
+      return combine(id, lang, [tagPart(id, ref, site, lang)]);
   }
 }
 
-export function scoreAll(ref: Place, site: Place): DimensionResult[] {
-  return DIMENSIONS.map((id) => scoreDimension(id, ref, site));
+export function scoreAll(ref: Place, site: Place, lang: Lang = "en"): DimensionResult[] {
+  return DIMENSIONS.map((id) => scoreDimension(id, ref, site, lang));
 }
 
 export function aggregate(results: DimensionResult[], w: Weights): Aggregate {

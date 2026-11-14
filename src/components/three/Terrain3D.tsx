@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Body } from "@/lib/types";
 import { disposeScene, makeRenderer, prefersReducedMotion } from "./space";
+import { useApp } from "../AppState";
 
 export interface Grid {
   n: number;
@@ -34,6 +35,7 @@ export function Terrain3D({ grid, body, label }: { grid: Grid; body: Body; label
   const [exag, setExag] = useState(2);
   const exagRef = useRef<(e: number) => void>(() => {});
   const [failed, setFailed] = useState(false);
+  const { tx } = useApp();
 
   useEffect(() => {
     const el = canvas.current, wrap = box.current;
@@ -126,13 +128,13 @@ export function Terrain3D({ grid, body, label }: { grid: Grid; body: Body; label
 
   useEffect(() => exagRef.current(exag), [exag]);
 
-  if (failed) return <div className="flex h-full items-center justify-center p-4 text-center text-sm text-muted">3D view needs WebGL.</div>;
+  if (failed) return <div className="flex h-full items-center justify-center p-4 text-center text-sm text-muted">{tx("3D view needs WebGL.", "ទិដ្ឋភាព 3D ត្រូវការ WebGL។")}</div>;
   return (
     <div ref={box} className="absolute inset-0">
-      <canvas ref={canvas} className="h-full w-full cursor-grab touch-none active:cursor-grabbing" role="img" aria-label={`3D terrain of ${label}, drag to rotate`} />
+      <canvas ref={canvas} className="h-full w-full cursor-grab touch-none active:cursor-grabbing" role="img" aria-label={tx(`3D terrain of ${label}, drag to rotate`, `សណ្ឋានដី 3D នៃ ${label} អូសដើម្បីបង្វិល`)} />
       <label className="absolute bottom-2 left-2 right-12 flex items-center gap-2 rounded-lg bg-black/60 px-2 py-1 text-[11px] text-white backdrop-blur">
-        <span className="whitespace-nowrap">Height ×{exag}</span>
-        <input type="range" min={1} max={6} step={0.5} value={exag} onChange={(e) => setExag(Number(e.target.value))} className="w-full" aria-label="Vertical exaggeration" />
+        <span className="whitespace-nowrap">{tx("Height", "កម្ពស់")} ×{exag}</span>
+        <input type="range" min={1} max={6} step={0.5} value={exag} onChange={(e) => setExag(Number(e.target.value))} className="w-full" aria-label={tx("Vertical exaggeration", "ការពង្រីកកម្ពស់")} />
       </label>
     </div>
   );

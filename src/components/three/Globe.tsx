@@ -53,7 +53,7 @@ export function Globe({
   panelOpen.current = !!selectedId;
   const reset = useRef<() => void>(() => {});
   const [failed, setFailed] = useState(false);
-  const { t } = useApp();
+  const { t, tx } = useApp();
 
   useEffect(() => {
     const el = canvas.current;
@@ -190,14 +190,14 @@ export function Globe({
   if (failed) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted">
-        3D view needs WebGL, which this browser has turned off. The location list still opens every site.
+        {tx("3D view needs WebGL, which this browser has turned off. The location list still opens every site.", "ទិដ្ឋភាព 3D ត្រូវការ WebGL ដែលកម្មវិធីរុករកនេះបានបិទ។ បញ្ជីទីតាំងនៅតែអាចបើកគ្រប់ទីតាំងបាន។")}
       </div>
     );
   }
 
   return (
     <div ref={wrap} className="relative h-full w-full overflow-hidden">
-      <canvas ref={canvas} className="block h-full w-full cursor-grab touch-none active:cursor-grabbing" aria-label={`Interactive 3D globe of ${world === "earth" ? "Earth" : world === "moon" ? "the Moon" : "Mars"}`} />
+      <canvas ref={canvas} className="block h-full w-full cursor-grab touch-none active:cursor-grabbing" aria-label={tx(`Interactive 3D globe of ${world === "earth" ? "Earth" : world === "moon" ? "the Moon" : "Mars"}`, `ផែនដីមូល 3D អន្តរកម្មនៃ${t(world)}`)} />
       <div className="pointer-events-none absolute inset-0">
         {markers.map((m) => (
           <button
