@@ -16,6 +16,8 @@ const STAR_COLOURS: [number, number, number, number][] = [
 // Meteor glow: most look white; magnesium and nickel give green, sodium gives orange.
 const METEOR_TINTS = ["255,255,255", "225,245,255", "205,255,215", "255,226,190"];
 
+const LAYER = { position: "fixed", pointerEvents: "none" } as const;
+
 type Star = { x: number; y: number; r: number; a: number; c: string; tw: number; ph: number; big: boolean };
 type Meteor = { x: number; y: number; dx: number; dy: number; speed: number; len: number; life: number; born: number; width: number; tint: string; fire: boolean };
 
@@ -107,7 +109,8 @@ export function SpaceBackdrop() {
     };
 
     const drawMeteor = (m: Meteor, now: number) => {
-      const age = (now - m.born) / 1000;
+      // A meteor spawned by a timer can be a few ms newer than this frame's timestamp; never let age go negative.
+      const age = Math.max(0, (now - m.born) / 1000);
       const p = age / m.life;
       if (p >= 1) return false;
       // Brightens fast, burns, then fades; small flicker as it ablates.
@@ -184,11 +187,12 @@ export function SpaceBackdrop() {
     };
   }, []);
 
+  // Positioning is inline so the layers can never fall into the page flow, even if the stylesheet is stale or slow.
   return (
     <div aria-hidden="true" className="space-backdrop no-print">
-      <div className="space-milkyway" style={{ backgroundImage: `url(${textureUrl("milkyway")})` }} />
-      <canvas ref={starsRef} className="space-stars" />
-      <canvas ref={meteorRef} className="space-meteors" />
+      <div className="space-milkyway" style={{ ...LAYER, inset: "-30%", zIndex: -20, opacity: 0.4, backgroundImage: `url(${textureUrl("milkyway")})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+      <canvas ref={starsRef} className="space-stars" style={{ ...LAYER, inset: 0, width: "100%", height: "100%", zIndex: -19 }} />
+      <canvas ref={meteorRef} className="space-meteors" style={{ ...LAYER, inset: 0, width: "100%", height: "100%", zIndex: -5 }} />
     </div>
   );
 }
