@@ -178,7 +178,7 @@ export default function SitePage() {
       <section className="space-y-4" aria-labelledby="terrain-h">
         <h2 id="terrain-h" className="text-xl font-semibold">{t("terrain_compare")}</h2>
         <p className="text-sm text-muted">{t("relief_view")}. Both windows are 60 km across at the same pixel size. Neither image is stretched or recoloured to resemble the other.</p>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
           <ReliefCanvas place={site} />
           <ReliefCanvas place={refPlace} />
         </div>
@@ -237,7 +237,7 @@ export default function SitePage() {
 
       <ProvenancePanel places={[site, refPlace]} />
 
-      {(mode === "science" || true) && (
+      {(
         <details className="card p-4" open={mode === "science"}>
           <summary className="cursor-pointer font-semibold">References ({uniqueCites.length})</summary>
           <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-muted">

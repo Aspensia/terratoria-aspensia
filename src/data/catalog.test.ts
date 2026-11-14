@@ -82,6 +82,20 @@ describe("real comparison runs", () => {
     }
   });
 
+  test("the index reproduces by hand from the per-dimension scores, qualities and weights", () => {
+    const w = PRESETS[0].weights;
+    const results = scoreAll(getPlace("moon-shackleton")!, getPlace("mcmurdo-dry-valleys")!);
+    let num = 0;
+    let den = 0;
+    for (const r of results) {
+      if (r.score === null || w[r.id] === 0) continue;
+      num += w[r.id] * r.quality * r.score;
+      den += w[r.id] * r.quality;
+    }
+    expect(aggregate(results, w).index).toBeCloseTo(num / den, 10);
+    expect(num / den).toBeGreaterThan(40);
+  });
+
   test("a site without terrain data (Lanzarote) is unknown on terrain, not zero", () => {
     const r = scoreAll(getPlace("moon-marius")!, getPlace("lanzarote")!).find((x) => x.id === "terrain")!;
     expect(r.score).toBeNull();
