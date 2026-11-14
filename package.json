@@ -1,0 +1,29 @@
+{
+  "name": "analogatlas",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run && node --test pipeline/"
+  },
+  "dependencies": {
+    "maplibre-gl": "^6.18.0",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "geotiff": "^3.0.5",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5",
+    "vitest": "^5.1.0"
+  },
+  "description": "AnalogAtlas: Earth analogue discovery for Moon and Mars regions. Code written with AI assistance (Claude) from the team's concept."
+}
