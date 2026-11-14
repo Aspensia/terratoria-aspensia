@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { EARTH_SITES, PLACES, REFERENCES } from "@/data/catalog";
 import { local } from "@/data/km";
 import terrain from "@/data/generated/terrain.json";
 import type { Key } from "@/lib/i18n";
 import type { Place } from "@/lib/types";
 import { useApp } from "./AppState";
+import { ScrollProgress, useNavPill, usePageEnter, useSpotlight } from "./motion/Motion";
 
 const NAV: { href: string; key: Key }[] = [
   { href: "/", key: "nav_home" },
@@ -163,6 +164,12 @@ export function Shell({ children }: { children: ReactNode }) {
   const { t, tx, lang, setLang, mode, setMode, muted, setMuted } = useApp();
   const path = usePathname();
   const section = NAV.find((n) => n.href !== "/" && isActive(n.href, path)) ?? (path.startsWith("/site") ? NAV[1] : null);
+  const page = useRef<HTMLDivElement>(null);
+  const navList = useRef<HTMLUListElement>(null);
+  const pill = useRef<HTMLLIElement>(null);
+  usePageEnter(page, path);
+  useNavPill(navList, pill, `${path}|${lang}`);
+  useSpotlight();
   return (
     <>
       <a href="#main" className="btn btn-primary sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
@@ -178,7 +185,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </svg>
             <span>
               <span className="block font-mono text-[10px] leading-tight tracking-[0.3em] text-accent">PROJECT:</span>
-              <span className="block text-lg font-semibold leading-tight tracking-tight">Terratoria</span>
+              <span className="brand-word block text-lg font-semibold leading-tight tracking-tight">Terratoria</span>
             </span>
           </Link>
           <div className="order-last w-full md:order-none md:ml-auto md:w-auto md:flex-1 md:max-w-xs">
@@ -209,7 +216,8 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <nav aria-label="Main" className="mx-auto flex max-w-7xl items-center gap-3 px-4">
-          <ul className="flex flex-1 gap-1 overflow-x-auto text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <ul ref={navList} className="nav-list flex flex-1 gap-1 overflow-x-auto py-1 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <li ref={pill} aria-hidden="true" role="presentation" className="nav-pill" />
             {NAV.map((n) => {
               const active = isActive(n.href, path);
               return (
@@ -227,6 +235,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </a>
         </nav>
         <MissionStrip />
+        <ScrollProgress />
       </header>
       {section && (
         <nav aria-label="Breadcrumb" className="no-print mx-auto max-w-7xl px-4 pt-4 text-xs text-muted">
@@ -241,10 +250,12 @@ export function Shell({ children }: { children: ReactNode }) {
       )}
       <main id="main" className="mx-auto max-w-7xl px-4 py-6">
         <Suspense fallback={<div className="card h-96 animate-pulse" />}>
-          <div key={path} className="page-enter">{children}</div>
+          <div key={path} ref={page}>
+            {children}
+          </div>
         </Suspense>
       </main>
-      <footer id="credits" className="relative z-10 mx-auto max-w-7xl border-t border-line px-4 py-6 text-xs text-muted">
+      <footer id="credits" className="site-footer relative z-10 mx-auto max-w-7xl px-4 pt-8 text-xs text-muted">
         <div className="flex flex-wrap items-center gap-4">
           <AspensiaLogo size={44} />
           <div>
@@ -264,6 +275,9 @@ export function Shell({ children }: { children: ReactNode }) {
             "ទិន្នន័យ៖ NASA LRO LOLA និង Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM។ រូបភាព៖ NASA GIBS Blue Marble និង NASA 3D Resources។ កូដត្រូវបានសរសេរដោយមានជំនួយពី AI (Claude) តាមគំនិតរបស់ក្រុម។",
           )}
         </p>
+        <span aria-hidden="true" className="footer-word">
+          Terratoria
+        </span>
       </footer>
     </>
   );

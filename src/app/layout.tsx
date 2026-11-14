@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Khmer, Space_Grotesk } from "next/font/google";
 import { AppProvider } from "@/components/AppState";
 import { Shell } from "@/components/Shell";
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
+import "lenis/dist/lenis.css";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -22,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" data-mode="science" className={`${geistSans.variable} ${geistMono.variable} ${khmer.variable} ${display.variable} antialiased`}>
       <body className="min-h-screen">
+        <SmoothScroll />
         <AppProvider>
           <Shell>{children}</Shell>
         </AppProvider>
