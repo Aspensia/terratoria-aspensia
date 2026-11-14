@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import * as THREE from "three";
 import { disposeScene, glow, makeRenderer, planet, prefersReducedMotion, starfield, type TextureName } from "./space";
 
@@ -69,6 +70,13 @@ export function SolarSystem() {
     window.addEventListener("resize", resize);
 
     const still = prefersReducedMotion();
+    // Gentle parallax: the view leans toward the pointer. The scene itself never takes clicks.
+    const lean = { x: 0, y: 0, tx: 0, ty: 0 };
+    const onMove = (e: PointerEvent) => {
+      lean.tx = (e.clientX / window.innerWidth - 0.5) * 2;
+      lean.ty = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+    if (!still) window.addEventListener("pointermove", onMove);
     const clock = new THREE.Clock();
     let frame = 0;
     const render = () => {
@@ -83,7 +91,10 @@ export function SolarSystem() {
       sun.rotation.y = t * 0.05;
       // Slow drift of the viewpoint; the system sits right of centre so the hero text stays readable.
       const drift = t * 0.02;
-      camera.position.x = Math.sin(drift) * 4;
+      lean.x += (lean.tx - lean.x) * 0.03;
+      lean.y += (lean.ty - lean.y) * 0.03;
+      camera.position.x = Math.sin(drift) * 4 + lean.x * 3;
+      camera.position.y = 9 - lean.y * 2.5;
       camera.lookAt(-7 + Math.sin(drift) * 2, 0, 0);
       renderer.render(scene, camera);
       if (!still) frame = requestAnimationFrame(render);
@@ -99,6 +110,7 @@ export function SolarSystem() {
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
+      window.removeEventListener("pointermove", onMove);
       document.removeEventListener("visibilitychange", onVis);
       THREE.DefaultLoadingManager.onLoad = () => {};
       disposeScene(scene);
@@ -106,11 +118,13 @@ export function SolarSystem() {
     };
   }, []);
 
-  return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
+  // Portalled to <body>: the page fade-in uses a transform, which would otherwise trap this fixed layer.
+  return createPortal(
+    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
       <canvas ref={ref} className="h-full w-full" />
       <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(4,7,15,0.88) 0%, rgba(4,7,15,0.55) 45%, rgba(4,7,15,0.1) 100%)" }} />
-    </div>
+    </div>,
+    document.body,
   );
 }
 

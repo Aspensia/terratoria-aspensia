@@ -3,14 +3,15 @@ import * as THREE from "three";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
-export type TextureName = "earth" | "moon" | "mars" | "venus" | "jupiter" | "saturn" | "neptune" | "stars";
+export type TextureName = "earth" | "moon" | "mars" | "venus" | "jupiter" | "saturn" | "neptune" | "stars" | "moon-normal" | "mars-normal";
 export const textureUrl = (name: TextureName) => `${BASE}/textures/${name}.jpg`;
 
 const loader = new THREE.TextureLoader();
 export function loadTexture(name: TextureName): THREE.Texture {
   const t = loader.load(textureUrl(name));
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
+  // Normal maps hold directions, not colours, so they must stay linear.
+  t.colorSpace = name.endsWith("-normal") ? THREE.NoColorSpace : THREE.SRGBColorSpace;
+  t.anisotropy = 8;
   return t;
 }
 
@@ -25,8 +26,13 @@ export function latLonToVec3(lat: number, lon: number, r = 1): THREE.Vector3 {
   return new THREE.Vector3(-r * Math.cos(phi) * Math.sin(theta), r * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta));
 }
 
-export function planet(name: TextureName, radius: number, segments = 64): THREE.Mesh {
-  return new THREE.Mesh(new THREE.SphereGeometry(radius, segments, segments / 2), new THREE.MeshStandardMaterial({ map: loadTexture(name), roughness: 1, metalness: 0 }));
+export function planet(name: TextureName, radius: number, segments = 64, normal?: TextureName, relief = 1): THREE.Mesh {
+  const mat = new THREE.MeshStandardMaterial({ map: loadTexture(name), roughness: 1, metalness: 0 });
+  if (normal) {
+    mat.normalMap = loadTexture(normal);
+    mat.normalScale.set(relief, relief);
+  }
+  return new THREE.Mesh(new THREE.SphereGeometry(radius, segments, segments / 2), mat);
 }
 
 /** Hipparcos star map on a huge inner sphere, plus a layer of point stars for depth. */
@@ -102,7 +108,7 @@ export const prefersReducedMotion = () =>
 export function makeRenderer(canvas: HTMLCanvasElement): THREE.WebGLRenderer | null {
   try {
     const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-    r.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     r.outputColorSpace = THREE.SRGBColorSpace;
     return r;
   } catch {

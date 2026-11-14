@@ -12,7 +12,7 @@ Terratoria ranks Earth sites as analogues of specific regions on the Moon and Ma
 - 20 Earth sites: 17 established or documented analogue sites and 3 untested candidates.
 - 8 dimensions, matching the challenge's list. Terrain, temperature and wind are **measured** from open data. Geology, illumination, water and ice, aeolian features, biology, subsurface and operations are **literature-derived** and labelled as such.
 - An "Exploratory Analogue Similarity Index": `Σ(W·Q·S) / Σ(W·Q)`. Missing data lowers coverage, never the score. It is a screening aid, not a probability.
-- A home page with an ambient 3D solar system, and 3D explorers for Earth, the Moon and Mars with clickable sites and a data panel (Three.js).
+- A home page with an ambient 3D solar system, a Mission Challenge quiz built on the real scores, 3D terrain for every 60 km site window, and 3D explorers for Earth, the Moon and Mars with clickable sites and a data panel (Three.js).
 - Zoomable image viewer for relief views and NASA imagery; procedural sound (Web Audio API) with a mute toggle.
 - Site profiles, side-by-side comparison at identical scale, CSV export, printable report, shareable URLs, English and Khmer, dark and light themes.
 
@@ -56,7 +56,7 @@ All are open and need no login. They are archived products, not live observation
 ```bash
 node pipeline/run-terrain.mjs   # → src/data/generated/terrain.json, public/grids/*.json
 node pipeline/run-climate.mjs   # → src/data/generated/climate.json
-node pipeline/run-moon-texture.mjs  # → public/textures/moon.png (LOLA shaded relief; saved to the site as moon.jpg)
+node pipeline/run-globe-textures.mjs  # → public/textures/{moon,moon-normal,mars-normal}.png from LOLA and MOLA; convert to .jpg for the site
 ```
 
 The terrain script reads a 60 km window per place with HTTP range requests, resamples every source to a common 463 m grid, and computes slope, relief, roughness and hypsometry. It first checks itself against known values (Mauna Loa summit, Jezero floor, Shackleton depth, Marius Hills elevation) and stops if they are off. Downloads are cached in `pipeline/.cache/`.

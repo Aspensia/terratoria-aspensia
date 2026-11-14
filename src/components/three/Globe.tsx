@@ -49,6 +49,8 @@ export function Globe({
   const canvas = useRef<HTMLCanvasElement>(null);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const focus = useRef<(id: string | null) => void>(() => {});
+  const panelOpen = useRef(false);
+  panelOpen.current = !!selectedId;
   const reset = useRef<() => void>(() => {});
   const [failed, setFailed] = useState(false);
   const { t } = useApp();
@@ -71,7 +73,7 @@ export function Globe({
     sun.position.set(5, 2, 4);
     scene.add(sun);
 
-    const globe = planet(world, 1, 128);
+    const globe = planet(world, 1, 160, world === "earth" ? undefined : (`${world}-normal` as TextureName));
     scene.add(globe);
     if (ATMOSPHERE[world]) scene.add(atmosphere(1.06, ATMOSPHERE[world]!));
     for (const b of BACKDROP[world]) {
@@ -124,8 +126,20 @@ export function Globe({
     const ro = new ResizeObserver(resize);
     ro.observe(box);
 
+    // When the data panel covers the right side (wide screens), slide the view left so the site stays visible.
+    let shift = 0;
     let frame = 0;
     const tick = () => {
+      const w = box.clientWidth, h = box.clientHeight;
+      const want = panelOpen.current && w >= 768 ? 206 : 0;
+      if (Math.abs(want - shift) > 0.5) {
+        shift += (want - shift) * 0.1;
+        camera.setViewOffset(w, h, shift, 0, w, h);
+      } else if (shift !== want) {
+        shift = want;
+        if (want) camera.setViewOffset(w, h, shift, 0, w, h);
+        else camera.clearViewOffset();
+      }
       if (target) {
         const dir = camera.position.clone().normalize().lerp(target.dir, 0.075).normalize();
         const dist = THREE.MathUtils.lerp(camera.position.length(), target.dist, 0.075);

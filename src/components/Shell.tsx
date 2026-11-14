@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense, useMemo, useState, type ReactNode } from "react";
-import { PLACES } from "@/data/catalog";
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
+import { EARTH_SITES, PLACES, REFERENCES } from "@/data/catalog";
+import terrain from "@/data/generated/terrain.json";
 import type { Key } from "@/lib/i18n";
 import type { Place } from "@/lib/types";
 import { useApp } from "./AppState";
@@ -12,6 +13,7 @@ const NAV: { href: string; key: Key }[] = [
   { href: "/", key: "nav_home" },
   { href: "/discover/", key: "nav_discover" },
   { href: "/explore/", key: "nav_explore" },
+  { href: "/challenge/", key: "nav_challenge" },
   { href: "/compare/", key: "nav_compare" },
   { href: "/saved/", key: "nav_saved" },
   { href: "/methods/", key: "nav_methods" },
@@ -97,9 +99,12 @@ function Search() {
 const isActive = (href: string, path: string) => (href === "/" ? path === "/" : path.startsWith(href.replace(/\/$/, "")));
 
 export function AspensiaLogo({ size = 28 }: { size?: number }) {
+  // The logo PNG is transparent, so it sits on the brand-blue gradient tile.
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- static export: no image optimiser
-    <img src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/aspensia-logo.png`} alt="Aspensia" width={size} height={size} className="logo-chip" />
+    <span className="logo-chip" style={{ width: size, height: size }}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- static export: no image optimiser */}
+      <img src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/aspensia-logo.png`} alt="Aspensia" width={Math.round(size * 0.86)} height={Math.round(size * 0.86)} />
+    </span>
   );
 }
 
@@ -109,6 +114,34 @@ function SoundIcon({ muted }: { muted: boolean }) {
       <path d="M4 9v6h4l5 4V5L8 9z" fill="currentColor" />
       {muted ? <path d="M17 9l5 6M22 9l-5 6" /> : <path d="M16.5 8.5a5 5 0 010 7M19.5 5.5a9 9 0 010 13" />}
     </svg>
+  );
+}
+
+const PIPELINE_RUN = Object.values(terrain).find((v) => v && "retrieved" in v)?.retrieved ?? "";
+
+/** Mission-control style status line. Everything it shows is true: archive data, real counts, a real clock. */
+function MissionStrip() {
+  const [now, setNow] = useState<string>("");
+  useEffect(() => {
+    const tick = () => setNow(new Date().toISOString().slice(11, 19));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="mission-strip no-print">
+      <div className="mx-auto flex max-w-7xl items-center gap-x-5 overflow-x-auto whitespace-nowrap px-4 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted">
+        <span className="flex items-center gap-2 text-text">
+          <span className="live" aria-hidden="true" /> Archive data online
+        </span>
+        <span>Targets {REFERENCES.length + EARTH_SITES.length}</span>
+        <span>Moon {REFERENCES.filter((r) => r.body === "moon").length} · Mars {REFERENCES.filter((r) => r.body === "mars").length} · Earth {EARTH_SITES.length}</span>
+        <span>Pipeline run {PIPELINE_RUN}</span>
+        <span className="ml-auto text-text" aria-label="Coordinated Universal Time">
+          UTC {now}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -165,7 +198,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <nav aria-label="Main" className="mx-auto flex max-w-7xl items-center gap-3 px-4">
-          <ul className="flex flex-1 gap-1 overflow-x-auto text-sm">
+          <ul className="flex flex-1 gap-1 overflow-x-auto text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {NAV.map((n) => {
               const active = isActive(n.href, path);
               return (
@@ -182,6 +215,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <span>by Aspensia</span>
           </a>
         </nav>
+        <MissionStrip />
       </header>
       {section && (
         <nav aria-label="Breadcrumb" className="no-print mx-auto max-w-7xl px-4 pt-4 text-xs text-muted">

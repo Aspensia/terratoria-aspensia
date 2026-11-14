@@ -11,6 +11,15 @@ export const SERIES = ["#56B4E9", "#009E73", "#CC79A7"];
 export const REF_COLOR = "#E69F00";
 const DASH = ["", "2 2", "8 3 2 3"];
 
+/** Vertical (or horizontal, prefix "h") gradients per series, lighter at the tip. */
+const gradients = (dir: "" | "h" = "") =>
+  [...SERIES, REF_COLOR].map((c, i) => (
+    <linearGradient key={i} id={`g${dir}-${i === SERIES.length ? "ref" : i}`} x1="0" y1={dir ? "0" : "1"} x2={dir ? "1" : "0"} y2="0">
+      <stop offset="0%" stopColor={c} stopOpacity={0.55} />
+      <stop offset="100%" stopColor={c} stopOpacity={1} />
+    </linearGradient>
+  ));
+
 const axis = { stroke: "var(--muted)", fontSize: 12 };
 const tip = {
   contentStyle: { background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 8, color: "var(--text)", fontSize: 12 },
@@ -76,9 +85,10 @@ export function SlopeChart({ refPlace, sites }: { refPlace: Place; sites: Place[
         <YAxis {...axis} width={56} label={{ value: t("share_pct"), angle: -90, position: "insideLeft", fill: "var(--muted)", fontSize: 12, style: { textAnchor: "middle" } }} />
         <Tooltip {...tip} formatter={(v) => [`${v}%`]} cursor={{ fill: "var(--panel-2)" }} />
         <Legend verticalAlign="top" height={30} wrapperStyle={{ fontSize: 12 }} />
-        <Bar dataKey={refPlace.id} name={refPlace.name} fill={REF_COLOR} isAnimationActive={false} />
+        <defs>{gradients()}</defs>
+        <Bar dataKey={refPlace.id} name={refPlace.name} fill="url(#g-ref)" radius={[3, 3, 0, 0]} animationDuration={700} />
         {sites.filter((s) => s.terrain).map((s, i) => (
-          <Bar key={s.id} dataKey={s.id} name={s.name} fill={SERIES[i]} isAnimationActive={false} />
+          <Bar key={s.id} dataKey={s.id} name={s.name} fill={`url(#g-${i})`} radius={[3, 3, 0, 0]} animationDuration={700} />
         ))}
       </BarChart>
     </Frame>
@@ -103,8 +113,9 @@ export function DimensionChart({ sites, results }: { sites: Place[]; results: Di
             <YAxis type="category" dataKey="dim" width={150} {...axis} />
             <Tooltip {...tip} formatter={(v) => [v === null ? "no data" : Number(v).toFixed(0)]} cursor={{ fill: "var(--panel-2)" }} />
             <Legend verticalAlign="top" height={30} wrapperStyle={{ fontSize: 12 }} />
+            <defs>{gradients("h")}</defs>
             {sites.map((s, i) => (
-              <Bar key={s.id} dataKey={s.id} name={s.name} fill={SERIES[i]} isAnimationActive={false} />
+              <Bar key={s.id} dataKey={s.id} name={s.name} fill={`url(#gh-${i})`} radius={[0, 3, 3, 0]} animationDuration={700} />
             ))}
           </BarChart>
         </ResponsiveContainer>

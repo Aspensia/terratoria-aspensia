@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { DATASETS, type Dataset } from "@/data/datasets";
 import { DIMENSION_LABEL, DIMENSION_SIMPLE } from "@/lib/i18n";
 import type { Aggregate, Basis, DimensionResult, Place, Status } from "@/lib/types";
@@ -17,7 +18,7 @@ export function StatusBadge({ status }: { status?: Status }) {
   if (!status) return null;
   const known = status === "established" || status === "documented";
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-2 py-0.5 text-xs">
+    <span className={`chip inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs ${known ? "chip-ok" : "chip-warn"}`}>
       <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
         {known ? <circle cx="5" cy="5" r="4" fill="var(--ok)" /> : <rect x="1.5" y="1.5" width="7" height="7" transform="rotate(45 5 5)" fill="var(--warn)" />}
       </svg>
@@ -31,12 +32,32 @@ export function BasisChip({ basis }: { basis: Basis }) {
   return <span className="rounded border border-line px-1.5 py-px text-[11px] text-muted">{t(`basis_${basis}`)}</span>;
 }
 
+/** Eases a number up to its value whenever it changes (instant with reduced motion). */
+export function useCountUp(value: number | null, ms = 700): number | null {
+  const [shown, setShown] = useState(value);
+  useEffect(() => {
+    if (value === null || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return setShown(value);
+    let raf = 0;
+    const from = 0;
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / ms);
+      setShown(from + (value - from) * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value, ms]);
+  return shown;
+}
+
 export function IndexBadge({ agg, size = "md" }: { agg: Aggregate; size?: "md" | "lg" }) {
   const { t } = useApp();
+  const shown = useCountUp(agg.index);
   return (
     <div className="text-right">
       <div className={`font-mono font-semibold tabular-nums ${size === "lg" ? "text-5xl" : "text-2xl"}`} title={agg.index === null ? t("no_index_why") : t("index")}>
-        {agg.index === null ? "–" : agg.index.toFixed(0)}
+        {shown === null ? "–" : shown.toFixed(0)}
         {agg.index !== null && <span className="text-sm font-normal text-muted"> / 100</span>}
       </div>
       <div className="text-xs text-muted">
@@ -59,7 +80,7 @@ export function ScoreBar({ r, detail = false }: { r: DimensionResult; detail?: b
         </span>
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded bg-panel-2" role="img" aria-label={`${DIMENSION_LABEL[lang][r.id]}: ${r.score === null ? t("basis_none") : `${r.score.toFixed(0)} / 100`}`}>
-        {r.score !== null && <div className="h-full rounded bg-accent" style={{ width: `${pct.toFixed(1)}%` }} />}
+        {r.score !== null && <div className="bar-fill h-full rounded" style={{ width: `${pct.toFixed(1)}%` }} />}
       </div>
       {detail && (
         <div className="mt-2 text-sm text-muted">

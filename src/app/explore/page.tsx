@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp, useQuery } from "@/components/AppState";
 import { fmtCoord, IndexBadge, ScoreBar, StatusBadge } from "@/components/Bits";
 import { ZoomableImage } from "@/components/Lightbox";
@@ -139,6 +139,7 @@ export default function ExplorePage() {
   const { t } = useApp();
   const [params, setQuery] = useQuery();
   const drawer = useRef<HTMLElement>(null);
+  const [touring, setTouring] = useState(false);
 
   const bodyParam = params?.get("body");
   const world: World = WORLDS.includes(bodyParam as World) ? (bodyParam as World) : "moon";
@@ -167,11 +168,30 @@ export default function ExplorePage() {
     sfx(id ? "select" : "close");
     setQuery({ focus: id });
   };
+  const pick = (id: string | null) => {
+    setTouring(false); // any manual choice ends the tour
+    select(id);
+  };
+
+  // Guided tour: visit every location in turn, long enough to read the panel.
+  const focusId = focused?.id;
+  useEffect(() => {
+    if (!touring) return;
+    const next = () => {
+      const i = places.findIndex((p) => p.id === new URLSearchParams(window.location.search).get("focus"));
+      select(places[(i + 1) % places.length].id);
+    };
+    if (!focusId) next();
+    const id = setInterval(next, 7000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restart only when the tour or world changes
+  }, [touring, places]);
+  useEffect(() => setTouring(false), [world]);
 
   useEffect(() => {
     if (!focused) return;
     drawer.current?.focus({ preventScroll: true });
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && select(null);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && pick(null);
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- select only touches the URL
@@ -185,6 +205,10 @@ export default function ExplorePage() {
           <h1 className="text-3xl font-semibold tracking-tight">{t(world as Key)}</h1>
           <p className="text-sm text-muted">{t("explore_hint")}</p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <button type="button" className={`btn ${touring ? "btn-primary" : ""}`} aria-pressed={touring} onClick={() => setTouring((v) => !v)}>
+          {touring ? "■ Stop tour" : "▶ Guided tour"}
+        </button>
         <div role="tablist" aria-label={t("step1")} className="flex gap-1 rounded-xl border border-line bg-[var(--panel)] p-1">
           {WORLDS.map((w) => (
             <button
@@ -200,6 +224,7 @@ export default function ExplorePage() {
             </button>
           ))}
         </div>
+        </div>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-[250px_1fr]">
@@ -212,7 +237,7 @@ export default function ExplorePage() {
               <li key={p.id}>
                 <button
                   type="button"
-                  onClick={() => select(p.id)}
+                  onClick={() => pick(p.id)}
                   aria-current={p.id === focused?.id ? "true" : undefined}
                   className={`w-full rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-[var(--panel-2)] ${p.id === focused?.id ? "bg-[var(--panel-2)] text-text ring-1 ring-[var(--line-strong)]" : "text-muted"}`}
                 >
@@ -233,7 +258,7 @@ export default function ExplorePage() {
 
         <div className="card order-1 overflow-hidden p-0 lg:order-2">
           <div className="relative h-[58vh] min-h-[380px] lg:h-[72vh]">
-            <Globe key={world} world={world} markers={markers} selectedId={focused?.id ?? null} onSelect={(id) => select(id)} />
+            <Globe key={world} world={world} markers={markers} selectedId={focused?.id ?? null} onSelect={(id) => pick(id)} />
 
             {focused && (
               <aside
@@ -255,7 +280,7 @@ export default function ExplorePage() {
                       </div>
                     )}
                   </div>
-                  <button type="button" className="btn shrink-0" onClick={() => select(null)} aria-label={t("close")}>
+                  <button type="button" className="btn shrink-0" onClick={() => pick(null)} aria-label={t("close")}>
                     ✕
                   </button>
                 </div>

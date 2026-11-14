@@ -64,6 +64,9 @@ export default function Home() {
             <Link href="/explore/" className="btn px-5 py-2.5 text-base">
               {t("explore_3d")}
             </Link>
+            <Link href="/challenge/" className="btn px-5 py-2.5 text-base">
+              ▶ {t("nav_challenge")}
+            </Link>
           </div>
           <dl className="mt-10 grid max-w-xl grid-cols-2 gap-4 sm:grid-cols-4">
             {stats.map(([n, k]) => (
