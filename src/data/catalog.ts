@@ -275,7 +275,7 @@ const EARTH_SEEDS: Seed[] = [
       { title: "Rover drilling and sample handling", because: ["operations"] },
       { title: "Dust devil and dust-loading measurements", because: ["dust_wind"] },
     ],
-    differences: ["About 170 times Mars' surface pressure.", "Coastal fog reaches parts of the desert."],
+    differences: ["About 150 times Mars' surface pressure.", "Coastal fog reaches parts of the desert."],
   },
   {
     id: "mcmurdo-dry-valleys",
@@ -519,7 +519,7 @@ const EARTH_SEEDS: Seed[] = [
       { title: "Dried-lake mineralogy and evaporite sampling", because: ["geology", "water_ice"] },
       { title: "Wind erosion and yardang formation studies", because: ["dust_wind"] },
     ],
-    differences: ["Coordinates mark the Dalangtan playa region, not a single outcrop.", "About 110 times Mars' surface pressure even at this altitude."],
+    differences: ["Coordinates mark the Dalangtan playa region, not a single outcrop.", "About 120 times Mars' surface pressure even at this altitude."],
   },
   {
     id: "ries",
