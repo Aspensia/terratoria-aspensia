@@ -79,6 +79,15 @@ describe("scoreDimension", () => {
   });
 });
 
+describe("operations without field history", () => {
+  test("a slope-only operations score carries half quality", () => {
+    const site = full({ attributes: {} });
+    const r = scoreDimension("operations", full(), site);
+    expect(r.score).toBeCloseTo(100, 5);
+    expect(r.quality).toBeCloseTo(0.5, 5);
+  });
+});
+
 describe("aggregate", () => {
   test("a missing dimension does not change the index", () => {
     const withAll = scoreAll(full(), full({ terrain: terrain({ reliefM: 500 }) }));

@@ -34,6 +34,11 @@ for (const t of TARGETS) {
   try {
     const w = await readWindow(t);
     const m = terrainMetrics(w.grid, w.n, w.cellM);
+    if (m) {
+      // Elevation grid for the side-by-side shaded-relief view (metres, null = nodata).
+      mkdirSync("public/grids", { recursive: true });
+      writeFileSync(`public/grids/${t.id}.json`, JSON.stringify({ n: w.n, cellM: w.cellM, z: Array.from(w.grid, (v) => (Number.isFinite(v) ? Math.round(v) : null)) }));
+    }
     out[t.id] = m ? { ...m, product: w.product, url: w.url, retrieved } : null;
     console.log(t.id, m ? `slope50 ${m.slopeMedianDeg} relief ${m.reliefM} rough ${m.roughnessM} valid ${m.validFraction}` : "insufficient valid data");
   } catch (e) {

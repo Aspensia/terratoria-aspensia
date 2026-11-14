@@ -165,7 +165,14 @@ export function scoreDimension(id: DimensionId, ref: Place, site: Place): Dimens
     case "operations": {
       const tags = tagPart(id, ref, site);
       const mob = mobilityPart(ref, site);
-      return tags ? combine(id, [tags], [mob]) : combine(id, [mob]);
+      if (tags) return combine(id, [tags], [mob]);
+      // No documented field history: slope alone is weak evidence, so halve its quality.
+      const r = combine(id, [mob]);
+      if (r.score !== null) {
+        r.quality *= 0.5;
+        r.evidence.push("No documented field campaigns; based on slope similarity only");
+      }
+      return r;
     }
     default:
       return combine(id, [tagPart(id, ref, site)]);
