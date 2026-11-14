@@ -59,7 +59,7 @@ export function ScoreBar({ r, detail = false }: { r: DimensionResult; detail?: b
         </span>
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded bg-panel-2" role="img" aria-label={`${DIMENSION_LABEL[lang][r.id]}: ${r.score === null ? t("basis_none") : `${r.score.toFixed(0)} / 100`}`}>
-        {r.score !== null && <div className="h-full rounded bg-accent" style={{ width: `${pct}%` }} />}
+        {r.score !== null && <div className="h-full rounded bg-accent" style={{ width: `${pct.toFixed(1)}%` }} />}
       </div>
       {detail && (
         <div className="mt-2 text-sm text-muted">

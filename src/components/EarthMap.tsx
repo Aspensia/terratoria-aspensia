@@ -14,6 +14,8 @@ export interface MapSite {
 
 // NASA GIBS Blue Marble: open, no key. Static composite imagery, not live.
 const BASEMAP = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg";
+// The bundler cannot resolve the library's module worker, so it is served from /public (copied by "npm run copy:maplibre").
+maplibregl.setWorkerUrl(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/maplibre/maplibre-gl-worker.mjs`);
 const HOME = { center: [10, 22] as [number, number], zoom: 0.9 };
 
 export function EarthMap({ sites, onOpen }: { sites: MapSite[]; onOpen(id: string): void }) {
