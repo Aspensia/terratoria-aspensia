@@ -102,7 +102,7 @@ export function SolarSystem() {
     sun.add(glow("rgba(255,190,100,0.8)", 7, 0.55), glow("rgba(255,140,60,0.45)", 20, 0.35));
     scene.add(sun);
 
-    const orbitMat = new THREE.LineBasicMaterial({ color: 0x6cc4ff, transparent: true, opacity: 0.12 });
+    const orbitMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.07 });
     const bodies = PLANETS.map((p) => {
       const pts = Array.from({ length: 129 }, (_, i) => new THREE.Vector3(Math.cos((i / 128) * Math.PI * 2) * p.d, 0, Math.sin((i / 128) * Math.PI * 2) * p.d));
       scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), orbitMat));
@@ -157,10 +157,11 @@ export function SolarSystem() {
       lean.ty = (e.clientY / window.innerHeight - 0.5) * 2;
     };
     if (!still) window.addEventListener("pointermove", onMove);
-    const clock = new THREE.Clock();
+    const timer = new THREE.Timer();
     let frame = 0;
     const render = () => {
-      const t = still ? 20 : clock.getElapsedTime();
+      timer.update();
+      const t = still ? 20 : timer.getElapsed();
       for (const b of bodies) {
         const a = b.phase + t * b.speed * 0.25;
         b.holder.position.set(Math.cos(a) * b.d, 0, Math.sin(a) * b.d);
@@ -204,7 +205,7 @@ export function SolarSystem() {
   return createPortal(
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
       <canvas ref={ref} className="h-full w-full" />
-      <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(4,7,15,0.88) 0%, rgba(4,7,15,0.55) 45%, rgba(4,7,15,0.1) 100%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(8,9,11,0.9) 0%, rgba(8,9,11,0.58) 45%, rgba(8,9,11,0.1) 100%)" }} />
     </div>,
     document.body,
   );

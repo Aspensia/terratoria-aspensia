@@ -6,14 +6,14 @@ import { TEAM_KM } from "@/data/km";
 import { useApp } from "./AppState";
 import { AspensiaLogo } from "./Shell";
 
-// Each avatar gets its own gradient so the six tiles read as a set.
+// Quiet graphite tiles; a slight shift in tone keeps the six apart.
 const HUES = [
-  ["#1262c4", "#6cc4ff"],
-  ["#4b3fb8", "#8b7cff"],
-  ["#0f7a5c", "#4fc3a1"],
-  ["#b4532a", "#f2a36b"],
-  ["#8a2a7a", "#e07ad0"],
-  ["#a86b00", "#f2c94c"],
+  ["#2a2d33", "#3d4149"],
+  ["#2c2f35", "#41454d"],
+  ["#2b2e34", "#3f434b"],
+  ["#2d3036", "#43474f"],
+  ["#2a2d32", "#3c4048"],
+  ["#2c2f34", "#42464e"],
 ];
 
 function Avatar({ name, i, size = 48 }: { name: string; i: number; size?: number }) {

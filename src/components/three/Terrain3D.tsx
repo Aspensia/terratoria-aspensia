@@ -62,7 +62,7 @@ export function Terrain3D({ grid, body, label }: { grid: Grid; body: Body; label
     const scene = new THREE.Scene();
     scene.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 })));
     // Faint 10 km grid just under the lowest point gives a sense of scale.
-    const g = new THREE.GridHelper(sizeKm, 6, 0x6cc4ff, 0x6cc4ff);
+    const g = new THREE.GridHelper(sizeKm, 6, 0xb8bec8, 0xb8bec8);
     (g.material as THREE.Material).opacity = 0.12;
     (g.material as THREE.Material).transparent = true;
     scene.add(g);

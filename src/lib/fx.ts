@@ -14,7 +14,7 @@ export function ripple(btn: HTMLElement, clientX: number, clientY: number) {
   setTimeout(() => dot.remove(), 650);
 }
 
-const COLORS = ["#6cc4ff", "#8b7cff", "#4fc3a1", "#f2c94c", "#e07ad0", "#f2a36b"];
+const COLORS = ["#e9ebee", "#a9bfd6", "#4fc3a1", "#f2c94c", "#e07ad0", "#f2a36b"];
 
 /** Confetti burst from a screen point. */
 export function confetti(x: number, y: number, count = 28) {

@@ -19,7 +19,7 @@ import type { Place } from "@/lib/types";
 
 const Globe = dynamic(() => import("@/components/three/Globe").then((m) => m.Globe), {
   ssr: false,
-  loading: () => <div className="h-full w-full animate-pulse bg-[radial-gradient(circle,rgba(108,196,255,0.12),transparent_60%)]" />,
+  loading: () => <div className="h-full w-full animate-pulse bg-[radial-gradient(circle,rgba(255,255,255,0.06),transparent_60%)]" />,
 });
 
 type World = "earth" | "moon" | "mars";
