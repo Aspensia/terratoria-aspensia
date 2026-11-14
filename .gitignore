@@ -22,6 +22,7 @@
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
 
 # debug
@@ -42,3 +43,10 @@ next-env.d.ts
 .superpowers/
 pipeline/.cache/
 .impeccable/
+
+# copied from node_modules by `npm run copy:maplibre` before every dev/build
+/public/maplibre/
+
+# local editor and AI tool setup (shadcn MCP server, shadcn registry config)
+.mcp.json
+components.json

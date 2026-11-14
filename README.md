@@ -27,17 +27,21 @@ PROJECT: Terratoria was built by **Aspensia**, a team of six high school student
 - An "Exploratory Analogue Similarity Index": `Σ(W·Q·S) / Σ(W·Q)`. Missing data lowers coverage, never the score. It is a screening aid, not a probability.
 - A home page with an ambient 3D solar system, a Mission Challenge quiz built on the real scores, 3D terrain for every 60 km site window, and 3D explorers for Earth, the Moon and Mars with clickable sites and a data panel (Three.js).
 - Zoomable image viewer for relief views and NASA imagery; procedural sound (Web Audio API) with a mute toggle.
-- Site profiles, side-by-side comparison at identical scale, CSV export, printable report, shareable URLs, English and Khmer, dark and light themes.
+- Site profiles, side-by-side comparison at identical scale, CSV export, printable report, shareable URLs, English and Khmer, Simple and Scientific modes.
+- A Mission Plan page that walks through choosing a lunar base site, with worked examples (Atacama, Haughton, Death Valley).
+- A space backdrop on every page (the real Milky Way, twinkling stars, occasional shooting stars), smooth scrolling (Lenis) and GSAP motion. Everything rests when the visitor's system asks for reduced motion.
 
 This is not a global search. Only the places listed in `pipeline/targets.mjs` were analysed.
 
 ## Run it
 
+Needs Node.js 20.9 or newer (Next.js 16).
+
 ```bash
 npm install --legacy-peer-deps
 npm run dev          # http://localhost:3000
-npm test             # 30 unit tests + 6 pipeline tests
-npm run build        # static site in ./out
+npm test             # 49 unit tests + 6 pipeline tests
+npm run build        # static site in ./out (a postbuild step also runs pipeline/flatten-segments.mjs)
 ```
 
 `--legacy-peer-deps` is needed because the test runner's optional peer range conflicts with the scaffold's type package.
@@ -74,6 +78,8 @@ node pipeline/run-climate.mjs   # → src/data/generated/climate.json
 node pipeline/run-globe-textures.mjs  # → public/textures/{moon,moon-normal,mars-normal}.png from LOLA and MOLA; convert to .jpg for the site
 ```
 
+`npm run build` finishes with `pipeline/flatten-segments.mjs`, which copies Next.js prefetch files to the names the browser requests, so plain static hosts do not answer 404 on link prefetches.
+
 The terrain script reads a 60 km window per place with HTTP range requests, resamples every source to a common 463 m grid, and computes slope, relief, roughness and hypsometry. It first checks itself against known values (Mauna Loa summit, Jezero floor, Shackleton depth, Marius Hills elevation) and stops if they are off. Downloads are cached in `pipeline/.cache/`.
 
 To add a place: add it to `pipeline/targets.mjs`, rerun both scripts, then add its entry (tags with citations) to `src/data/catalog.ts`. The tests check that every tag is in the vocabulary and that every citation is an entry of the checked APA list in `src/data/references.ts`.
@@ -81,11 +87,11 @@ To add a place: add it to `pipeline/targets.mjs`, rerun both scripts, then add i
 ## Layout
 
 ```
-pipeline/            data reduction scripts (Node), run by hand
+pipeline/            data reduction scripts (Node), run by hand; flatten-segments.mjs runs after every build
 src/lib/scoring.ts   similarity engine: pure functions, no UI imports
 src/data/            catalogue, datasets, presets, generated pipeline output
 src/components/      map, relief canvas, charts, shared UI
-src/app/             pages: Discover, site, compare, saved, methods, about
+src/app/             pages: home, Discover, Explore (3D), Mission Plan, Mission Challenge, site, Compare, Saved, Methods, About
 docs/superpowers/    design and implementation plan
 SUBMISSION.md        draft text for the Space Apps project page
 ```
@@ -100,4 +106,6 @@ SUBMISSION.md        draft text for the Space Apps project page
 
 ## Credits
 
-LOLA Science Team (NASA GSFC); Diviner team (UCLA); MOLA Science Team; NASA Langley POWER Project; Copernicus DEM © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA; NASA GIBS. Not affiliated with or endorsed by NASA or ESA.
+LOLA Science Team (NASA GSFC); Diviner team (UCLA); MOLA Science Team; NASA Langley POWER Project; Copernicus DEM © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA; NASA GIBS (Blue Marble, VIIRS Black Marble); NASA 3D Resources; Cassini Jupiter map PIA07782 (NASA/JPL/Space Science Institute); Deep Star Maps 2020 (NASA/Goddard Space Flight Center Scientific Visualization Studio; Gaia DR2: ESA/Gaia/DPAC). Not affiliated with or endorsed by NASA or ESA.
+
+The data and imagery above keep their own terms. A licence added to this repository covers the code only.
