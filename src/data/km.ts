@@ -247,7 +247,7 @@ export function local(p: Place, lang: Lang) {
 export const tagLabel = (tag: string, lang: Lang) => (lang === "km" ? TAG_KM[tag] ?? tag : tag.replace(/_/g, " "));
 
 /** Khmer text for the dataset table. Product names and identifiers stay in English. */
-export const DATASET_KM: Record<string, { resolution: string; period: string; usedFor: string; quality: string }> = {
+export const DATASET_KM: Record<string, { resolution: string; period: string; usedFor: string; quality: string; instrument?: string; version?: string }> = {
   lola: {
     resolution: "៨០ ម. (ប៉ូល stereographic); ៦៤ ភីកសែល/ដឺក្រេ ប្រហែល ៤៧៤ ម. (ស៊ីឡាំង)",
     period: "តាំងពីឆ្នាំ ២០០៩ (ប្រមូលផ្តុំ)",
@@ -267,12 +267,14 @@ export const DATASET_KM: Record<string, { resolution: string; period: string; us
     quality: "ផលិតផលក្រឡាចត្រង្គ ដែលបំពេញចន្លោះរវាងគន្លង (ធំបំផុតក្បែរខ្សែអេក្វាទ័រ)។ កំណត់មាត្រដ្ឋានរួម ៤៦៣ ម. សម្រាប់គ្រប់ពិភព។",
   },
   power: {
+    instrument: "ការវិភាគឡើងវិញ MERRA-2 (ម៉ូដែលដែលបញ្ចូលការសង្កេតពីផ្កាយរណប)",
     resolution: "០.៥° × ០.៦២៥°",
     period: "ទិន្នន័យអាកាសធាតុច្រើនទសវត្សរ៍ (តាម API)",
     usedFor: "សីតុណ្ហភាព និងខ្យល់លើផែនដី៖ សីតុណ្ហភាពផ្ទៃមធ្យម និងតម្លៃខ្លាំងបំផុត ល្បឿនខ្យល់នៅកម្ពស់ ១០ ម.",
     quality: "ជាការវិភាគឡើងវិញដោយម៉ូដែល មិនមែនការសង្កេតផ្ទាល់ទេ។ មួយក្រឡា (ប្រហែល ៥០ គ.ម.) ក្នុងមួយទីតាំង ដូច្នេះអាកាសធាតុតូចៗ ដូចជាបាតរណ្តៅ ឬបាតជ្រលង មិនត្រូវបានបង្ហាញទេ។",
   },
   copdem: {
+    instrument: "អាំងទែរហ្វេរ៉ូម៉ែត្រីរ៉ាដា synthetic aperture ប៉ុស X",
     resolution: "៣ វិនាទីធ្នូ ប្រហែល ៩០ ម.",
     period: "ថតពីឆ្នាំ ២០១០ ដល់ ២០១៥",
     usedFor: "សណ្ឋានដីផែនដី៖ ជម្រាល កម្ពស់ខុសគ្នា ភាពរដិបរដុប hypsometry និងទម្រង់កម្ពស់",
@@ -297,6 +299,8 @@ export const DATASET_KM: Record<string, { resolution: string; period: string; us
     quality: "រូបភាពសម្រាប់បរិបទ។ មិនបានប្រើក្នុងពិន្ទុភាពស្រដៀងណាមួយទេ។",
   },
   nasa3d: {
+    version: "ឃ្លាំង GitHub សាខា master",
+    instrument: "ផែនទីផ្ទៃភព និងរូបថត Apollo",
     resolution: "ទទឹង ៧២០ ដល់ ២៨៨០ ភីកសែល",
     period: "ផ្សេងៗ",
     usedFor: "ឈុត 3D និងកម្មវិធីមើលរូបភាព (សម្រាប់បង្ហាញតែប៉ុណ្ណោះ មិនដាក់ពិន្ទុទេ)",
@@ -349,3 +353,10 @@ export const TEAM_KM: Record<string, { role: string; work: string }> = {
   "Yim Pichpanhasak": { role: "ការកែលម្អកម្មវិធី និងការធានាគុណភាព", work: "បានកែលម្អគេហទំព័រ និងកម្មវិធី ផ្ទៀងផ្ទាត់ទិន្នន័យ និងប្រភព ហើយកាត់តវីដេអូ។" },
   "Lim Rothsothyr": { role: "ប្រធានផ្នែកស្រាវជ្រាវ និងទិន្នន័យ", work: "បានស្វែងរក និងវិភាគទិន្នន័យ ចងក្រងការស្រាវជ្រាវ សរសេរព្រាងខ្លឹមសារ និងជួយគ្រប់គ្រងឃ្លាំង GitHub។" },
 };
+
+/** Khmer version of where a place's temperature numbers come from. */
+export function climateSourceKm(p: Place): string {
+  if (p.body === "earth") return "ទិន្នន័យអាកាសធាតុ NASA POWER (MERRA-2)៖ សីតុណ្ហភាពផ្ទៃ TS / TS_MAX / TS_MIN និងខ្យល់នៅកម្ពស់ ១០ ម. WS10M តម្លៃប្រចាំឆ្នាំ នៅក្រឡា ០.៥° × ០.៦២៥° ដែលមានទីតាំងនោះ";
+  if (p.body === "moon") return "ផលិតផលប្រមូលផ្តុំសកល LRO Diviner (LRO-L-DLRE-5-GCP-V1.0) សីតុណ្ហភាពពន្លឺ bolometric ក្នុងប្រអប់ ០.៥° ឆ្នាំ ២០០៩–២០១៥ (Williams et al., 2017)";
+  return "សីតុណ្ហភាពខ្យល់ជិតផ្ទៃដីដែលវាស់ដោយ Mars 2020 MEDA នៅ Jezero៖ មធ្យមប្រហែល -៥៥ °C ជាមួយការប្រែប្រួលប្រចាំថ្ងៃប្រហែល ៥០–៦០ K (Rodriguez-Manfredi et al., 2023)។ ជាសីតុណ្ហភាពខ្យល់នៅកម្ពស់ ១.៤៥ ម. មិនមែនសីតុណ្ហភាពផ្ទៃដីទេ";
+}

@@ -150,7 +150,7 @@ export function ProvenancePanel({ places, open = false }: { places: Place[]; ope
                   <span className="block text-muted">{d.mission}</span>
                 </td>
                 <td className="py-2 pr-3">
-                  {d.instrument}
+                  {km(d)?.instrument ?? d.instrument}
                   <a href={d.url} target="_blank" rel="noreferrer" className="block text-accent underline">
                     {d.product}
                   </a>

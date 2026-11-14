@@ -159,14 +159,14 @@ export default function MethodsPage() {
                     <tr key={d.id} className="border-t border-line align-top">
                       <td className="py-2 pr-3">
                         {d.mission}
-                        <span className="block text-muted">{d.instrument}</span>
+                        <span className="block text-muted">{dkm(d)?.instrument ?? d.instrument}</span>
                         <span className="block text-muted">{d.agency}</span>
                       </td>
                       <td className="py-2 pr-3">
                         <a href={d.url} target="_blank" rel="noreferrer" className="text-accent underline">
                           {d.product}
                         </a>
-                        <span className="block text-muted">{d.version}</span>
+                        <span className="block text-muted">{dkm(d)?.version ?? d.version}</span>
                       </td>
                       <td className="py-2 pr-3">
                         {dkm(d)?.resolution ?? d.resolution}

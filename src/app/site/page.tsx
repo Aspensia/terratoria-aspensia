@@ -8,7 +8,7 @@ import { ProfileChart, SlopeChart } from "@/components/Charts";
 import { ReliefCanvas } from "@/components/ReliefCanvas";
 import { getPlace, REFERENCES } from "@/data/catalog";
 import { GENERAL_LIMITS, LIMITS } from "@/data/limits";
-import { GENERAL_LIMITS_KM, LIMITS_KM, local } from "@/data/km";
+import { climateSourceKm, GENERAL_LIMITS_KM, LIMITS_KM, local } from "@/data/km";
 import { DIMENSION_LABEL, type Key } from "@/lib/i18n";
 import { aggregate, explain, scoreAll } from "@/lib/scoring";
 import { parseWeights, serializeWeights } from "@/lib/storage";
@@ -62,8 +62,17 @@ function MetricsTable({ site, refPlace }: { site: Place; refPlace: Place }) {
         </tbody>
       </table>
       <p className="mt-2 text-xs text-muted">
-        A dash means no data. {site.climate && <>Earth climate: {site.climate.cite}. </>}
-        {refPlace.climate && <>Reference: {refPlace.climate.cite}.</>}
+        {tx("A dash means no data.", "សញ្ញា – មានន័យថាគ្មានទិន្នន័យ។")}{" "}
+        {site.climate && (
+          <>
+            {tx("Earth climate", "អាកាសធាតុផែនដី")}: {lang === "km" ? climateSourceKm(site) : site.climate.cite}.{" "}
+          </>
+        )}
+        {refPlace.climate && (
+          <>
+            {tx("Reference", "តំបន់យោង")}: {lang === "km" ? climateSourceKm(refPlace) : refPlace.climate.cite}.
+          </>
+        )}
       </p>
     </div>
   );
