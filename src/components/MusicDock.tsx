@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { trackById, type Track } from "@/data/tracks";
+import { TRACKS, trackById, type Track } from "@/data/tracks";
 import { useApp } from "./AppState";
 
 /** Coloured Greek-letter badge, or the themed song's own icon. */
@@ -40,27 +40,53 @@ export function TrackBadge({ track, size = 28 }: { track: Track; size?: number }
   );
 }
 
-const cmd = (f: HTMLIFrameElement | null, func: string, args: unknown[] = []) =>
-  f?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "https://www.youtube-nocookie.com");
+const YT = "https://www.youtube-nocookie.com";
+const cmd = (f: HTMLIFrameElement | null, func: string, args: unknown[] = []) => f?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), YT);
+const clock = (s: number) => (Number.isFinite(s) && s > 0 ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "0:00");
+
+function Icon({ d, size = 14 }: { d: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d={d} />
+    </svg>
+  );
+}
+const PLAY = "M4 2.5v11l9-5.5z", PAUSE = "M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z", PREV = "M3 3h2v10H3zM14 3v10L6 8z", NEXT = "M11 3h2v10h-2zM2 3v10l8-5z";
 
 /**
- * Docked player for the YouTube songs. YouTube requires a visible player of at least 200 × 200 px while it plays,
- * so the dock never shrinks below that; collapsing it pauses the song.
+ * The site's music player. Songs with a licensed audio file play in the background through an <audio> element.
+ * YouTube songs play in YouTube's embedded player, kept visible (at least 200 × 200 px) as YouTube requires,
+ * driven by this player's own controls; collapsing the player pauses a YouTube song.
  */
 export function MusicDock() {
-  const { music, setMusic, musicAll, track: id, volume, muted, tx, lang } = useApp();
+  const { music, setMusic, musicAll, track: id, setTrack, volume, setVolume, muted, setMuted, tx, lang } = useApp();
   const track = trackById(id);
-  const frame = useRef<HTMLIFrameElement>(null);
-  const [open, setOpen] = useState(true);
   const home = usePathname() === "/";
+  const frame = useRef<HTMLIFrameElement>(null);
+  const audio = useRef<HTMLAudioElement>(null);
+  const [open, setOpen] = useState(true);
+  const [playing, setPlaying] = useState(true);
+  const [time, setTime] = useState({ cur: 0, dur: 0 });
+  const file = !!track.audio;
+  const yt = !file && !!track.youtube;
+  const level = muted ? 0 : volume;
 
-  // Loop by restarting at the end. (YouTube's own loop needs a one-song playlist, which pops up a playlist panel.)
+  // New song: start fresh and playing.
+  useEffect(() => {
+    setTime({ cur: 0, dur: 0 });
+    setPlaying(true);
+  }, [id]);
+
+  // YouTube reports its state and time by postMessage once asked to; it also loops here (its own loop needs a playlist).
   useEffect(() => {
     const onMsg = (e: MessageEvent) => {
       if (e.source !== frame.current?.contentWindow || typeof e.data !== "string") return;
       try {
         const d = JSON.parse(e.data);
-        const state = d.event === "onStateChange" ? d.info : d.info?.playerState;
+        const info = d.info ?? {};
+        if (typeof info.currentTime === "number" || typeof info.duration === "number")
+          setTime((tm) => ({ cur: info.currentTime ?? tm.cur, dur: info.duration || tm.dur }));
+        const state = d.event === "onStateChange" ? d.info : info.playerState;
         if (state === 0) {
           cmd(frame.current, "seekTo", [0, true]);
           cmd(frame.current, "playVideo");
@@ -73,58 +99,138 @@ export function MusicDock() {
     return () => window.removeEventListener("message", onMsg);
   }, []);
 
-  // Keep the player in step with the volume slider and the mute button.
+  // Keep the player in step with play/pause, collapse, volume and mute.
   useEffect(() => {
+    const go = playing && (open || file);
+    if (file && audio.current) {
+      audio.current.volume = level;
+      if (go) void audio.current.play().catch(() => setPlaying(false));
+      else audio.current.pause();
+      return;
+    }
     const apply = () => {
-      // Ask the player to report its state, so the loop above hears when the song ends.
-      frame.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "https://www.youtube-nocookie.com");
-      cmd(frame.current, "setVolume", [Math.round((muted ? 0 : volume) * 100)]);
-      cmd(frame.current, open ? "playVideo" : "pauseVideo");
+      frame.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), YT);
+      cmd(frame.current, "setVolume", [Math.round(level * 100)]);
+      cmd(frame.current, go ? "playVideo" : "pauseVideo");
     };
     apply();
     const f = frame.current;
     f?.addEventListener("load", apply);
     return () => f?.removeEventListener("load", apply);
-  }, [volume, muted, open, track.youtube]);
+  }, [playing, open, level, id, file]);
 
-  if (!music || !track.youtube || (!musicAll && !home)) return null;
+  if (!music || !(file || yt) || (!musicAll && !home)) return null;
+
+  const at = TRACKS.findIndex((x) => x.id === id);
+  const step = (d: number) => setTrack(TRACKS[(at + d + TRACKS.length) % TRACKS.length].id);
+  const seek = (v: number) => {
+    setTime((tm) => ({ ...tm, cur: v }));
+    if (file && audio.current) audio.current.currentTime = v;
+    else cmd(frame.current, "seekTo", [v, true]);
+  };
   const origin = typeof window === "undefined" ? "" : `&origin=${encodeURIComponent(window.location.origin)}`;
+  const toggle = () => {
+    if (!open && yt) setOpen(true);
+    setPlaying(!(playing && (open || file)));
+  };
+  const isOn = playing && (open || file);
 
   return (
-    <aside className={`music-dock no-print ${open ? "" : "is-closed"}`} aria-label={tx("Now playing", "កំពុងចាក់")}>
+    <aside className={`music-dock no-print ${open ? "" : "is-closed"}`} aria-label={tx("Music player", "កម្មវិធីចាក់តន្ត្រី")}>
       <div className="flex items-center gap-2 px-2.5 py-2">
-        <TrackBadge track={track} size={22} />
+        <TrackBadge track={track} size={24} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-xs font-semibold">{track.label}</span>
+          <span className="block truncate text-[11px] font-semibold tracking-wide" style={track.color ? { color: track.color } : undefined}>
+            {track.label}
+          </span>
           <span className="block truncate text-[11px] text-muted">
             {track.title} · {track.artist}
           </span>
         </span>
+        {!open && (
+          <button type="button" className="music-btn" aria-label={isOn ? tx("Pause", "ផ្អាក") : tx("Play", "ចាក់")} onClick={toggle}>
+            <Icon d={isOn ? PAUSE : PLAY} />
+          </button>
+        )}
         <button
           type="button"
-          className="btn h-8 min-h-0 px-2 text-xs"
+          className="music-btn"
           aria-expanded={open}
-          title={tx("YouTube only allows its player to play while it is visible, so hiding it pauses the song.", "YouTube អនុញ្ញាតឱ្យចាក់បានតែពេលកម្មវិធីចាក់អាចមើលឃើញ ដូច្នេះការលាក់វានឹងផ្អាកបទចម្រៀង។")}
+          aria-label={open ? tx("Collapse player", "បង្រួមកម្មវិធីចាក់") : tx("Expand player", "ពង្រីកកម្មវិធីចាក់")}
+          title={yt && open ? tx("YouTube songs pause while the player is collapsed (YouTube requires a visible player).", "បទពី YouTube នឹងផ្អាកពេលបង្រួម (YouTube តម្រូវឱ្យឃើញកម្មវិធីចាក់)។") : undefined}
           onClick={() => setOpen(!open)}
         >
-          {open ? tx("Pause & hide", "ផ្អាក និងលាក់") : tx("Play", "ចាក់")}
+          <Icon d={open ? "M3 6l5 5 5-5z" : "M3 10l5-5 5 5z"} />
         </button>
-        <button type="button" className="btn h-8 min-h-0 w-8 justify-center p-0" aria-label={tx("Turn music off", "បិទតន្ត្រី")} onClick={() => setMusic(false)}>
-          ×
+        <button type="button" className="music-btn" aria-label={tx("Turn music off", "បិទតន្ត្រី")} onClick={() => setMusic(false)}>
+          <span aria-hidden="true" className="text-base leading-none">×</span>
         </button>
       </div>
-      {/* Stays mounted while hidden so the song resumes where it paused. */}
-      <div className="music-frame" hidden={!open}>
-        <iframe
-          key={track.youtube}
-          ref={frame}
-          title={`${track.title} · ${track.artist}`}
-          src={`https://www.youtube-nocookie.com/embed/${track.youtube}?autoplay=1&enablejsapi=1&playsinline=1&rel=0&iv_load_policy=3${origin}`}
-          allow="autoplay; encrypted-media; picture-in-picture"
-          referrerPolicy="strict-origin-when-cross-origin"
-        />
-      </div>
-      {open && <p className="px-2.5 py-1.5 text-[10.5px] leading-snug text-muted">{track.credit[lang]}</p>}
+
+      {file && <audio ref={audio} src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${track.audio}`} loop preload="auto" onTimeUpdate={(e) => setTime({ cur: e.currentTarget.currentTime, dur: e.currentTarget.duration })} />}
+
+      {yt && (
+        // Stays mounted while collapsed so the song resumes where it paused.
+        <div className="music-frame" hidden={!open}>
+          <iframe
+            key={track.youtube}
+            ref={frame}
+            title={`${track.title} · ${track.artist}`}
+            src={`${YT}/embed/${track.youtube}?autoplay=1&enablejsapi=1&playsinline=1&rel=0&iv_load_policy=3&controls=0&disablekb=1${origin}`}
+            allow="autoplay; encrypted-media; picture-in-picture"
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        </div>
+      )}
+
+      {open && (
+        <div className="px-3 pb-2.5 pt-2">
+          <div className="flex items-center gap-1.5">
+            <button type="button" className="music-btn" aria-label={tx("Previous song", "បទមុន")} onClick={() => step(-1)}>
+              <Icon d={PREV} />
+            </button>
+            <button type="button" className="music-btn music-play" aria-label={isOn ? tx("Pause", "ផ្អាក") : tx("Play", "ចាក់")} onClick={toggle}>
+              <Icon d={isOn ? PAUSE : PLAY} size={16} />
+            </button>
+            <button type="button" className="music-btn" aria-label={tx("Next song", "បទបន្ទាប់")} onClick={() => step(1)}>
+              <Icon d={NEXT} />
+            </button>
+            <span className="ml-auto font-mono text-[10.5px] tabular-nums text-muted">
+              {clock(time.cur)} / {clock(time.dur)}
+            </span>
+          </div>
+          <input
+            type="range"
+            className="music-range mt-2 w-full"
+            min={0}
+            max={Math.max(1, time.dur)}
+            step={0.5}
+            value={Math.min(time.cur, time.dur || 1)}
+            onChange={(e) => seek(Number(e.target.value))}
+            aria-label={tx("Song position", "ទីតាំងក្នុងបទ")}
+            style={{ ["--p" as string]: `${time.dur ? (time.cur / time.dur) * 100 : 0}%` }}
+          />
+          <div className="mt-1.5 flex items-center gap-2">
+            <button type="button" className="music-btn" aria-label={muted ? tx("Unmute", "បើកសំឡេង") : tx("Mute", "បិទសំឡេង")} onClick={() => setMuted(!muted)}>
+              <Icon d={muted ? "M2 6h3l4-3v10l-4-3H2zM11 6l4 4M15 6l-4 4" : "M2 6h3l4-3v10l-4-3H2zM11.5 5.5a3.5 3.5 0 010 5"} />
+            </button>
+            <input
+              type="range"
+              className="music-range w-full"
+              min={0}
+              max={100}
+              value={Math.round(level * 100)}
+              onChange={(e) => {
+                setVolume(Number(e.target.value) / 100);
+                if (muted) setMuted(false);
+              }}
+              aria-label={tx("Volume", "កម្រិតសំឡេង")}
+              style={{ ["--p" as string]: `${level * 100}%` }}
+            />
+          </div>
+          <p className="mt-1.5 text-[10px] leading-snug text-muted">{track.credit[lang]}</p>
+        </div>
+      )}
     </aside>
   );
 }

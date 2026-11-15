@@ -1500,3 +1500,27 @@ html.has-cursor .cursor-ring { opacity: 0.55; }
 .amaze-btn { border-color: rgba(255, 90, 170, 0.45); color: #ffc2e2; }
 .amaze-btn:hover { box-shadow: 0 0 24px -6px rgba(255, 70, 160, 0.7); }
 .amaze-btn.is-on { background: linear-gradient(135deg, #ff3d8b, #b4248a); color: #fff; border-color: transparent; box-shadow: 0 0 30px -6px rgba(255, 70, 160, 0.9); }
+
+/* Custom music player controls */
+.music-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: var(--muted);
+  transition: color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+}
+.music-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.07); }
+.music-btn:active { transform: scale(0.92); }
+.music-play { width: 36px; height: 36px; border-radius: 50%; background: var(--text); color: var(--bg); }
+.music-play:hover { background: #fff; color: var(--bg); }
+.music-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #3d7bff, #ff3b30) 0 / var(--p, 0%) 100% no-repeat, rgba(255, 255, 255, 0.12);
+}
+.music-range::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(61, 123, 255, 0.25); }
+.music-range::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: #fff; }

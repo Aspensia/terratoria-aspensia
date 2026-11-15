@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useApp } from "@/components/AppState";
+import { TrackBadge } from "@/components/MusicDock";
 import { TeamSection } from "@/components/Team";
 import { EARTH_SITES, REFERENCES } from "@/data/catalog";
+import { TRACKS } from "@/data/tracks";
 
 export default function AboutPage() {
-  const { t, tx } = useApp();
+  const { t, tx, lang } = useApp();
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header>
@@ -91,6 +93,37 @@ export default function AboutPage() {
               "ឯកសារយោងត្រូវបានផ្ទៀងផ្ទាត់ជាមួយកំណត់ត្រា Crossref និង NASA ហើយមានរាយក្នុងទម្រង់ APA បោះពុម្ពលើកទី ៧ នៅទំព័រទិន្នន័យ និងវិធីសាស្ត្រ។ ការបកប្រែភាសាខ្មែរត្រូវបានពិនិត្យសម្រាប់ភាពត្រឹមត្រូវ។",
             )}
           </li>
+        </ul>
+      </section>
+
+      <section className="card p-5">
+        <h2 className="text-lg font-semibold">{tx("Music", "តន្ត្រី")}</h2>
+        <p className="mt-2 text-sm text-muted">
+          {tx(
+            "Theme songs are chosen in Settings. ALPHA is synthesised in your browser. The others stream from YouTube in its own player; no recording is copied or hosted on this site, and each remains its owner's work.",
+            "បទភ្លេងប្រធានបទត្រូវបានជ្រើសរើសក្នុងការកំណត់។ ALPHA ត្រូវបានបង្កើតក្នុងកម្មវិធីរុករករបស់អ្នក។ បទផ្សេងទៀតចាក់ពី YouTube ក្នុងកម្មវិធីចាក់របស់វាផ្ទាល់ គ្មានការថតចម្លង ឬដាក់បង្ហោះនៅលើគេហទំព័រនេះទេ ហើយបទនីមួយៗនៅតែជាកម្មសិទ្ធិរបស់ម្ចាស់។",
+          )}
+        </p>
+        <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+          {TRACKS.map((tr) => (
+            <li key={tr.id} className="flex items-start gap-3 rounded-xl border border-line p-3">
+              <TrackBadge track={tr} size={30} />
+              <span className="min-w-0 text-sm">
+                <span className="block text-xs font-semibold tracking-wide" style={tr.color ? { color: tr.color } : undefined}>
+                  {tr.label}
+                </span>
+                <span className="block font-medium">
+                  {tr.title} · {tr.artist}
+                </span>
+                <span className="block text-xs text-muted">{tr.credit[lang]}</span>
+                {tr.youtube && (
+                  <a className="mt-1 inline-block text-xs text-accent hover:underline" href={`https://www.youtube.com/watch?v=${tr.youtube}`} target="_blank" rel="noopener noreferrer">
+                    {tx("Listen on YouTube ↗", "ស្តាប់នៅលើ YouTube ↗")}
+                  </a>
+                )}
+              </span>
+            </li>
+          ))}
         </ul>
       </section>
 

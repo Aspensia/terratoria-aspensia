@@ -15,6 +15,11 @@ export interface Track {
   artist: string;
   credit: { en: string; km: string };
   youtube?: string;
+  /**
+   * A licensed audio file in public/audio/ (for example "/audio/beta.mp3"). When set, the song plays in the
+   * background with no visible player. Only add a file the team has a licence to publish on a website.
+   */
+  audio?: string;
   scene: Scene;
   sceneNote?: { en: string; km: string };
 }
