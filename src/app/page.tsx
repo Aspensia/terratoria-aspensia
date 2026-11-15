@@ -15,7 +15,6 @@ import { textureUrl } from "@/components/three/space";
 import { EARTH_SITES, REFERENCES } from "@/data/catalog";
 import { DATASETS } from "@/data/datasets";
 import { DATASET_KM } from "@/data/km";
-import { ambient } from "@/lib/audio";
 import type { Key } from "@/lib/i18n";
 import { DIMENSIONS } from "@/lib/types";
 
@@ -140,11 +139,6 @@ export default function Home() {
       );
     }, grid);
     return () => ctx.revert();
-  }, []);
-
-  useEffect(() => {
-    ambient(true);
-    return () => ambient(false);
   }, []);
 
   const stats: [number, Key][] = [

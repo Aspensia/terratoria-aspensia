@@ -75,7 +75,7 @@ export function EarthMap({ sites, onOpen }: { sites: MapSite[]; onOpen(id: strin
       b.style.cssText = `width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;border:none;padding:0;`;
       const size = rank !== null && rank <= 3 ? 20 : 15;
       // Circle = known site, diamond = candidate. Shape carries the meaning; colour only reinforces it.
-      b.innerHTML = `<span style="display:block;width:${size}px;height:${size}px;background:${known ? "#4fc3a1" : "#e6b34d"};border:2px solid #06111f;box-shadow:0 0 0 1.5px #fff;${known ? "border-radius:50%" : "transform:rotate(45deg)"};font:600 10px/1 sans-serif;color:#06111f;display:flex;align-items:center;justify-content:center"><span style="${known ? "" : "transform:rotate(-45deg)"}">${rank !== null && rank <= 3 ? rank : ""}</span></span>`;
+      b.innerHTML = `<span style="display:block;width:${size}px;height:${size}px;background:${known ? "var(--ok)" : "var(--warn)"};border:2px solid #06111f;box-shadow:0 0 0 1.5px #fff;${known ? "border-radius:50%" : "transform:rotate(45deg)"};font:600 10px/1 sans-serif;color:#06111f;display:flex;align-items:center;justify-content:center"><span style="${known ? "" : "transform:rotate(-45deg)"}">${rank !== null && rank <= 3 ? rank : ""}</span></span>`;
       const popup = new maplibregl.Popup({ offset: 14, closeButton: false }).setHTML(
         `<strong>${L.name}</strong><br><span style="opacity:.75">${L.country ?? ""}</span><br>${index === null ? tx("No index (insufficient data)", "គ្មានសន្ទស្សន៍ (ទិន្នន័យមិនគ្រប់គ្រាន់)") : `${t("index_short")} ${index.toFixed(0)} / 100`}`,
       );
@@ -113,11 +113,11 @@ export function EarthMap({ sites, onOpen }: { sites: MapSite[]; onOpen(id: strin
       <div className="flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-line px-3 py-2 text-xs">
         <span className="label">{t("legend")}</span>
         <span className="flex items-center gap-1.5">
-          <svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="#4fc3a1" stroke="#fff" /></svg>
+          <svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="var(--ok)" stroke="#fff" /></svg>
           {t("legend_known")}
         </span>
         <span className="flex items-center gap-1.5">
-          <svg width="12" height="12" aria-hidden="true"><rect x="2" y="2" width="8" height="8" transform="rotate(45 6 6)" fill="#e6b34d" stroke="#fff" /></svg>
+          <svg width="12" height="12" aria-hidden="true"><rect x="2" y="2" width="8" height="8" transform="rotate(45 6 6)" fill="var(--warn)" stroke="#fff" /></svg>
           {t("legend_new")}
         </span>
         <span className="text-muted">{tx("1–3 = top ranked", "១–៣ = ចំណាត់ថ្នាក់កំពូល")}</span>

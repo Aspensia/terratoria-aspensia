@@ -171,7 +171,7 @@ export default function ExplorePage() {
           lat: p.lat,
           lon: p.lon,
           label: local(p, lang).name,
-          color: p.body === "earth" ? (known ? "#4fc3a1" : "#e6b34d") : "#e69f00",
+          color: p.body === "earth" ? (known ? "var(--ok)" : "var(--warn)") : "var(--ref)",
           shape: p.body === "earth" && !known ? "diamond" : "circle",
         };
       }),

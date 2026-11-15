@@ -131,7 +131,7 @@ export function WorldTour() {
           <div role="group" aria-label={tx("Choose a world", "ជ្រើសរើសពិភព")} className="flex gap-2">
             {STOPS.map((s, n) => (
               <button key={s.id} type="button" aria-pressed={n === i} onClick={() => pick(n)} className="tour-pick">
-                <span aria-hidden="true" className="globe-thumb h-7 w-7 rounded-full" style={{ backgroundImage: `url(${textureUrl(s.id)})` }} />
+                <span aria-hidden="true" className="globe-thumb h-7 w-7 rounded-full" style={{ backgroundImage: `url(${textureUrl(s.id, true)})` }} />
                 <span className="hidden sm:inline">{t(s.id)}</span>
                 {n === i && playing && <span key={i} aria-hidden="true" className="tour-progress" style={{ animationDuration: `${HOLD_MS}ms` }} />}
               </button>

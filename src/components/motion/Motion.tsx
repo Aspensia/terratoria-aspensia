@@ -98,8 +98,12 @@ export function useNavPill(list: RefObject<HTMLUListElement | null>, pill: RefOb
     };
     place(!p.dataset.placed);
     p.dataset.placed = "1";
+    // Watch every link, not just the list: a language switch (and the Khmer web font arriving
+    // a moment later) changes link widths without changing the list's own size.
     const ro = new ResizeObserver(() => place(true));
     ro.observe(ul);
+    ul.querySelectorAll("a").forEach((a) => ro.observe(a));
+    document.fonts?.ready.then(() => place(true));
     return () => ro.disconnect();
   }, [list, pill, key]);
 }

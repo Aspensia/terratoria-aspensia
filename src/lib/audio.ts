@@ -8,6 +8,8 @@ let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let echo: GainNode | null = null; // send into a short feedback delay, for a little sparkle
 let muted = false;
+let volume = 0.7;
+const level = () => (muted ? 0 : volume);
 let wantAmbient = false;
 let ambientStop: (() => void) | null = null;
 let lastHover = 0;
@@ -21,7 +23,13 @@ export function isMuted() {
 
 export function setMuted(m: boolean) {
   muted = m;
-  if (ctx && master) master.gain.setTargetAtTime(m ? 0 : 1, ctx.currentTime, 0.08);
+  if (ctx && master) master.gain.setTargetAtTime(level(), ctx.currentTime, 0.08);
+}
+
+/** Master volume, 0–1 (the Settings slider). */
+export function setVolume(v: number) {
+  volume = Math.min(1, Math.max(0, v));
+  if (ctx && master) master.gain.setTargetAtTime(level(), ctx.currentTime, 0.05);
 }
 
 /** Creates or resumes the audio context. Must run inside a user gesture. */
@@ -32,7 +40,7 @@ export function unlock() {
     if (!AC) return;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = muted ? 0 : 1;
+    master.gain.value = level();
     master.connect(ctx.destination);
     // Echo: delay with soft feedback, high frequencies rolled off so repeats stay gentle.
     echo = ctx.createGain();
@@ -101,55 +109,122 @@ export function sfx(kind: Sfx) {
   }
 }
 
+// A licensed recording can replace the synthesised theme: put the file in public/audio/ and set its path here,
+// e.g. "/audio/ambient.mp3". Only use music the team has permission to publish.
+const AMBIENT_FILE: string | null = null;
+
+// Slow cinematic progression: Cmaj9 → Am9 → Fmaj7(#11) → G6sus, one chord every 9 s.
+const CHORDS = [
+  [130.81, 196.0, 246.94, 293.66, 329.63],
+  [110.0, 164.81, 196.0, 246.94, 261.63],
+  [87.31, 130.81, 164.81, 220.0, 246.94],
+  [98.0, 146.83, 164.81, 220.0, 261.63],
+];
+
+/** Long, soft reverb tail from decaying stereo noise: the "space" in the sound. */
+function reverb(c: AudioContext, seconds = 3.2) {
+  const len = Math.floor(c.sampleRate * seconds);
+  const ir = c.createBuffer(2, len, c.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = ir.getChannelData(ch);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+  }
+  const conv = c.createConvolver();
+  conv.buffer = ir;
+  return conv;
+}
+
 function startAmbient() {
   if (!ctx || !master) return;
   const c = ctx;
   const out = c.createGain();
   out.gain.value = 0;
-  out.gain.setTargetAtTime(0.06, c.currentTime, 2); // slow fade in
+  out.gain.setTargetAtTime(AMBIENT_FILE ? 0.5 : 0.09, c.currentTime, 2); // slow fade in
+  out.connect(master);
+
+  if (AMBIENT_FILE) {
+    const el = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${AMBIENT_FILE}`);
+    el.loop = true;
+    c.createMediaElementSource(el).connect(out);
+    void el.play();
+    ambientStop = () => {
+      out.gain.setTargetAtTime(0, c.currentTime, 0.5);
+      setTimeout(() => el.pause(), 2500);
+      ambientStop = null;
+    };
+    return;
+  }
+
+  const room = reverb(c);
+  const wet = c.createGain();
+  wet.gain.value = 0.7;
+  room.connect(wet).connect(out);
   const lp = c.createBiquadFilter();
   lp.type = "lowpass";
-  lp.frequency.value = 1800;
-  lp.connect(out).connect(master);
+  lp.frequency.value = 950;
+  lp.Q.value = 0.4;
+  lp.connect(out);
+  lp.connect(room);
 
-  // Warm, open pad: C major add9 voiced high enough to feel airy, never rumbling.
-  const pad = [261.63, 329.63, 392.0, 587.33].map((f, i) => {
+  // Pad: five voices that glide from chord to chord, each breathing at its own slow rate.
+  const voices = CHORDS[0].map((f, i) => {
     const o = c.createOscillator();
-    o.type = "sine";
+    o.type = i % 2 ? "triangle" : "sine";
     o.frequency.value = f;
-    o.detune.value = (i - 1.5) * 4;
+    o.detune.value = (i - 2) * 5;
     const g = c.createGain();
-    g.gain.value = 0.16;
-    // Each voice swells at its own slow rate, so the chord gently breathes.
+    g.gain.value = 0.11;
     const lfo = c.createOscillator();
     const depth = c.createGain();
-    lfo.frequency.value = 0.07 + i * 0.023;
-    depth.gain.value = 0.08;
+    lfo.frequency.value = 0.05 + i * 0.017;
+    depth.gain.value = 0.05;
     lfo.connect(depth).connect(g.gain);
     o.connect(g).connect(lp);
     o.start();
     lfo.start();
-    return [o, lfo];
+    return { o, lfo };
   });
 
-  // Twinkles: a random high pentatonic chime every couple of seconds, through the echo.
-  let twinkle: ReturnType<typeof setTimeout>;
-  const sparkle = () => {
-    if (!muted) note(pick(PENTA) * (Math.random() < 0.4 ? 2 : 1), { dur: 1.2, peak: 0.018 });
-    twinkle = setTimeout(sparkle, 1400 + Math.random() * 2600);
+  let step = 0;
+  const change = setInterval(() => {
+    step = (step + 1) % CHORDS.length;
+    voices.forEach((v, i) => v.o.frequency.setTargetAtTime(CHORDS[step][i], c.currentTime, 1.4));
+  }, 9000);
+
+  // Piano-like melody: a soft, slowly decaying note from the current chord, two octaves up, into the reverb.
+  let melody: ReturnType<typeof setTimeout>;
+  const play = () => {
+    if (!muted && c.state === "running") {
+      const t = c.currentTime;
+      const f = pick(CHORDS[step].slice(1)) * (Math.random() < 0.7 ? 4 : 2);
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = "triangle";
+      o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.06, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+      o.connect(g);
+      g.connect(room);
+      g.connect(out);
+      o.start(t);
+      o.stop(t + 3.3);
+    }
+    melody = setTimeout(play, 1600 + Math.random() * 2800);
   };
-  twinkle = setTimeout(sparkle, 1200);
+  melody = setTimeout(play, 2500);
 
   ambientStop = () => {
-    clearTimeout(twinkle);
+    clearTimeout(melody);
+    clearInterval(change);
     out.gain.setTargetAtTime(0, c.currentTime, 0.5);
     const stopAt = c.currentTime + 3;
-    pad.flat().forEach((n) => n.stop(stopAt));
+    voices.forEach((v) => (v.o.stop(stopAt), v.lfo.stop(stopAt)));
     ambientStop = null;
   };
 }
 
-/** Home-page ambience. Starts after the first user gesture if requested before it. */
+/** Theme music for the whole site. Starts after the first user gesture if requested before it. */
 export function ambient(on: boolean) {
   wantAmbient = on;
   if (on && ctx?.state === "running" && !ambientStop) startAmbient();

@@ -10,6 +10,9 @@ import type { Key } from "@/lib/i18n";
 import type { Place } from "@/lib/types";
 import { useApp } from "./AppState";
 import { ScrollProgress, useNavPill, usePageEnter, useSpotlight } from "./motion/Motion";
+import { Cursor } from "./Cursor";
+import { RouteLoader } from "./RouteLoader";
+import { Settings } from "./Settings";
 import { SpaceBackdrop } from "./SpaceBackdrop";
 
 const NAV: { href: string; key: Key }[] = [
@@ -174,6 +177,8 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <>
       <SpaceBackdrop />
+      <Cursor />
+      <RouteLoader />
       <a href="#main" className="btn btn-primary sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
         {t("skip")}
       </a>
@@ -215,6 +220,7 @@ export function Shell({ children }: { children: ReactNode }) {
             >
               <SoundIcon muted={muted} />
             </button>
+            <Settings />
           </div>
         </div>
         <nav aria-label="Main" className="mx-auto flex max-w-7xl items-center gap-3 px-4">

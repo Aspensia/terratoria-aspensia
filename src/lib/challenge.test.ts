@@ -63,3 +63,16 @@ describe("challenge rounds", () => {
     expect(rankTitle(10, 10)).toBe("Flight Director");
   });
 });
+
+describe("hints", () => {
+  test("a hint never removes or gives away the right answer", async () => {
+    const { hintFor } = await import("./challenge");
+    for (let s = 1; s <= 50; s++) {
+      for (const r of makeGame(seeded(s), 10)) {
+        const h = hintFor(r, seeded(s));
+        if (h.kind === "remove") expect(h.id).not.toBe(r.answer);
+        else expect(r.kind).toBe("duel");
+      }
+    }
+  });
+});

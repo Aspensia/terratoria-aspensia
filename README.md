@@ -26,7 +26,10 @@ PROJECT: Terratoria was built by **Aspensia**, a team of six high school student
 - 8 dimensions, matching the challenge's list. Terrain, temperature and wind are **measured** from open data. Geology, illumination, water and ice, aeolian features, biology, subsurface and operations are **literature-derived** and labelled as such.
 - An "Exploratory Analogue Similarity Index": `Σ(W·Q·S) / Σ(W·Q)`. Missing data lowers coverage, never the score. It is a screening aid, not a probability.
 - A home page with an ambient 3D solar system, a letterboxed world tour that warps between Earth, the Moon and Mars (auto-advances, with a pause control), a Mission Challenge quiz built on the real scores, 3D terrain for every 60 km site window, and 3D explorers for Earth, the Moon and Mars with clickable sites and a data panel (Three.js).
-- Zoomable image viewer for relief views and NASA imagery; procedural sound (Web Audio API) with a mute toggle.
+- Mission Challenge has three games: the 10-round Quiz (with hints that remove a wrong answer or reveal a value), a 60-second Rush, and Touchdown, a rocket-landing game where only gravity changes between the Moon, Mars and Earth.
+- Zoomable image viewer for relief views and NASA imagery; procedural sound and theme music (Web Audio API) with a mute toggle and a volume slider.
+- Settings (gear icon): Base Mode or Lite Mode (smaller textures, fewer polygons, 1x pixel ratio, for low-memory devices), volume, and a colour-vision palette for protan, deutan and tritan colour blindness and for achromatopsia (each with its weaker "-anomaly" form).
+- A short transition with a random space fact on every page change.
 - Site profiles, side-by-side comparison at identical scale, CSV export, printable report, shareable URLs, English and Khmer, Simple and Scientific modes.
 - A Mission Plan page that walks through choosing a lunar base site, with worked examples (Atacama, Haughton, Death Valley).
 - A space backdrop on every page (the real Milky Way, twinkling stars, occasional shooting stars), smooth scrolling (Lenis), GSAP motion and a custom cursor drawn from the Aspensia mark (`src/app/cursor/`; the full-size vector is `public/aspensia-mark.svg`). Everything rests when the visitor's system asks for reduced motion.
@@ -40,7 +43,7 @@ Needs Node.js 20.9 or newer (Next.js 16).
 ```bash
 npm install --legacy-peer-deps
 npm run dev          # http://localhost:3000
-npm test             # 49 unit tests + 6 pipeline tests
+npm test             # 54 unit tests + 6 pipeline tests
 npm run build        # static site in ./out (a postbuild step also runs pipeline/flatten-segments.mjs)
 ```
 

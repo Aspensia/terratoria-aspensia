@@ -9,6 +9,9 @@ import { ripple } from "@/lib/fx";
 import { readSaved, toggleId, writeSaved } from "@/lib/storage";
 
 type Mode = "simple" | "science";
+export type Perf = "base" | "lite";
+export const VISIONS = ["default", "protanopia", "protanomaly", "deuteranopia", "deuteranomaly", "tritanopia", "tritanomaly", "achromatopsia", "achromatomaly"] as const;
+export type Vision = (typeof VISIONS)[number];
 
 interface AppState {
   lang: Lang;
@@ -19,6 +22,15 @@ interface AppState {
   toggleSaved(id: string): void;
   muted: boolean;
   setMuted(m: boolean): void;
+  /** 0–1. */
+  volume: number;
+  setVolume(v: number): void;
+  /** Base Mode (full quality) or Lite Mode (less memory). Changing it reloads the page so 3D scenes rebuild. */
+  perf: Perf;
+  setPerf(p: Perf): void;
+  /** Colour-vision palette for data colours. */
+  vision: Vision;
+  setVision(v: Vision): void;
   t(key: Key): string;
   /** Inline bilingual text: tx("English", "ខ្មែរ"). */
   tx(en: string, km: string): string;
@@ -46,6 +58,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<Mode>("science");
   const [saved, setSaved] = useState<string[]>([]);
   const [muted, setMutedState] = useState(false);
+  const [volume, setVolumeState] = useState(0.7);
+  const [perf, setPerfState] = useState<Perf>("base");
+  const [vision, setVisionState] = useState<Vision>("default");
 
   useEffect(() => {
     if (pref("terratoria.lang") === "km") setLangState("km");
@@ -54,7 +69,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMutedState(true);
       audio.setMuted(true);
     }
+    const v = Number(pref("terratoria.volume") ?? "0.7");
+    if (Number.isFinite(v) && v >= 0 && v <= 1) {
+      setVolumeState(v);
+      audio.setVolume(v);
+    }
+    // The inline script in layout.tsx already applied these to <html>; mirror them into state.
+    if (document.documentElement.dataset.perf === "lite") setPerfState("lite");
+    const vis = document.documentElement.dataset.vision as Vision | undefined;
+    if (vis && VISIONS.includes(vis)) setVisionState(vis);
     setSaved(readSaved(store(), PLACES.map((p) => p.id)));
+    audio.ambient(true); // site-wide theme music; starts on the first click or key press
   }, []);
 
   useEffect(() => {
@@ -106,10 +131,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSaved,
       muted,
       setMuted: (m) => (setMutedState(m), audio.setMuted(m), setPref("terratoria.muted", m ? "1" : "0")),
+      volume,
+      setVolume: (v) => (setVolumeState(v), audio.setVolume(v), setPref("terratoria.volume", String(v))),
+      perf,
+      setPerf: (p) => {
+        setPref("terratoria.perf", p);
+        window.location.reload();
+      },
+      vision,
+      setVision: (v) => {
+        setVisionState(v);
+        setPref("terratoria.vision", v);
+        if (v === "default") delete document.documentElement.dataset.vision;
+        else document.documentElement.dataset.vision = v;
+      },
       t: (key) => STRINGS[lang][key],
       tx: (en, km) => (lang === "km" ? km : en),
     }),
-    [lang, mode, saved, toggleSaved, muted],
+    [lang, mode, saved, toggleSaved, muted, volume, perf, vision],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -38,12 +38,30 @@ export function SpaceBackdrop() {
     const sx = sc.getContext("2d"), mx = mc.getContext("2d");
     if (!sx || !mx) return;
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const lite = document.documentElement.dataset.perf === "lite";
+    // One pre-drawn glow per star colour, reused every frame instead of a new gradient per star.
+    const glows = new Map<string, HTMLCanvasElement>();
+    const glowOf = (c: string) => {
+      let g = glows.get(c);
+      if (!g) {
+        g = document.createElement("canvas");
+        g.width = g.height = 32;
+        const x = g.getContext("2d")!;
+        const rg = x.createRadialGradient(16, 16, 0, 16, 16, 16);
+        rg.addColorStop(0, `rgba(${c},1)`);
+        rg.addColorStop(1, `rgba(${c},0)`);
+        x.fillStyle = rg;
+        x.fillRect(0, 0, 32, 32);
+        glows.set(c, g);
+      }
+      return g;
+    };
     let w = 0, h = 0, dpr = 1;
     let stars: Star[] = [];
     const meteors: Meteor[] = [];
 
     const resize = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = lite ? 1 : Math.min(window.devicePixelRatio || 1, 2);
       w = window.innerWidth;
       h = window.innerHeight;
       for (const c of [sc, mc]) {
@@ -52,7 +70,7 @@ export function SpaceBackdrop() {
       }
       sx.setTransform(dpr, 0, 0, dpr, 0, 0);
       mx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const n = Math.round((w * h) / (w < 700 ? 3200 : 2400));
+      const n = Math.round((w * h) / (w < 700 || lite ? 3600 : 2400));
       stars = Array.from({ length: n }, () => {
         const b = Math.pow(Math.random(), 3.2); // many faint stars, few bright ones
         return { x: Math.random() * w, y: Math.random() * h, r: 0.3 + b * 1.35, a: 0.25 + b * 0.75, c: pick(), tw: 0.6 + Math.random() * 2.2, ph: Math.random() * 6.3, big: b > 0.82 };
@@ -65,11 +83,9 @@ export function SpaceBackdrop() {
       for (const s of stars) {
         const a = still ? s.a : s.a * (0.72 + 0.28 * Math.sin(t * s.tw + s.ph));
         if (s.big) {
-          const g = sx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 5);
-          g.addColorStop(0, `rgba(${s.c},${a * 0.55})`);
-          g.addColorStop(1, `rgba(${s.c},0)`);
-          sx.fillStyle = g;
-          sx.fillRect(s.x - s.r * 5, s.y - s.r * 5, s.r * 10, s.r * 10);
+          sx.globalAlpha = a * 0.55;
+          sx.drawImage(glowOf(s.c), s.x - s.r * 5, s.y - s.r * 5, s.r * 10, s.r * 10);
+          sx.globalAlpha = 1;
           // Faint four-point diffraction spikes, as a telescope camera records bright stars.
           sx.strokeStyle = `rgba(${s.c},${a * 0.28})`;
           sx.lineWidth = 0.6;
@@ -152,13 +168,15 @@ export function SpaceBackdrop() {
     window.addEventListener("resize", resize);
     if (still) return () => window.removeEventListener("resize", resize);
 
-    let frame = 0, lastStars = 0, timer = 0;
+    let frame = 0, lastStars = 0, timer = 0, dirty = false;
     const loop = (now: number) => {
-      if (now - lastStars > 66) {
-        drawStars(now / 1000); // twinkle at about 15 fps; it is slow, so this is plenty
+      if (now - lastStars > (lite ? 120 : 66)) {
+        drawStars(now / 1000); // twinkle at about 15 fps (8 in Lite Mode); it is slow, so this is plenty
         lastStars = now;
       }
-      mx.clearRect(0, 0, w, h);
+      // Clear the meteor layer only when something was drawn on it: most frames have no meteor.
+      if (dirty || meteors.length) mx.clearRect(0, 0, w, h);
+      dirty = meteors.length > 0;
       for (let i = meteors.length - 1; i >= 0; i--) if (!drawMeteor(meteors[i], now)) meteors.splice(i, 1);
       frame = requestAnimationFrame(loop);
     };

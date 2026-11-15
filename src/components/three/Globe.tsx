@@ -77,7 +77,7 @@ export function Globe({
     scene.add(globe);
     if (ATMOSPHERE[world]) scene.add(atmosphere(1.06, ATMOSPHERE[world]!));
     for (const b of BACKDROP[world]) {
-      const m = planet(b.tex, b.r, 32);
+      const m = planet(b.tex, b.r, 32, undefined, 1, true);
       m.position.set(...b.at);
       scene.add(m);
     }
@@ -166,16 +166,24 @@ export function Globe({
       }
       frame = requestAnimationFrame(tick);
     };
+    // Draw only while the globe is on screen and the tab is visible.
+    let onScreen = true;
     const onVis = () => {
       cancelAnimationFrame(frame);
-      if (document.visibilityState === "visible") frame = requestAnimationFrame(tick);
+      if (document.visibilityState === "visible" && onScreen) frame = requestAnimationFrame(tick);
     };
     document.addEventListener("visibilitychange", onVis);
+    const io = new IntersectionObserver(([e]) => {
+      onScreen = e.isIntersecting;
+      onVis();
+    });
+    io.observe(box);
     tick();
 
     return () => {
       cancelAnimationFrame(frame);
       document.removeEventListener("visibilitychange", onVis);
+      io.disconnect();
       ro.disconnect();
       controls.dispose();
       disposeScene(scene);

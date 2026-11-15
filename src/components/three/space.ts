@@ -4,14 +4,18 @@ import * as THREE from "three";
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 export type TextureName = "earth" | "earth-night" | "moon" | "mars" | "venus" | "jupiter" | "saturn" | "neptune" | "stars" | "milkyway" | "moon-normal" | "mars-normal";
-export const textureUrl = (name: TextureName) => `${BASE}/textures/${name}.jpg`;
+export const textureUrl = (name: TextureName, small = false) => `${BASE}/textures/${small ? "sm/" : ""}${name}.jpg`;
+
+/** Lite Mode (Settings): smaller textures, fewer polygons, 1x pixel ratio. Set on <html> before first paint. */
+export const isLite = () => typeof document !== "undefined" && document.documentElement.dataset.perf === "lite";
 
 const loader = new THREE.TextureLoader();
-export function loadTexture(name: TextureName): THREE.Texture {
-  const t = loader.load(textureUrl(name));
+/** `small` loads the 1024 px copy in textures/sm/: right for bodies that never fill the screen, and always used in Lite Mode. */
+export function loadTexture(name: TextureName, small = false): THREE.Texture {
+  const t = loader.load(textureUrl(name, small || isLite()));
   // Normal maps hold directions, not colours, so they must stay linear.
   t.colorSpace = name.endsWith("-normal") ? THREE.NoColorSpace : THREE.SRGBColorSpace;
-  t.anisotropy = 8;
+  t.anisotropy = isLite() ? 1 : 8;
   return t;
 }
 
@@ -26,10 +30,11 @@ export function latLonToVec3(lat: number, lon: number, r = 1): THREE.Vector3 {
   return new THREE.Vector3(-r * Math.cos(phi) * Math.sin(theta), r * Math.cos(theta), r * Math.sin(phi) * Math.sin(theta));
 }
 
-export function planet(name: TextureName, radius: number, segments = 64, normal?: TextureName, relief = 1): THREE.Mesh {
-  const mat = new THREE.MeshStandardMaterial({ map: loadTexture(name), roughness: 1, metalness: 0 });
+export function planet(name: TextureName, radius: number, segments = 64, normal?: TextureName, relief = 1, small = false): THREE.Mesh {
+  if (isLite()) segments = Math.min(segments, 64);
+  const mat = new THREE.MeshStandardMaterial({ map: loadTexture(name, small), roughness: 1, metalness: 0 });
   if (normal) {
-    mat.normalMap = loadTexture(normal);
+    mat.normalMap = loadTexture(normal, small);
     mat.normalScale.set(relief, relief);
   }
   return new THREE.Mesh(new THREE.SphereGeometry(radius, segments, segments / 2), mat);
@@ -43,7 +48,7 @@ export function starfield(radius = 300): THREE.Group {
     new THREE.MeshBasicMaterial({ map: loadTexture("stars"), side: THREE.BackSide, color: 0x7d8aa3, depthWrite: false }),
   );
   g.add(sky);
-  const n = 1400;
+  const n = isLite() ? 600 : 1400;
   const pos = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
     const v = new THREE.Vector3().randomDirection().multiplyScalar(radius * (0.35 + Math.random() * 0.55));
@@ -107,8 +112,9 @@ export const prefersReducedMotion = () =>
 /** Creates a renderer, or returns null when WebGL is unavailable so callers can show a fallback. */
 export function makeRenderer(canvas: HTMLCanvasElement): THREE.WebGLRenderer | null {
   try {
-    const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
-    r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const lite = isLite();
+    const r = new THREE.WebGLRenderer({ canvas, antialias: !lite, alpha: true, powerPreference: lite ? "low-power" : "high-performance" });
+    r.setPixelRatio(lite ? 1 : Math.min(window.devicePixelRatio, 2));
     r.outputColorSpace = THREE.SRGBColorSpace;
     return r;
   } catch {

@@ -82,7 +82,7 @@ export default function ComparePage() {
       ) : (
         <>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label={t("relief_view")}>
-            <div className="card p-4" style={{ borderTop: "3px solid #E69F00" }}>
+            <div className="card p-4" style={{ borderTop: "3px solid var(--ref)" }}>
               <p className="label">{t("target")}</p>
               <h2 className="font-semibold">{local(refPlace, lang).name}</h2>
               <p className="mb-3 font-mono text-xs text-muted">{fmtCoord(refPlace)}</p>

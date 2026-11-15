@@ -8,7 +8,7 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { Lensflare, LensflareElement } from "three/examples/jsm/objects/Lensflare.js";
-import { atmosphere, disposeScene, glow, loadTexture, makeRenderer, planet, prefersReducedMotion, starfield, type TextureName } from "./space";
+import { atmosphere, disposeScene, glow, isLite, loadTexture, makeRenderer, planet, prefersReducedMotion, starfield, type TextureName } from "./space";
 
 // Illustrative only: sizes, distances and speeds are chosen to look good, not to scale.
 // Axial tilts (obliquity, degrees) and atmosphere tints are the real ones.
@@ -63,7 +63,7 @@ function saturnRing(r: number): THREE.Mesh {
  */
 function earthMaterial(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
-    uniforms: { day: { value: loadTexture("earth") }, night: { value: loadTexture("earth-night") } },
+    uniforms: { day: { value: loadTexture("earth", true) }, night: { value: loadTexture("earth-night", true) } },
     vertexShader: `varying vec2 vUv; varying vec3 vW; varying vec3 vN;
       void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position,1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal);
         gl_Position = projectionMatrix * viewMatrix * w; }`,
@@ -165,7 +165,7 @@ export function SolarSystem() {
     // Sky: the real Milky Way (NASA SVS Deep Star Maps 2020, from Gaia DR2) under the Hipparcos stars.
     const milky = new THREE.Mesh(
       new THREE.SphereGeometry(330, 64, 32),
-      new THREE.MeshBasicMaterial({ map: loadTexture("milkyway"), side: THREE.BackSide, color: 0x9a9a9a, depthWrite: false }),
+      new THREE.MeshBasicMaterial({ map: loadTexture("milkyway", true), side: THREE.BackSide, color: 0x9a9a9a, depthWrite: false }),
     );
     milky.rotation.set(0.35, 0.9, 0.55);
     scene.add(milky);
@@ -188,7 +188,7 @@ export function SolarSystem() {
     flare.addElement(new LensflareElement(flareTexture("rgba(200,210,230,0.1)", "rgba(160,170,200,0.02)"), 40, 0.7));
     flare.addElement(new LensflareElement(flareTexture("rgba(255,200,140,0.08)", "rgba(255,150,80,0.02)", true), 100, 1.0));
     sun.add(flare);
-    const belt = asteroidBelt(9.6, 11.3, window.innerWidth < 700 ? 900 : 2200);
+    const belt = asteroidBelt(9.6, 11.3, window.innerWidth < 700 || isLite() ? 900 : 2200);
     scene.add(belt);
 
     const orbitMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.07 });
@@ -198,7 +198,7 @@ export function SolarSystem() {
       // A tilted holder carries the spin axis; the globe spins inside it.
       const holder = new THREE.Group();
       holder.rotation.z = THREE.MathUtils.degToRad(p.tilt);
-      const mesh = planet(p.tex, p.r, 128, p.normal, 1.4);
+      const mesh = planet(p.tex, p.r, 128, p.normal, 1.4, true);
       if (p.tex === "earth") {
         (mesh.material as THREE.MeshStandardMaterial).map?.dispose();
         (mesh.material as THREE.Material).dispose();
@@ -217,11 +217,11 @@ export function SolarSystem() {
 
     // The Moon circles Earth.
     const earth = bodies.find((b) => b.tex === "earth")!.holder;
-    const moon = planet("moon", 0.13, 64, "moon-normal");
+    const moon = planet("moon", 0.13, 64, "moon-normal", 1, true);
     scene.add(moon);
 
     // A soft bloom on the Sun. Skipped on small or touch screens to save battery.
-    const lite = window.innerWidth < 700 || window.matchMedia("(hover: none)").matches;
+    const lite = isLite() || window.innerWidth < 700 || window.matchMedia("(hover: none)").matches;
     const composer = lite ? null : new EffectComposer(renderer);
     if (composer) {
       composer.addPass(new RenderPass(scene, camera));

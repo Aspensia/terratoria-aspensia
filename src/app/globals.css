@@ -21,6 +21,9 @@
   --ref: #e69f00;
   --ok: #4fc3a1;
   --warn: #e6b34d;
+  --s1: #56b4e9;
+  --s2: #009e73;
+  --s3: #cc79a7;
   --page-bg:
     radial-gradient(1200px 700px at 85% -10%, rgba(255, 255, 255, 0.045), transparent 60%),
     radial-gradient(800px 500px at 60% 110%, rgba(224, 134, 92, 0.04), transparent 60%),
@@ -135,7 +138,7 @@ li.card:hover,
     color: var(--text);
     font-size: 0.875rem;
     font-weight: 500;
-    cursor: url("./cursor/cursor-pointer.svg") 15 2, pointer;
+    cursor: url("./cursor/cursor-pointer.svg") 3 2, pointer;
     /* A slight overshoot makes buttons feel springy. */
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease, background-color 0.2s ease;
   }
@@ -326,7 +329,7 @@ li.card:hover,
   background: none;
   border: 0;
   padding: 0;
-  cursor: url("./cursor/cursor-pointer.svg") 15 2, pointer;
+  cursor: url("./cursor/cursor-pointer.svg") 3 2, pointer;
   transition: opacity 0.2s ease;
   will-change: transform;
 }
@@ -840,7 +843,7 @@ select:focus {
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.07), 0 0 24px -8px var(--glow);
 }
 input[type="range"] {
-  cursor: url("./cursor/cursor-pointer.svg") 15 2, pointer;
+  cursor: url("./cursor/cursor-pointer.svg") 3 2, pointer;
 }
 /* Long Khmer option names must not push a dropdown past a phone screen. */
 main label:has(> select) {
@@ -876,7 +879,7 @@ main tbody tr:hover {
   background-color: rgba(255, 255, 255, 0.025);
 }
 summary {
-  cursor: url("./cursor/cursor-pointer.svg") 15 2, pointer;
+  cursor: url("./cursor/cursor-pointer.svg") 3 2, pointer;
   transition: color 0.2s ease;
 }
 summary:hover {
@@ -1122,10 +1125,10 @@ summary::marker {
 /* Custom cursor: the Aspensia mark, blue and red facets. Layered so utilities such as cursor-grab still win. */
 @layer base {
   html {
-    cursor: url("./cursor/cursor.svg") 15 2, auto;
+    cursor: url("./cursor/cursor.svg") 3 2, auto;
   }
   a, button, [role="button"], summary, select, label, input[type="checkbox"], input[type="radio"] {
-    cursor: url("./cursor/cursor-pointer.svg") 15 2, pointer;
+    cursor: url("./cursor/cursor-pointer.svg") 3 2, pointer;
   }
   input:not([type="range"]):not([type="checkbox"]):not([type="radio"]), textarea, [contenteditable="true"] {
     cursor: text;
@@ -1254,3 +1257,189 @@ html[lang="km"] .tour [class*="tracking-"] { letter-spacing: 0; }
 @media (max-width: 767px) {
   .tour-shade { background: linear-gradient(180deg, rgba(2, 3, 5, 0.25) 0%, rgba(2, 3, 5, 0.72) 35%, rgba(2, 3, 5, 0.72) 75%, rgba(2, 3, 5, 0.35) 100%); }
 }
+
+/* Colour vision (Settings). One palette per confusion axis; the anomalous (weak) forms share their axis's palette.
+   Picked from Paul Tol's colour-blind-safe sets, with brightness spread so pairs also differ in lightness. */
+html[data-vision="protanopia"], html[data-vision="protanomaly"],
+html[data-vision="deuteranopia"], html[data-vision="deuteranomaly"] {
+  --earth: #33bbee; --mars: #ee7733; --moon: #dddddd; --ref: #f0e442;
+  --ok: #33bbee; --warn: #ee7733;
+  --s1: #33bbee; --s2: #ee7733; --s3: #f7f7f7;
+}
+html[data-vision="tritanopia"], html[data-vision="tritanomaly"] {
+  --earth: #33bbee; --mars: #ee3344; --moon: #dddddd; --ref: #f7f7f7;
+  --ok: #33bbee; --warn: #ee3344;
+  --s1: #33bbee; --s2: #ee3344; --s3: #9a9a9a;
+}
+html[data-vision="achromatopsia"], html[data-vision="achromatomaly"] {
+  --earth: #ffffff; --mars: #7a7a7a; --moon: #b8b8b8; --ref: #ffffff;
+  --ok: #ffffff; --warn: #8a8a8a;
+  --s1: #ffffff; --s2: #a8a8a8; --s3: #6e6e6e;
+}
+
+/* Settings panel */
+.settings-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 60;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: 1rem;
+  background: var(--panel-solid);
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.8);
+  animation: settings-in 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  transform-origin: top right;
+}
+@keyframes settings-in { from { opacity: 0; transform: translateY(-6px) scale(0.97); } }
+.settings-option {
+  display: block;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.settings-option:hover { border-color: var(--line-strong); }
+.settings-option.is-on { border-color: color-mix(in srgb, var(--text) 55%, transparent); background: rgba(255, 255, 255, 0.04); }
+.settings-option:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn[aria-expanded="true"] .gear-icon { transform: rotate(90deg); }
+.gear-icon { transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+
+/* Animated cursor (components/Cursor.tsx). Only active with a mouse; the static SVG cursor above is the fallback. */
+html.has-cursor, html.has-cursor * { cursor: none !important; }
+html.has-cursor input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="button"]),
+html.has-cursor textarea, html.has-cursor [contenteditable="true"] { cursor: text !important; }
+.cursor-dot, .cursor-ring {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  will-change: transform;
+}
+.cursor-dot[data-state="hidden"], .cursor-dot[data-state="text"] { opacity: 0; }
+.cursor-art {
+  position: absolute;
+  left: -3px; /* the SVG tip sits 3 px in, 2 px down */
+  top: -2px;
+  display: block;
+  width: 27px;
+  height: 34px;
+  transform-origin: 3px 2px;
+  transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+  animation: cursor-glow 3.2s ease-in-out infinite;
+}
+.cursor-art img { position: absolute; inset: 0; transition: opacity 0.18s ease; }
+.cursor-b { opacity: 0; }
+.cursor-dot[data-state="hover"] .cursor-art { transform: rotate(-9deg) scale(1.14); }
+.cursor-dot[data-state="hover"] .cursor-b { opacity: 1; }
+.cursor-dot[data-press] .cursor-art { transform: scale(0.82); transition-duration: 0.08s; }
+.cursor-dot[data-state="hover"][data-press] .cursor-art { transform: rotate(-9deg) scale(0.92); }
+@keyframes cursor-glow {
+  0%, 100% { filter: drop-shadow(-2px 0 4px rgba(61, 123, 255, 0.45)); }
+  50% { filter: drop-shadow(2px 1px 4px rgba(255, 59, 48, 0.4)); }
+}
+.cursor-ring {
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, #3d7bff, #ff3b30, #3d7bff);
+  -webkit-mask: radial-gradient(circle, transparent 12.5px, #000 13px);
+  mask: radial-gradient(circle, transparent 12.5px, #000 13px);
+  opacity: 0;
+  transition: opacity 0.25s ease, width 0.25s ease, height 0.25s ease, margin 0.25s ease;
+}
+html.has-cursor .cursor-ring { opacity: 0.55; }
+.cursor-ring[data-state="hover"] { opacity: 0.9 !important; width: 42px; height: 42px; margin: -21px 0 0 -21px; -webkit-mask: radial-gradient(circle, transparent 18.5px, #000 19px); mask: radial-gradient(circle, transparent 18.5px, #000 19px); }
+.cursor-ring[data-state="text"] { opacity: 0 !important; }
+.cursor-ring.is-burst::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(61, 123, 255, 0.7), 0 0 0 4px rgba(255, 59, 48, 0.45);
+  animation: cursor-burst 0.5s ease-out forwards;
+}
+@keyframes cursor-burst { to { transform: scale(2.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .cursor-art { animation: none; transition: none; }
+  .cursor-ring { display: none; }
+}
+
+/* Page-change loader with a space fact (components/RouteLoader.tsx). */
+.route-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(5, 6, 8, 0.72);
+  backdrop-filter: blur(6px);
+  animation: route-in 0.2s ease-out;
+}
+@keyframes route-in { from { opacity: 0; } }
+.route-card {
+  max-width: 30rem;
+  text-align: center;
+  animation: route-rise 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes route-rise { from { opacity: 0; transform: translateY(10px); } }
+.route-orbit {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  animation: route-spin 1.4s linear infinite;
+}
+.route-planet {
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--earth), #0b2b4a);
+  animation: route-spin 1.4s linear infinite reverse; /* keeps the lit side still */
+}
+.route-moon {
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--moon);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+@keyframes route-spin { to { transform: rotate(360deg); } }
+.route-bar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: left;
+  background: linear-gradient(90deg, #3d7bff, #ff3b30);
+  animation: route-load 2.4s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+}
+@keyframes route-load { from { transform: scaleX(0); } to { transform: scaleX(0.92); } }
+@media (prefers-reduced-motion: reduce) {
+  .route-orbit, .route-planet, .route-card, .route-loader { animation: none; }
+}
+
+/* Mission Challenge: game picker and hints */
+.game-pick {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  text-align: left;
+  transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+.game-pick:hover { transform: translateY(-2px); border-color: var(--line-strong); }
+.game-pick:active { transform: translateY(0) scale(0.98); }
+.game-pick[aria-pressed="true"] { border-color: color-mix(in srgb, var(--text) 55%, transparent); background: rgba(255, 255, 255, 0.05); }
+.hint-btn { gap: 0.4rem; }
+.is-struck { opacity: 0.35 !important; text-decoration: line-through; filter: grayscale(1); }

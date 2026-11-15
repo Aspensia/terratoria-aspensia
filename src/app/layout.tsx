@@ -20,9 +20,16 @@ export const metadata: Metadata = {
   other: { generator: "Built with AI assistance (Claude) from the team's concept" },
 };
 
+// Runs before first paint, so 3D scenes start in the chosen mode and colours never flash.
+// Lite Mode is the default only on devices that report 2 GB of memory or less.
+const PREFS = `try{var d=document.documentElement,s=localStorage,p=s.getItem("terratoria.perf");if(p!=="lite"&&p!=="base"){var m=navigator.deviceMemory;p=m&&m<=2?"lite":"base"}d.dataset.perf=p;var v=s.getItem("terratoria.vision");if(v)d.dataset.vision=v}catch(e){}`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-mode="science" className={`${geistSans.variable} ${geistMono.variable} ${khmer.variable} ${display.variable} antialiased`}>
+    <html lang="en" data-mode="science" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${khmer.variable} ${display.variable} antialiased`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: PREFS }} />
+      </head>
       <body className="min-h-screen">
         <SmoothScroll />
         <AppProvider>

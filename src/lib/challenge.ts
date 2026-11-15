@@ -126,3 +126,12 @@ export function rankTitle(score: number, total: number, lang: "en" | "km" = "en"
   const en = k >= 0.9 ? "Flight Director" : k >= 0.7 ? "Mission Specialist" : k >= 0.4 ? "Field Geologist" : "Cadet";
   return lang === "km" ? RANKS_KM[en] : en;
 }
+
+/** A hint never gives the answer away: it removes one wrong option, or (head-to-head) reveals one of the two values. */
+export type Hint = { kind: "remove"; id: string } | { kind: "reveal"; id: string };
+
+export function hintFor(round: Round, rand: () => number = Math.random): Hint {
+  if (round.kind === "duel") return { kind: "reveal", id: round.a.id };
+  const ids = round.kind === "world" ? ["earth", "moon", "mars"] : round.options.map((o) => o.id);
+  return { kind: "remove", id: pickOne(rand, ids.filter((id) => id !== round.answer)) };
+}

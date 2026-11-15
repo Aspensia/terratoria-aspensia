@@ -8,8 +8,9 @@ import { local } from "@/data/km";
 
 // Okabe-Ito colours: distinguishable with the common forms of colour blindness.
 // The reference region is always orange and dashed; Earth sites are solid.
-export const SERIES = ["#56B4E9", "#009E73", "#CC79A7"];
-export const REF_COLOR = "#E69F00";
+// CSS variables, so the colour-vision setting in Settings recolours every chart.
+export const SERIES = ["var(--s1)", "var(--s2)", "var(--s3)"];
+export const REF_COLOR = "var(--ref)";
 const DASH = ["", "2 2", "8 3 2 3"];
 
 /** Vertical (or horizontal, prefix "h") gradients per series, lighter at the tip. */
