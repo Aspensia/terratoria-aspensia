@@ -8,10 +8,10 @@ import { Lightbox } from "./Lightbox";
 const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 function Credit({ p }: { p: SitePhoto }) {
-  const { tx } = useApp();
+  const { tx, lang } = useApp();
   return (
     <>
-      {p.credit} ·{" "}
+      {lang === "km" ? p.credit.replace(", via Wikimedia Commons", " តាមរយៈ Wikimedia Commons") : p.credit} ·{" "}
       {/^(Public domain|PD|CC0)/i.test(p.license) ? null : <>{tx("resized, converted to WebP", "ប្តូរទំហំ និងបម្លែងជា WebP")} · </>}
       {p.licenseUrl ? (
         <a href={p.licenseUrl} target="_blank" rel="noopener noreferrer" className="underline decoration-line-strong underline-offset-2 hover:text-text">
@@ -30,7 +30,8 @@ function Credit({ p }: { p: SitePhoto }) {
 
 /** Real photographs of an Earth site from Wikimedia Commons, stored locally, each with credit, licence and source. */
 export function SitePhotos({ siteId, siteName }: { siteId: string; siteName: string }) {
-  const { tx } = useApp();
+  const { tx, lang } = useApp();
+  const cap = (p: SitePhoto) => (lang === "km" ? p.captionKm : p.caption);
   const photos = SITE_PHOTOS[siteId] ?? [];
   const [open, setOpen] = useState<SitePhoto | null>(null);
   const [broken, setBroken] = useState<Set<string>>(new Set());
@@ -56,7 +57,7 @@ export function SitePhotos({ siteId, siteName }: { siteId: string; siteName: str
                 type="button"
                 className="group relative block aspect-[4/3] w-full overflow-hidden bg-panel-2"
                 onClick={() => setOpen(p)}
-                aria-label={`${tx("View full size", "មើលទំហំពេញ")}: ${p.caption}`}
+                aria-label={`${tx("View full size", "មើលទំហំពេញ")}: ${cap(p)}`}
               >
                 {broken.has(p.file) ? (
                   <span className="flex h-full items-center justify-center p-4 text-center text-xs text-muted">{tx("Image unavailable", "រូបភាពមិនអាចបង្ហាញបាន")}</span>
@@ -64,7 +65,7 @@ export function SitePhotos({ siteId, siteName }: { siteId: string; siteName: str
                   // eslint-disable-next-line @next/next/no-img-element -- static export, pre-optimised WebP
                   <img
                     src={`${BASE}/photos/${siteId}/${p.file}-sm.webp`}
-                    alt={p.caption}
+                    alt={cap(p)}
                     width={p.w}
                     height={p.h}
                     loading="lazy"
@@ -78,7 +79,7 @@ export function SitePhotos({ siteId, siteName }: { siteId: string; siteName: str
                 </span>
               </button>
               <div className="space-y-1 p-3">
-                <p className="text-sm leading-snug">{p.caption}</p>
+                <p className="text-sm leading-snug">{cap(p)}</p>
                 <p className="text-[11px] leading-snug text-muted">
                   <Credit p={p} />
                 </p>
@@ -91,10 +92,10 @@ export function SitePhotos({ siteId, siteName }: { siteId: string; siteName: str
         <Lightbox
           image={{
             src: `${BASE}/photos/${siteId}/${open.file}.webp`,
-            alt: `${siteName}: ${open.caption}`,
+            alt: `${siteName}: ${cap(open)}`,
             caption: (
               <>
-                <span className="text-text">{open.caption}</span> · <Credit p={open} />
+                <span className="text-text">{cap(open)}</span> · <Credit p={open} />
               </>
             ),
           }}
