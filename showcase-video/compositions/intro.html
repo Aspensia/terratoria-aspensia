@@ -1,0 +1,38 @@
+<template>
+  <style>
+    @font-face { font-family: "Space Grotesk"; src: url("assets/fonts/space-grotesk.woff2") format("woff2"); font-weight: 300 700; }
+    @font-face { font-family: "Geist Mono"; src: url("assets/fonts/geist-mono.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; }
+    #in-copy { position: absolute; left: 144px; top: 300px; width: 900px; }
+    .in-label { font-family: "Geist Mono", monospace; font-size: 22px; letter-spacing: 0.22em; text-transform: uppercase; color: #9d9fa6; }
+    #in-label-b { margin-top: 18px; color: #a9bfd6; }
+    #in-title { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 168px; line-height: 1; letter-spacing: -0.035em; margin-top: 6px; color: #ededef; white-space: nowrap; }
+    #in-title span { display: inline-block; }
+    #in-badge { position: absolute; left: 144px; top: 610px; display: flex; align-items: center; gap: 18px; padding: 14px 26px 14px 14px; border: 1px solid rgba(255,255,255,0.18); border-radius: 18px; background: rgba(22,24,28,0.62); backdrop-filter: blur(10px); }
+    #in-badge img { width: 64px; height: 64px; border-radius: 14px; }
+    #in-badge-text { font-family: "Space Grotesk", sans-serif; font-size: 30px; font-weight: 500; color: #ededef; }
+    #in-badge-text small { display: block; font-family: "Geist Mono", monospace; font-size: 22px; letter-spacing: 0.16em; color: #9d9fa6; text-transform: uppercase; }
+  </style>
+  <div id="root" data-composition-id="intro" data-width="1920" data-height="1080">
+    <div id="in-copy" class="clip" data-start="0.35" data-duration="3.65">
+      <p id="in-label-a" class="in-label">NASA Space Apps Challenge 2026</p>
+      <p id="in-label-b" class="in-label">Project:</p>
+      <h1 id="in-title"><span>T</span><span>e</span><span>r</span><span>r</span><span>a</span><span>t</span><span>o</span><span>r</span><span>i</span><span>a</span></h1>
+    </div>
+    <div id="in-badge" class="clip" data-start="2.4" data-duration="1.6">
+      <img id="in-logo" src="assets/aspensia-logo.png" alt="Aspensia" />
+      <p id="in-badge-text"><small>Made by</small>Aspensia</p>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#in-label-a", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.35)
+      .fromTo("#in-label-b", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" }, 0.6)
+      .fromTo("#in-title span", { opacity: 0, yPercent: 60, filter: "blur(10px)" }, { opacity: 1, yPercent: 0, filter: "blur(0px)", duration: 0.5, ease: "power4.out", stagger: 0.055 }, 0.85)
+      .fromTo("#in-badge", { opacity: 0, x: -40, scale: 0.92 }, { opacity: 1, x: 0, scale: 1, duration: 0.45, ease: "back.out(1.6)" }, 2.45)
+      .fromTo("#in-logo", { rotate: -25 }, { rotate: 0, duration: 0.6, ease: "power3.out" }, 2.45)
+      // Whip out to the left into Discover.
+      .to("#in-copy, #in-badge", { x: -260, opacity: 0, filter: "blur(12px)", duration: 0.3, ease: "power3.in" }, 3.68);
+    window.__timelines["intro"] = tl;
+  </script>
+</template>

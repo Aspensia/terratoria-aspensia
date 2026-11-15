@@ -1,0 +1,35 @@
+<template>
+  <style>
+    @font-face { font-family: "Space Grotesk"; src: url("assets/fonts/space-grotesk.woff2") format("woff2"); font-weight: 300 700; }
+    @font-face { font-family: "Geist Mono"; src: url("assets/fonts/geist-mono.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; pointer-events: none; }
+    #cap-band { position: absolute; left: 0; right: 0; bottom: 0; height: 330px; background: linear-gradient(rgba(8, 9, 11, 0), rgba(8, 9, 11, 0.92) 62%); }
+    .cap { position: absolute; left: 144px; bottom: 112px; width: 1500px; }
+    .cap .tag { display: inline-block; font: 500 22px/1 "Geist Mono", monospace; letter-spacing: 0.2em; text-transform: uppercase; color: #a9bfd6; padding: 8px 14px; border: 1px solid rgba(169, 191, 214, 0.55); border-radius: 8px; background: rgba(8, 9, 11, 0.6); }
+    .cap .line { margin-top: 16px; font: 600 50px/1.12 "Space Grotesk", sans-serif; letter-spacing: -0.015em; color: #ededef; }
+    .cap .line span { display: inline-block; }
+  </style>
+  <div id="root" data-composition-id="captions" data-width="1920" data-height="1080">
+    <div id="cap-band" class="clip" data-start="0.2" data-duration="27.75" data-layout-ignore></div>
+
+    <div id="cap-1" class="clip cap" data-start="0.9" data-duration="2.9"><p class="tag">PROJECT: Terratoria</p><p class="line"><span>Real NASA and ESA mission data.</span> <span>Welcome to Terratoria.</span></p></div>
+    <div id="cap-2" class="clip cap" data-start="4.25" data-duration="3.5"><p class="tag">Discover</p><p class="line"><span>Rank 21 Earth analogues</span> <span>against the Moon and Mars, your way.</span></p></div>
+    <div id="cap-3" class="clip cap" data-start="8.3" data-duration="4.45"><p class="tag">3D Explorer</p><p class="line"><span>Spin real globes. Click a site</span> <span>for its measured terrain and climate.</span></p></div>
+    <div id="cap-4" class="clip cap" data-start="13.25" data-duration="3.5"><p class="tag">Mission Plan</p><p class="line"><span>Five steps to a lunar base,</span> <span>each tested on Earth first.</span></p></div>
+    <div id="cap-5" class="clip cap" data-start="17.25" data-duration="5.5"><p class="tag">Mission Challenge</p><p class="line"><span>Four games: Quiz, Rush,</span> <span>Flashcards and Touchdown.</span></p></div>
+    <div id="cap-6" class="clip cap" data-start="23.2" data-duration="2.6"><p class="tag">Compare</p><p class="line"><span>Put sites side by side</span> <span>across eight science dimensions.</span></p></div>
+    <div id="cap-7" class="clip cap" data-start="26.15" data-duration="1.75"><p class="tag">Saved Sites</p><p class="line"><span>Bookmark targets.</span> <span>Compare them in one click.</span></p></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#cap-band", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.2).to("#cap-band", { opacity: 0, duration: 0.3 }, 27.6);
+    const caps = [[1, 0.9, 2.9], [2, 4.25, 3.5], [3, 8.3, 4.45], [4, 13.25, 3.5], [5, 17.25, 5.5], [6, 23.2, 2.6], [7, 26.15, 1.75]];
+    for (const [n, s, d] of caps) {
+      const id = `#cap-${n}`;
+      tl.fromTo(`${id} .tag`, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: 0.3, ease: "power3.out" }, s)
+        .fromTo(`${id} .line span`, { opacity: 0, y: 26, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, y: 0, clipPath: "inset(0 0 0% 0)", duration: 0.4, ease: "power3.out", stagger: 0.14 }, s + 0.12)
+        .to(`${id} .tag, ${id} .line span`, { opacity: 0, y: -10, duration: 0.2, ease: "power2.in" }, s + d - 0.22);
+    }
+    window.__timelines["captions"] = tl;
+  </script>
+</template>

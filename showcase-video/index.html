@@ -1,0 +1,58 @@
+<!doctype html>
+<html
+  lang="en"
+  data-composition-variables='[{"id":"accent","type":"color","label":"Accent","default":"#a9bfd6"},{"id":"ground","type":"color","label":"Ground","default":"#08090b"}]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <style>
+      @font-face { font-family: "Space Grotesk"; src: url("assets/fonts/space-grotesk.woff2") format("woff2"); font-weight: 300 700; }
+      @font-face { font-family: "Geist"; src: url("assets/fonts/geist.woff2") format("woff2"); font-weight: 100 900; }
+      @font-face { font-family: "Geist Mono"; src: url("assets/fonts/geist-mono.woff2") format("woff2"); font-weight: 100 900; }
+      :root {
+        --ground: #08090b;
+        --ink: #ededef;
+        --muted: #9d9fa6;
+        --accent: #a9bfd6;
+        --earth: #56b4e9;
+        --mars: #e0865c;
+        --moon: #c8d0dc;
+        --ok: #4fc3a1;
+        --warn: #e6b34d;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--ground); }
+      #root { position: relative; width: 100%; height: 100%; font-family: "Geist", sans-serif; color: var(--ink); }
+      #backdrop { position: absolute; inset: 0; background: radial-gradient(1200px 700px at 70% 40%, #12151c 0%, var(--ground) 70%); z-index: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+      <div id="backdrop"></div>
+
+      <!-- Live 3D: Earth, Moon and Mars drawn from the site's own textures, for the whole film (shown in the intro, explorer and finale). -->
+      <div id="space3d" data-composition-id="space3d" data-composition-src="compositions/space3d.html" data-start="0" data-duration="30" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 1"></div>
+
+      <div id="intro" data-composition-id="intro" data-composition-src="compositions/intro.html" data-start="0" data-duration="4" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 2"></div>
+      <div id="discover" data-composition-id="discover" data-composition-src="compositions/discover.html" data-start="4" data-duration="4" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 2"></div>
+      <div id="explorer" data-composition-id="explorer" data-composition-src="compositions/explorer.html" data-start="8" data-duration="5" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 2"></div>
+      <div id="plan" data-composition-id="plan" data-composition-src="compositions/plan.html" data-start="13" data-duration="4" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 2"></div>
+      <div id="games" data-composition-id="games" data-composition-src="compositions/games.html" data-start="17" data-duration="6" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 2"></div>
+      <div id="compare" data-composition-id="compare" data-composition-src="compositions/compare.html" data-start="23" data-duration="3" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 2"></div>
+      <div id="saved" data-composition-id="saved" data-composition-src="compositions/saved.html" data-start="26" data-duration="2" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 2"></div>
+      <div id="finale" data-composition-id="finale" data-composition-src="compositions/finale.html" data-start="28" data-duration="2" data-track-index="2" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 2"></div>
+
+      <div id="hud" data-composition-id="hud" data-composition-src="compositions/hud.html" data-start="0" data-duration="30" data-track-index="3" data-track-kind="graphics" data-width="1920" data-height="1080" style="z-index: 5"></div>
+      <div id="captions" data-composition-id="captions" data-composition-src="compositions/captions.html" data-start="0" data-duration="30" data-track-index="4" data-track-kind="captions" data-width="1920" data-height="1080" style="z-index: 6"></div>
+
+      <audio id="score" class="clip" src="assets/audio/score.wav" data-start="0" data-duration="30" data-track-index="5" data-volume="1"></audio>
+    </div>
+    <script>
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = gsap.timeline({ paused: true });
+    </script>
+  </body>
+</html>

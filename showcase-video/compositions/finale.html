@@ -1,0 +1,34 @@
+<template>
+  <style>
+    @font-face { font-family: "Space Grotesk"; src: url("assets/fonts/space-grotesk.woff2") format("woff2"); font-weight: 300 700; }
+    @font-face { font-family: "Geist Mono"; src: url("assets/fonts/geist-mono.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; }
+    #fn-lock { position: absolute; left: 0; right: 0; top: 650px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    #fn-row { display: flex; align-items: center; gap: 30px; }
+    #fn-logo { width: 132px; height: 132px; border-radius: 28px; }
+    #fn-words { text-align: left; }
+    #fn-kicker { font: 500 24px/1 "Geist Mono", monospace; letter-spacing: 0.24em; color: #a9bfd6; text-transform: uppercase; }
+    #fn-title { font: 600 132px/1 "Space Grotesk", sans-serif; letter-spacing: -0.035em; color: #ededef; margin-top: 8px; }
+    #fn-sub { margin-top: 26px; font: 400 30px/1.3 "Geist Mono", monospace; letter-spacing: 0.14em; color: #c8d0dc; text-transform: uppercase; }
+  </style>
+  <div id="root" data-composition-id="finale" data-width="1920" data-height="1080">
+    <div id="fn-lock" class="clip" data-start="0.15" data-duration="1.85">
+      <div id="fn-row">
+        <img id="fn-logo" src="assets/aspensia-logo.png" alt="Aspensia" />
+        <div id="fn-words">
+          <p id="fn-kicker">Project:</p>
+          <p id="fn-title">Terratoria</p>
+        </div>
+      </div>
+      <p id="fn-sub">Made by Aspensia · NASA Space Apps Challenge 2026</p>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // The mark lands on the music hit (film 28.0 s + 0.15), then the wordmark wipes in beside it.
+    tl.fromTo("#fn-logo", { scale: 0.4, rotate: -30, opacity: 0 }, { scale: 1, rotate: 0, opacity: 1, duration: 0.5, ease: "back.out(1.8)" }, 0.15)
+      .fromTo("#fn-words", { clipPath: "inset(0 100% 0 0)", x: -20 }, { clipPath: "inset(0 0% 0 0)", x: 0, duration: 0.45, ease: "power3.out" }, 0.3)
+      .fromTo("#fn-sub", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 0.4);
+    window.__timelines["finale"] = tl;
+  </script>
+</template>

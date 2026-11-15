@@ -1560,3 +1560,14 @@ html.has-cursor .cursor-ring { opacity: 0.55; }
 @media (prefers-reduced-motion: reduce) {
   .flashcard-inner { transition: none; }
 }
+
+/* Showcase Mode: the 30-second film player. */
+.showcase-stage { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--line-strong); border-radius: 16px; background: #000; }
+.showcase-stage:fullscreen { border: 0; border-radius: 0; }
+.showcase-stage.is-clean .showcase-hud, .showcase-stage.is-clean .showcase-start { display: none; }
+.showcase-start { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 0.7rem; padding: 0.9rem 1.5rem; border-radius: 999px; background: #ededef; color: #0a0b0d; font-weight: 600; font-size: 1.05rem; box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.9); transition: transform 0.2s ease; }
+.showcase-start:hover { transform: translate(-50%, -50%) scale(1.04); }
+.showcase-hud { position: absolute; left: 16px; right: 16px; bottom: 14px; pointer-events: none; }
+.showcase-bar { position: relative; margin-top: 6px; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); }
+.showcase-bar > div { height: 100%; border-radius: 999px; background: var(--accent); }
+.showcase-bar > i { position: absolute; top: -3px; width: 2px; height: 10px; margin-left: -1px; background: rgba(255, 255, 255, 0.55); }

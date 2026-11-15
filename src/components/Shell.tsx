@@ -25,6 +25,7 @@ const NAV: { href: string; key: Key }[] = [
   { href: "/compare/", key: "nav_compare" },
   { href: "/saved/", key: "nav_saved" },
   { href: "/methods/", key: "nav_methods" },
+  { href: "/showcase/", key: "nav_showcase" },
   { href: "/about/", key: "nav_about" },
 ];
 

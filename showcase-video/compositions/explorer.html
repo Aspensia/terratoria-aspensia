@@ -1,0 +1,55 @@
+<template>
+  <style>
+    @font-face { font-family: "Geist Mono"; src: url("assets/fonts/geist-mono.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; }
+    .shot { position: absolute; inset: 0; overflow: hidden; }
+    .full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    .crop { position: absolute; overflow: hidden; border-radius: 16px; }
+    .crop img { position: absolute; width: 1920px; height: 1080px; }
+    #ex-chip { position: absolute; left: 144px; top: 150px; font-family: "Geist Mono", monospace; font-size: 28px; letter-spacing: 0.16em; text-transform: uppercase; color: #ededef; padding: 12px 22px; border: 1px solid rgba(224, 134, 92, 0.6); border-radius: 999px; background: rgba(8, 9, 11, 0.55); }
+    #ex-chip b { color: #e0865c; font-weight: 500; }
+    #ex-cursor { position: absolute; left: 0; top: 0; width: 72px; height: 72px; }
+    #ex-ripple { position: absolute; left: 924px; top: 344px; width: 72px; height: 72px; border-radius: 50%; border: 3px solid #e69f00; }
+  </style>
+  <div id="root" data-composition-id="explorer" data-width="1920" data-height="1080">
+    <!-- Over the live 3D Mars (space3d): label, the site's own cursor, and its click on the Jezero pin at 2.0 s. -->
+    <div id="ex-chip" class="clip" data-start="0.15" data-duration="2.1">Live 3D · <b>Mars</b> · Jezero crater</div>
+    <div id="ex-ripple-wrap" class="clip" data-start="2.0" data-duration="0.6" style="position: absolute; inset: 0" data-layout-ignore>
+      <div id="ex-ripple"></div>
+    </div>
+
+    <!-- The real 3D Explorer page after the click: Jezero focused, its site panel slides open. -->
+    <div id="ex-shot" class="clip shot" data-start="2.2" data-duration="2.8">
+      <div id="ex-cam" style="position: absolute; inset: 0">
+        <img class="full" src="assets/shots/explore-mars.jpg" alt="3D Explorer on Mars with the Jezero crater panel open" />
+        <div id="ex-cover" class="crop" style="left: 1171px; top: 310px; width: 400px; height: 754px; border-radius: 0">
+          <img src="assets/shots/explore-mars-0.jpg" alt="" style="left: -1171px; top: -310px" />
+        </div>
+        <div id="ex-drawer" class="crop" style="left: 1171px; top: 310px; width: 400px; height: 754px">
+          <img src="assets/shots/explore-mars.jpg" alt="" style="left: -1171px; top: -310px" />
+        </div>
+      </div>
+    </div>
+
+    <img id="ex-cursor" class="clip" data-start="0.9" data-duration="1.55" src="assets/cursor.svg" alt="" />
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#ex-chip", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 0.15)
+      // Cursor enters from off-frame and lands on the pin; its click is at 2.0 s (film 10.0 s).
+      .fromTo("#ex-cursor", { x: 1700, y: 1150 }, { x: 926, y: 388, duration: 0.95, ease: "power3.out" }, 0.9)
+      .to("#ex-cursor", { scale: 0.82, duration: 0.08, ease: "power2.in", transformOrigin: "8px 6px" }, 1.92)
+      .to("#ex-cursor", { scale: 1, duration: 0.12, ease: "power2.out" }, 2.0)
+      .fromTo("#ex-ripple", { scale: 0.3, opacity: 1 }, { scale: 2.6, opacity: 0, duration: 0.55, ease: "power2.out" }, 2.0)
+      .to("#ex-chip", { opacity: 0, duration: 0.2 }, 2.0)
+      // Cut to the page; the panel slides open over the unfocused globe.
+      .fromTo("#ex-cam", { scale: 1.06, transformOrigin: "1371px 687px" }, { scale: 1, duration: 0.45, ease: "power3.out" }, 2.2)
+      .fromTo("#ex-drawer", { x: 120, opacity: 0, clipPath: "inset(0 0 0 100%)" }, { x: 0, opacity: 1, clipPath: "inset(0 0 0 0%)", duration: 0.45, ease: "power3.out" }, 2.3)
+      .to("#ex-cover", { opacity: 0, duration: 0.2 }, 2.75)
+      // Punch in on the panel: measured terrain and climate for Jezero.
+      .to("#ex-cam", { scale: 1.36, x: -150, duration: 0.7, ease: "power2.inOut" }, 3.05)
+      .to("#ex-cam", { scale: 1.42, duration: 0.85, ease: "none" }, 3.75)
+      .to("#ex-cam", { y: -60, opacity: 0, filter: "blur(10px)", duration: 0.25, ease: "power3.in" }, 4.72);
+    window.__timelines["explorer"] = tl;
+  </script>
+</template>

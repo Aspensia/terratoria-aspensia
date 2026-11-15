@@ -1,0 +1,6 @@
+capture/
+renders/
+.hyperframes/
+check.json
+check.err
+render.log

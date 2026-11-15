@@ -1,0 +1,54 @@
+<template>
+  <style>
+    @font-face { font-family: "Geist Mono"; src: url("assets/fonts/geist-mono.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; pointer-events: none; }
+    #hud-scrim { position: absolute; left: 0; right: 0; top: 0; height: 170px; background: linear-gradient(rgba(8, 9, 11, 0.92), rgba(8, 9, 11, 0.7) 55%, rgba(8, 9, 11, 0)); }
+    .br { position: absolute; width: 56px; height: 56px; border-color: rgba(169, 191, 214, 0.6); border-style: solid; border-width: 0; }
+    #hud-tl { left: 48px; top: 48px; border-left-width: 2px; border-top-width: 2px; }
+    #hud-tr { right: 48px; top: 48px; border-right-width: 2px; border-top-width: 2px; }
+    #hud-bl { left: 48px; bottom: 48px; border-left-width: 2px; border-bottom-width: 2px; }
+    #hud-brr { right: 48px; bottom: 48px; border-right-width: 2px; border-bottom-width: 2px; }
+    .hud-txt { position: absolute; top: 62px; font: 400 22px/1 "Geist Mono", monospace; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(237, 237, 239, 0.75); }
+    #hud-name { left: 124px; }
+    #hud-name b { color: #4fc3a1; font-weight: 400; }
+    #hud-tc { right: 124px; text-align: right; }
+    .hud-scene { position: absolute; right: 124px; top: 96px; font: 400 24px/1 "Geist Mono", monospace; letter-spacing: 0.18em; text-transform: uppercase; color: #a9bfd6; text-align: right; }
+  </style>
+  <div id="root" data-composition-id="hud" data-width="1920" data-height="1080">
+    <div id="hud-frame" class="clip" data-start="0" data-duration="30" style="position: absolute; inset: 0" data-layout-ignore>
+      <div id="hud-scrim"></div>
+      <div id="hud-tl" class="br"></div>
+      <div id="hud-tr" class="br"></div>
+      <div id="hud-bl" class="br"></div>
+      <div id="hud-brr" class="br"></div>
+      <p id="hud-name" class="hud-txt"><b>●</b> Terratoria · showcase</p>
+      <p id="hud-tc" class="hud-txt">T+00:00.0</p>
+    </div>
+    <p id="hud-s1" class="clip hud-scene" data-start="0" data-duration="4">01/08 · Launch</p>
+    <p id="hud-s2" class="clip hud-scene" data-start="4" data-duration="4">02/08 · Discover</p>
+    <p id="hud-s3" class="clip hud-scene" data-start="8" data-duration="5">03/08 · 3D Explorer</p>
+    <p id="hud-s4" class="clip hud-scene" data-start="13" data-duration="4">04/08 · Mission Plan</p>
+    <p id="hud-s5" class="clip hud-scene" data-start="17" data-duration="6">05/08 · Mission Challenge</p>
+    <p id="hud-s6" class="clip hud-scene" data-start="23" data-duration="3">06/08 · Compare</p>
+    <p id="hud-s7" class="clip hud-scene" data-start="26" data-duration="2">07/08 · Saved Sites</p>
+    <p id="hud-s8" class="clip hud-scene" data-start="28" data-duration="2">08/08 · Mission ready</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo(".br", { scale: 1.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out", stagger: 0.05 }, 0.1)
+      .fromTo(".hud-txt", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.3);
+    // Timecode: a pure function of timeline time.
+    const tc = document.getElementById("hud-tc");
+    const clock = { t: 0 };
+    tl.fromTo(clock, { t: 0 }, {
+      t: 30, duration: 30, ease: "none",
+      onUpdate: () => { const s = clock.t; tc.textContent = `T+00:${String(Math.floor(s)).padStart(2, "0")}.${Math.floor((s % 1) * 10)}`; },
+    }, 0);
+    // Each scene label ticks in on its cut; brackets snap on every cut.
+    [0, 4, 8, 13, 17, 23, 26, 28].forEach((t, k) => {
+      tl.fromTo(`#hud-s${k + 1}`, { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.3, ease: "power3.out" }, t + 0.05);
+      if (t > 0) tl.fromTo(".br", { scale: 1.25 }, { scale: 1, duration: 0.3, ease: "power3.out", immediateRender: false }, t);
+    });
+    window.__timelines["hud"] = tl;
+  </script>
+</template>

@@ -1,0 +1,39 @@
+<template>
+  <style>
+    @font-face { font-family: "Geist Mono"; src: url("assets/fonts/geist-mono.woff2") format("woff2"); font-weight: 100 900; }
+    #root { position: absolute; inset: 0; }
+    .shot { position: absolute; inset: 0; overflow: hidden; background: #08090b; }
+    .full { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+    .step { position: absolute; left: 446px; width: 1028px; border: 2px solid rgba(169, 191, 214, 0.95); border-radius: 14px; }
+    .step i { position: absolute; left: -66px; top: 50%; width: 46px; height: 46px; margin-top: -23px; border-radius: 50%; background: #a9bfd6; color: #0a0b0d; font: 600 22px/46px "Geist Mono", monospace; text-align: center; font-style: normal; }
+  </style>
+  <div id="root" data-composition-id="plan" data-width="1920" data-height="1080">
+    <div id="pl-a" class="clip shot" data-start="0" data-duration="1.3">
+      <img id="pl-a-img" class="full" src="assets/shots/plan.jpg" alt="Mission Plan: from Earth analogues to a self-sustaining lunar base" />
+    </div>
+    <div id="pl-b" class="clip shot" data-start="1.15" data-duration="2.85">
+      <div id="pl-b-cam" style="position: absolute; inset: 0">
+        <img class="full" src="assets/shots/plan-steps.jpg" alt="The five-step plan, each Moon need paired with Earth test sites" />
+        <div id="pl-s2" class="step" style="top: 250px; height: 132px"><i>2</i></div>
+        <div id="pl-s3" class="step" style="top: 398px; height: 152px"><i>3</i></div>
+        <div id="pl-s4" class="step" style="top: 566px; height: 136px"><i>4</i></div>
+        <div id="pl-s5" class="step" style="top: 716px; height: 152px"><i>5</i></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // A: whip in on the plan's title, push towards the headline.
+    tl.fromTo("#pl-a-img", { x: 320, scale: 1.1, filter: "blur(14px)", transformOrigin: "1150px 380px" }, { x: 0, scale: 1.25, filter: "blur(0px)", duration: 0.4, ease: "power3.out" }, 0)
+      .to("#pl-a-img", { scale: 1.45, duration: 0.9, ease: "power2.inOut" }, 0.4)
+      // B: wipe down to the five steps; each step lights as the camera passes it.
+      .fromTo("#pl-b", { clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)", duration: 0.4, ease: "power3.inOut" }, 1.15)
+      .fromTo("#pl-b-cam", { scale: 1.3, y: 140, transformOrigin: "960px 300px" }, { scale: 1.3, y: -250, duration: 2.5, ease: "power1.inOut" }, 1.2);
+    ["#pl-s2", "#pl-s3", "#pl-s4", "#pl-s5"].forEach((s, k) => {
+      const t = 1.5 + k * 0.52;
+      tl.fromTo(s, { opacity: 0, scale: 1.04 }, { opacity: 1, scale: 1, duration: 0.25, ease: "power2.out" }, t).to(s, { opacity: 0.25, duration: 0.25 }, t + 0.5);
+    });
+    tl.to("#pl-b-cam", { x: -300, opacity: 0, filter: "blur(12px)", duration: 0.25, ease: "power3.in" }, 3.72);
+    window.__timelines["plan"] = tl;
+  </script>
+</template>
