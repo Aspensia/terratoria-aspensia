@@ -10,6 +10,7 @@ import { ZoomableImage } from "@/components/Lightbox";
 import { CountUp, Magnet } from "@/components/motion/Motion";
 import SplitText from "@/components/SplitText";
 import { TeamStrip } from "@/components/Team";
+import { WorldTour } from "@/components/WorldTour";
 import { textureUrl } from "@/components/three/space";
 import { EARTH_SITES, REFERENCES } from "@/data/catalog";
 import { DATASETS } from "@/data/datasets";
@@ -100,21 +101,6 @@ const ARCHIVE: { src: string; alt: Bi; caption: Bi }[] = [
       en: "Global colour mosaic of Mars. Source: NASA 3D Resources (public domain).",
       km: "រូបភាពពណ៌ផ្គុំទូទាំងភពអង្គារ។ ប្រភព៖ NASA 3D Resources (សាធារណៈ)។",
     },
-  },
-];
-
-const WORLDS: { id: "earth" | "moon" | "mars"; line: Bi }[] = [
-  {
-    id: "moon",
-    line: { en: "Shackleton crater at the south pole and the Marius Hills lava-tube pit.", km: "រណ្តៅ Shackleton នៅប៉ូលខាងត្បូង និងរណ្តៅស្រុតបំពង់កម្អែ Marius Hills។" },
-  },
-  {
-    id: "mars",
-    line: { en: "Jezero crater's ancient lake and the cave skylights of Arsia Mons.", km: "បឹងបុរាណនៃរណ្តៅ Jezero និងរន្ធធ្លុះរូងភ្នំនៃ Arsia Mons។" },
-  },
-  {
-    id: "earth",
-    line: { en: "21 field sites on seven continents, scored against both worlds.", km: "ទីតាំងទីវាល ២១ នៅលើទ្វីបទាំងប្រាំពីរ ដែលដាក់ពិន្ទុធៀបនឹងពិភពទាំងពីរ។" },
   },
 ];
 
@@ -229,27 +215,7 @@ export default function Home() {
 
         <DataTicker />
 
-        <section aria-labelledby="worlds-h">
-          <h2 id="worlds-h" className="label mb-4">
-            {t("worlds_title")}
-          </h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            {WORLDS.map((w) => (
-              <Link key={w.id} href={`/explore/?body=${w.id}`} className="card card-hover group flex items-center gap-4 p-5">
-                <span
-                  aria-hidden="true"
-                  className="globe-thumb h-20 w-20 shrink-0 rounded-full"
-                  style={{ backgroundImage: `url(${textureUrl(w.id)})` }}
-                />
-                <span>
-                  <span className="block text-lg font-semibold">{t(w.id)}</span>
-                  <span className="block text-sm text-muted">{w.line[lang]}</span>
-                  <span className="mt-1 block text-sm text-accent transition-transform group-hover:translate-x-1">{t("explore_3d")} →</span>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <WorldTour />
 
         <section aria-labelledby="archive-h">
           <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">

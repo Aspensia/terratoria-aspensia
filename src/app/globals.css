@@ -135,7 +135,7 @@ li.card:hover,
     color: var(--text);
     font-size: 0.875rem;
     font-weight: 500;
-    cursor: pointer;
+    cursor: url("./cursor/cursor-pointer.svg") 15 2, pointer;
     /* A slight overshoot makes buttons feel springy. */
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease, background-color 0.2s ease;
   }
@@ -326,7 +326,7 @@ li.card:hover,
   background: none;
   border: 0;
   padding: 0;
-  cursor: pointer;
+  cursor: url("./cursor/cursor-pointer.svg") 15 2, pointer;
   transition: opacity 0.2s ease;
   will-change: transform;
 }
@@ -840,7 +840,7 @@ select:focus {
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.07), 0 0 24px -8px var(--glow);
 }
 input[type="range"] {
-  cursor: pointer;
+  cursor: url("./cursor/cursor-pointer.svg") 15 2, pointer;
 }
 /* Long Khmer option names must not push a dropdown past a phone screen. */
 main label:has(> select) {
@@ -876,7 +876,7 @@ main tbody tr:hover {
   background-color: rgba(255, 255, 255, 0.025);
 }
 summary {
-  cursor: pointer;
+  cursor: url("./cursor/cursor-pointer.svg") 15 2, pointer;
   transition: color 0.2s ease;
 }
 summary:hover {
@@ -1117,4 +1117,140 @@ summary::marker {
     color: #000;
     background: none;
   }
+}
+
+/* Custom cursor: the Aspensia mark, blue and red facets. Layered so utilities such as cursor-grab still win. */
+@layer base {
+  html {
+    cursor: url("./cursor/cursor.svg") 15 2, auto;
+  }
+  a, button, [role="button"], summary, select, label, input[type="checkbox"], input[type="radio"] {
+    cursor: url("./cursor/cursor-pointer.svg") 15 2, pointer;
+  }
+  input:not([type="range"]):not([type="checkbox"]):not([type="radio"]), textarea, [contenteditable="true"] {
+    cursor: text;
+  }
+  :disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* World tour: a letterboxed 3D stage that warps between Earth, the Moon and Mars. */
+.tour-frame {
+  position: relative;
+  overflow: hidden;
+  min-height: min(78svh, 640px);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #020305;
+  isolation: isolate;
+}
+/* Anamorphic letterbox bars. */
+.tour-frame::before,
+.tour-frame::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 7%;
+  background: #000;
+  z-index: 3;
+  pointer-events: none;
+}
+.tour-frame::before { top: 0; }
+.tour-frame::after { bottom: 0; }
+.tour-stage {
+  position: absolute;
+  inset: 0;
+  will-change: transform, filter;
+  pointer-events: none; /* a page-sized canvas must not trap wheel or touch scrolling */
+}
+@media (min-width: 768px) {
+  .tour-stage { left: 28%; }
+}
+.tour-stage .btn { display: none; }
+.tour-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(2, 3, 5, 0.92) 0%, rgba(2, 3, 5, 0.55) 38%, transparent 62%),
+    radial-gradient(120% 90% at 60% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+.tour-warp {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 64% 50%, rgba(255, 255, 255, 0.75), transparent 30%),
+    repeating-conic-gradient(from 0deg at 64% 50%, rgba(120, 160, 255, 0.35) 0deg 1deg, transparent 1deg 7deg, rgba(255, 90, 80, 0.25) 7deg 8deg, transparent 8deg 13deg);
+  mix-blend-mode: screen;
+}
+.tour-hud {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: min(78svh, 640px);
+  padding: 4.5rem 1.5rem 7rem;
+  pointer-events: none;
+}
+.tour-hud a { pointer-events: auto; }
+@media (min-width: 768px) {
+  .tour-hud { padding: 4.5rem 3rem 6rem; max-width: 34rem; }
+}
+.tour-controls {
+  position: absolute;
+  z-index: 4;
+  left: 1rem;
+  right: 1rem;
+  bottom: calc(7% + 0.75rem);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+@media (min-width: 768px) {
+  .tour-controls { left: 3rem; right: auto; }
+}
+.tour-pick {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.3rem 0.85rem 0.3rem 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(10, 11, 13, 0.7);
+  backdrop-filter: blur(8px);
+  color: var(--muted);
+  font-size: 0.85rem;
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.tour-pick:hover { color: var(--text); transform: translateY(-2px); }
+.tour-pick:active { transform: translateY(0) scale(0.97); }
+.tour-pick[aria-pressed="true"] { color: var(--text); border-color: color-mix(in srgb, var(--text) 45%, transparent); }
+.tour-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: left;
+  background: linear-gradient(90deg, #3d7bff, #ff3b30);
+  animation: tour-fill linear forwards;
+}
+@keyframes tour-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.tour-next { min-height: 2.75rem; }
+/* Wide tracking splits Khmer clusters apart. */
+html[lang="km"] .tour [class*="tracking-"] { letter-spacing: 0; }
+@media (max-width: 767px) {
+  .tour-shade { background: linear-gradient(180deg, rgba(2, 3, 5, 0.25) 0%, rgba(2, 3, 5, 0.72) 35%, rgba(2, 3, 5, 0.72) 75%, rgba(2, 3, 5, 0.35) 100%); }
 }

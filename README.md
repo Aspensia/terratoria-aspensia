@@ -25,11 +25,11 @@ PROJECT: Terratoria was built by **Aspensia**, a team of six high school student
 - 21 Earth sites: 18 established or documented analogue sites and 3 untested candidates. Death Valley was added from the team's research plan.
 - 8 dimensions, matching the challenge's list. Terrain, temperature and wind are **measured** from open data. Geology, illumination, water and ice, aeolian features, biology, subsurface and operations are **literature-derived** and labelled as such.
 - An "Exploratory Analogue Similarity Index": `Σ(W·Q·S) / Σ(W·Q)`. Missing data lowers coverage, never the score. It is a screening aid, not a probability.
-- A home page with an ambient 3D solar system, a Mission Challenge quiz built on the real scores, 3D terrain for every 60 km site window, and 3D explorers for Earth, the Moon and Mars with clickable sites and a data panel (Three.js).
+- A home page with an ambient 3D solar system, a letterboxed world tour that warps between Earth, the Moon and Mars (auto-advances, with a pause control), a Mission Challenge quiz built on the real scores, 3D terrain for every 60 km site window, and 3D explorers for Earth, the Moon and Mars with clickable sites and a data panel (Three.js).
 - Zoomable image viewer for relief views and NASA imagery; procedural sound (Web Audio API) with a mute toggle.
 - Site profiles, side-by-side comparison at identical scale, CSV export, printable report, shareable URLs, English and Khmer, Simple and Scientific modes.
 - A Mission Plan page that walks through choosing a lunar base site, with worked examples (Atacama, Haughton, Death Valley).
-- A space backdrop on every page (the real Milky Way, twinkling stars, occasional shooting stars), smooth scrolling (Lenis) and GSAP motion. Everything rests when the visitor's system asks for reduced motion.
+- A space backdrop on every page (the real Milky Way, twinkling stars, occasional shooting stars), smooth scrolling (Lenis), GSAP motion and a custom cursor drawn from the Aspensia mark (`src/app/cursor/`; the full-size vector is `public/aspensia-mark.svg`). Everything rests when the visitor's system asks for reduced motion.
 
 This is not a global search. Only the places listed in `pipeline/targets.mjs` were analysed.
 
