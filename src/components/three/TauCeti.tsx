@@ -28,11 +28,16 @@ float h3(vec3 p){ p = fract(p*0.3183099 + 0.1); p *= 17.0; return fract(p.x*p.y*
 float n3(vec3 x){ vec3 i = floor(x), f = fract(x); f = f*f*(3.0-2.0*f);
   return mix(mix(mix(h3(i),h3(i+vec3(1,0,0)),f.x), mix(h3(i+vec3(0,1,0)),h3(i+vec3(1,1,0)),f.x), f.y),
              mix(mix(h3(i+vec3(0,0,1)),h3(i+vec3(1,0,1)),f.x), mix(h3(i+vec3(0,1,1)),h3(i+vec3(1,1,1)),f.x), f.y), f.z); }
-float fbm(vec3 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++){ s += a*n3(p); p *= 2.02; a *= 0.5; } return s; }`;
+float fbm(vec3 p){ float s = 0.0, a = 0.5; for (int i = 0; i < OCT; i++){ s += a*n3(p); p *= 2.02; a *= 0.5; } return s; }`;
 
-/** Swirling cloud world: domain-warped noise in green, yellow and orange; AMAZE blends to sparkling pink. */
-function worldMaterial() {
+/**
+ * Tau Ceti e as a cloud world: banded zones broken into marbled swirls (two levels of domain warping),
+ * a dimmer day side with a warm terminator and dark night side, and limb haze. AMAZE blends to hot pink-red,
+ * covered in twinkling glints. Detail (noise octaves) follows Lite / Base Mode.
+ */
+function worldMaterial(octaves: number) {
   return new THREE.ShaderMaterial({
+    defines: { OCT: octaves },
     uniforms: { t: { value: 0 }, amaze: { value: 0 } },
     vertexShader: `varying vec3 vP; varying vec3 vN; varying vec3 vW;
       void main(){ vP = position; vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz;
@@ -40,26 +45,83 @@ function worldMaterial() {
     fragmentShader: `uniform float t; uniform float amaze; varying vec3 vP; varying vec3 vN; varying vec3 vW;
       ${NOISE}
       void main(){
-        vec3 p = normalize(vP) * 2.4;
-        vec3 q = vec3(fbm(p + vec3(0.0, t * 0.01, 0.0)), fbm(p + vec3(5.2, 1.3, 2.8)), fbm(p + vec3(2.1, 7.7, 3.3)));
-        vec3 r = vec3(fbm(p + 3.6 * q + vec3(1.7, 9.2, t * 0.012)), fbm(p + 3.6 * q + vec3(8.3, 2.8, 1.1)), 0.0);
-        float f = fbm(p + 4.2 * r.xyy);
-        vec3 col = mix(vec3(0.3, 0.72, 0.1), vec3(0.93, 0.96, 0.2), smoothstep(0.32, 0.72, f));
-        col = mix(col, vec3(0.93, 0.48, 0.07), smoothstep(0.52, 0.82, r.x) * 0.85);
-        vec3 pink = mix(vec3(0.78, 0.12, 0.46), vec3(1.0, 0.56, 0.82), smoothstep(0.3, 0.8, f));
-        float spark = step(0.988, h3(floor(normalize(vP) * 320.0) + floor(t * 7.0))) * (0.6 + 0.4 * sin(t * 20.0 + f * 30.0));
-        col = mix(col, pink, amaze);
+        vec3 sp = normalize(vP);
+        vec3 p = sp * 2.6;
+        // Latitude bands, bent by two levels of swirling flow.
+        vec3 q = vec3(fbm(p + vec3(0.0, 0.0, t * 0.008)), fbm(p + vec3(5.2, 1.3, 2.8)), fbm(p + vec3(2.1, 7.7, 3.3)));
+        vec3 r = vec3(fbm(p + 4.0 * q + vec3(1.7, 9.2, t * 0.01)), fbm(p + 4.0 * q + vec3(8.3, 2.8, 1.1)), fbm(p + 4.0 * q + vec3(3.1, 4.4, 6.6)));
+        float band = sin(sp.y * 9.0 + r.x * 5.0 + q.y * 2.0);
+        float f = fbm(p * 1.6 + 5.0 * r);
+        float fine = fbm(sp * 22.0 + 3.0 * r);
+        vec3 green = vec3(0.16, 0.42, 0.05), lime = vec3(0.62, 0.68, 0.08), amber = vec3(0.62, 0.3, 0.04);
+        vec3 col = mix(green, lime, smoothstep(0.3, 0.75, f + band * 0.12));
+        col = mix(col, amber, smoothstep(0.5, 0.85, r.z + band * 0.08) * 0.9);
+        col *= 0.65 + 0.7 * fine; // fine eddies, the planet's signature marbling
+        // AMAZE: hot pink-red, with dense glints that twinkle at their own pace.
+        vec3 pink = mix(vec3(0.95, 0.02, 0.28), vec3(1.0, 0.25, 0.5), smoothstep(0.25, 0.8, f)) * (0.8 + 0.4 * fine);
+        vec3 cell = floor(sp * 420.0);
+        float ph = h3(cell);
+        float glint = step(0.965, ph) * pow(0.5 + 0.5 * sin(t * (3.0 + ph * 9.0) + ph * 40.0), 6.0);
         vec3 N = normalize(vN), L = normalize(-vW), V = normalize(cameraPosition - vW);
         float ndl = dot(N, L);
-        float lit = smoothstep(-0.12, 0.3, ndl);
-        vec3 c = col * (0.015 + 1.15 * max(ndl, 0.0)) * lit;
-        float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-        c += mix(vec3(0.8, 0.95, 0.35), vec3(1.0, 0.45, 0.8), amaze) * rim * (0.15 + 0.85 * lit) * 0.55;
-        c += amaze * spark * vec3(1.0, 0.75, 0.95) * (0.35 + lit);
+        float lit = smoothstep(-0.1, 0.25, ndl);
+        // Warmer, dimmer light near the terminator, like late afternoon.
+        vec3 sunCol = mix(vec3(1.0, 0.55, 0.3), vec3(1.0, 0.92, 0.8), smoothstep(0.0, 0.5, ndl));
+        vec3 c = col * sunCol * (0.01 + 0.78 * max(ndl, 0.0)) * lit;
+        // AMAZE: hot pink that glows on its own (the infested world shines), brightest on the day side.
+        c = mix(c, pink * (0.12 + 1.25 * max(ndl, 0.0) * lit), amaze);
+        float rim = pow(1.0 - max(dot(N, V), 0.0), 2.6);
+        c += mix(vec3(0.55, 0.75, 0.25), vec3(1.0, 0.18, 0.4), amaze) * rim * (0.08 + 0.6 * lit) * 0.6;
+        c += amaze * glint * vec3(1.0, 0.7, 0.85) * (0.6 + 1.4 * lit);
         gl_FragColor = vec4(c, 1.0);
         #include <colorspace_fragment>
       }`,
   });
+}
+
+/** Additive, twinkling point sprites (sparkles and the Petrova stream share it). */
+function sparkleMaterial(color: string, size: number) {
+  return new THREE.ShaderMaterial({
+    uniforms: { t: { value: 0 }, k: { value: 0 }, c: { value: new THREE.Color(color) }, size: { value: size }, scale: { value: 1000 }, from: { value: new THREE.Vector3() }, to: { value: new THREE.Vector3() }, flow: { value: 0 } },
+    vertexShader: `attribute float seed; uniform float t; uniform float size; uniform float scale; uniform vec3 from; uniform vec3 to; uniform float flow; varying float vTw;
+      void main(){
+        vec3 p = position;
+        if (flow > 0.5) {
+          // Stream: each particle travels from the star to the planet, then starts again.
+          float u = fract(seed + t * (0.03 + 0.03 * fract(seed * 7.3)));
+          p = mix(from, to, u) + position * (0.25 + 0.75 * u);
+        }
+        vTw = pow(0.5 + 0.5 * sin(t * (2.0 + fract(seed * 13.7) * 6.0) + seed * 60.0), 3.0);
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_PointSize = min(64.0, size * scale * (0.4 + vTw) / -mv.z); // size is in world units
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `uniform vec3 c; uniform float k; varying float vTw;
+      void main(){
+        vec2 d = gl_PointCoord - 0.5;
+        float r = length(d);
+        float core = exp(-r * r * 40.0);
+        float star = max(0.0, 1.0 - abs(d.x) * 14.0) * max(0.0, 1.0 - abs(d.y) * 2.2) + max(0.0, 1.0 - abs(d.y) * 14.0) * max(0.0, 1.0 - abs(d.x) * 2.2);
+        float a = k * (core + star * 0.6 * vTw) * (0.35 + vTw);
+        gl_FragColor = vec4(c * a, a);
+      }`,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+}
+
+function points(n: number, place: (i: number, v: THREE.Vector3) => void) {
+  const pos = new Float32Array(n * 3), seed = new Float32Array(n), v = new THREE.Vector3();
+  for (let i = 0; i < n; i++) {
+    place(i, v);
+    pos.set([v.x, v.y, v.z], i * 3);
+    seed[i] = Math.random();
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setAttribute("seed", new THREE.BufferAttribute(seed, 1));
+  return g;
 }
 
 /** An original long, modular hard-SF craft built along +X: command module, habitats, tanks, radiators, solar wings, engine. */
@@ -146,9 +208,10 @@ export function TauCeti({ amaze = false }: { amaze?: boolean }) {
       return { ...w, m };
     });
 
-    const worldMat = worldMaterial();
-    const world = new THREE.Mesh(new THREE.SphereGeometry(R, isLite() ? 96 : 192, isLite() ? 48 : 96), worldMat);
-    const air = atmosphere(R * 1.035, "#c8ff7a", 3.2);
+    const lowSpec = isLite() || window.matchMedia("(hover: none)").matches;
+    const worldMat = worldMaterial(lowSpec ? 3 : 6);
+    const world = new THREE.Mesh(new THREE.SphereGeometry(R, lowSpec ? 96 : 192, lowSpec ? 48 : 96), worldMat);
+    const air = atmosphere(R * 1.03, "#8fbf4a", 3.4);
     const airColor = (air.material as THREE.ShaderMaterial).uniforms.c.value as THREE.Color;
     const e = new THREE.Group();
     e.add(world, air);
@@ -158,26 +221,20 @@ export function TauCeti({ amaze = false }: { amaze?: boolean }) {
     craft.scale.setScalar(0.055);
     scene.add(craft);
 
-    // Petrova line: a faint red-pink beam from the star into the planet, shimmering along its length.
-    const beamMat = new THREE.ShaderMaterial({
-      uniforms: { t: { value: 0 }, k: { value: 0 } },
-      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: `uniform float t; uniform float k; varying vec2 vUv;
-        float h(float x){ return fract(sin(x * 91.7) * 43758.5); }
-        void main(){
-          float edge = 1.0 - abs(vUv.x - 0.5) * 2.0;
-          float shimmer = 0.6 + 0.4 * sin(vUv.y * 140.0 - t * 6.0) * sin(vUv.y * 37.0 + t * 2.0);
-          float grain = step(0.97, h(floor(vUv.y * 900.0) + floor(t * 10.0)));
-          float a = k * pow(edge, 2.5) * (0.35 * shimmer + grain * 0.9);
-          gl_FragColor = vec4(vec3(1.0, 0.25, 0.55) * a, a);
-        }`,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
-    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.05, 1, 24, 1, true), beamMat);
-    scene.add(beam);
+    // AMAZE sparkles: a twinkling shell of glints hugging the planet.
+    const glitterMat = sparkleMaterial("#ff5c8f", 0.005);
+    const glitter = new THREE.Points(
+      points(lowSpec ? 600 : 2200, (_, v) => v.randomDirection().multiplyScalar(R * (1.005 + Math.pow(Math.random(), 3) * 0.25))),
+      glitterMat,
+    );
+    e.add(glitter);
+
+    // Petrova line: a soft stream of red-pink glints flowing from Tau Ceti into the planet.
+    const streamMat = sparkleMaterial("#ff3d6e", 0.045);
+    streamMat.uniforms.flow.value = 1;
+    const stream = new THREE.Points(points(lowSpec ? 900 : 3200, (_, v) => v.randomDirection().multiplyScalar(Math.pow(Math.random(), 2) * 0.22)), streamMat);
+    stream.frustumCulled = false;
+    scene.add(stream);
 
     const lite = isLite() || window.innerWidth < 700 || window.matchMedia("(hover: none)").matches;
     const composer = lite ? null : new EffectComposer(renderer);
@@ -194,6 +251,8 @@ export function TauCeti({ amaze = false }: { amaze?: boolean }) {
       composer?.setPixelRatio(renderer.getPixelRatio());
       composer?.setSize(w, h);
       camera.aspect = w / h;
+      const px = (renderer.getDrawingBufferSize(new THREE.Vector2()).y * 0.5) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      glitterMat.uniforms.scale.value = streamMat.uniforms.scale.value = px;
       // Shift the picture right on wide screens so the hero text keeps the left side.
       if (w > 900) camera.setViewOffset(w, h, -w * 0.16, 0, w, h);
       else camera.clearViewOffset();
@@ -218,38 +277,42 @@ export function TauCeti({ amaze = false }: { amaze?: boolean }) {
         o.m.position.set(Math.cos(a) * dist(o.au), 0, Math.sin(a) * dist(o.au));
       }
 
-      // The ship holds a low orbit over the day side, drifting slowly along it.
+      // The ship flies a real low orbit (one lap every 90 seconds). The orbit is a dawn-dusk orbit: its
+      // plane faces Tau Ceti, so the ship rides the day-night line and stays in sunlight, as real
+      // Earth-observing satellites do.
       toStar.copy(e.position).negate().normalize();
-      const sideways = new THREE.Vector3().crossVectors(yAxis, toStar).normalize();
-      // About 75° from the point under the star: Tau Ceti hangs low over the horizon ahead.
-      const ang = 1.3 + Math.sin(t * 0.03) * 0.08;
-      U.copy(toStar).multiplyScalar(Math.cos(ang)).addScaledVector(sideways, Math.sin(ang)).normalize();
-      U.y = 0.18;
-      U.normalize();
+      const n = toStar.clone().multiplyScalar(0.92).addScaledVector(yAxis, 0.4).normalize();
+      const a = new THREE.Vector3().crossVectors(yAxis, n).normalize();
+      const b = new THREE.Vector3().crossVectors(n, a);
+      const th = (t / 90) * Math.PI * 2;
+      U.copy(a).multiplyScalar(Math.cos(th)).addScaledVector(b, Math.sin(th));
+      T.copy(a).multiplyScalar(-Math.sin(th)).addScaledVector(b, Math.cos(th));
       craft.position.copy(e.position).addScaledVector(U, R * 1.07);
-      T.copy(toStar).addScaledVector(U, -toStar.dot(U)).normalize(); // flying toward the star
       S.crossVectors(T, U).normalize();
       craft.quaternion.setFromRotationMatrix(m.makeBasis(T, U, S));
 
-      // Camera just behind and above the ship: the planet's curve fills the lower frame.
-      camera.position.copy(craft.position).addScaledVector(T, -0.12).addScaledVector(U, 0.035).addScaledVector(S, 0.06 + Math.sin(t * 0.07) * 0.01);
-      camera.up.copy(U);
+      // Camera hangs on the sunlit side, a few planet radii out and drifting slowly, so Tau Ceti e shows
+      // nearly full with its swirling bands; the ship crosses in front of the planet and passes behind it.
+      const side = new THREE.Vector3().crossVectors(yAxis, toStar).normalize();
+      const view = toStar.clone().multiplyScalar(0.62).addScaledVector(yAxis, 0.3).addScaledVector(side, 0.55 + Math.sin(t * 0.02) * 0.15).normalize();
+      camera.position.copy(e.position).addScaledVector(view, R * 3.3);
+      camera.up.set(0, 1, 0);
+      camera.lookAt(e.position);
+
       // AMAZE fades in and out smoothly.
       k += ((want.current ? 1 : 0) - k) * 0.04;
-      camera.lookAt(craft.position.clone().addScaledVector(T, 0.06).addScaledVector(U, 0.005));
 
       worldMat.uniforms.t.value = t;
       worldMat.uniforms.amaze.value = k;
-      airColor.setRGB(0.78 + 0.22 * k, 1 - 0.55 * k, 0.48 + 0.32 * k);
-      beamMat.uniforms.t.value = t;
-      beamMat.uniforms.k.value = k;
-      beam.visible = k > 0.01;
-      // Stretch the beam from the star's surface to the planet.
-      const from = toStar.clone().multiplyScalar(-1.25);
-      const to = e.position.clone().addScaledVector(toStar, R * 0.9);
-      beam.position.copy(from).add(to).multiplyScalar(0.5);
-      beam.scale.set(1, from.distanceTo(to), 1);
-      beam.quaternion.setFromUnitVectors(yAxis, to.clone().sub(from).normalize());
+      airColor.setRGB(0.56 + 0.44 * k, 0.75 - 0.57 * k, 0.29 + 0.11 * k);
+      for (const mat of [glitterMat, streamMat]) {
+        mat.uniforms.t.value = t;
+        mat.uniforms.k.value = k;
+      }
+      glitter.visible = stream.visible = k > 0.01;
+      // The stream runs from the star's surface to the planet's sunlit face.
+      streamMat.uniforms.from.value.copy(toStar).multiplyScalar(-1.3);
+      streamMat.uniforms.to.value.copy(e.position).addScaledVector(toStar, R * 0.95);
 
       starMat.uniforms.t.value = t;
       draw();

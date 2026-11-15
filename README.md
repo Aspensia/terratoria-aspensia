@@ -44,7 +44,7 @@ Needs Node.js 20.9 or newer (Next.js 16).
 ```bash
 npm install --legacy-peer-deps
 npm run dev          # http://localhost:3000
-npm test             # 55 unit tests + 6 pipeline tests
+npm test             # 56 unit tests + 6 pipeline tests
 npm run build        # static site in ./out (a postbuild step also runs pipeline/flatten-segments.mjs)
 ```
 
