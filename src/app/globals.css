@@ -1442,7 +1442,6 @@ html.has-cursor .cursor-ring { opacity: 0.55; }
 .game-pick:active { transform: translateY(0) scale(0.98); }
 .game-pick[aria-pressed="true"] { border-color: color-mix(in srgb, var(--text) 55%, transparent); background: rgba(255, 255, 255, 0.05); }
 .hint-btn { gap: 0.4rem; }
-.is-struck { opacity: 0.35 !important; text-decoration: line-through; filter: grayscale(1); }
 
 /* Settings: switches and the theme-song list */
 .settings-panel { max-height: min(80vh, 44rem); overflow-y: auto; overscroll-behavior: contain; }

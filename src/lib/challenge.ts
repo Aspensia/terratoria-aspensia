@@ -3,6 +3,8 @@
 import { EARTH_SITES, PLACES, REFERENCES } from "../data/catalog";
 import { BALANCED } from "../data/presets";
 import { aggregate, scoreAll } from "./scoring";
+import { local, tagLabel } from "../data/km";
+import { DIMENSION_LABEL, type Lang } from "./i18n";
 import type { Body, Place } from "./types";
 
 export type DuelMetric = "steeper" | "rougher" | "relief" | "colder";
@@ -127,11 +129,63 @@ export function rankTitle(score: number, total: number, lang: "en" | "km" = "en"
   return lang === "km" ? RANKS_KM[en] : en;
 }
 
-/** A hint never gives the answer away: it removes one wrong option, or (head-to-head) reveals one of the two values. */
-export type Hint = { kind: "remove"; id: string } | { kind: "reveal"; id: string };
+/**
+ * Two clues per round, gentle first. Neither names the answer: they point at it through the data
+ * (temperature, geology, the best-matching dimension, a measured value, latitude or type of place).
+ */
+export function cluesFor(round: Round): [Text, Text] {
+  const both = (f: (lang: Lang) => string): Text => ({ en: f("en"), km: f("km") });
+  const num = (n: number, lang: Lang) => (lang === "km" ? toKmDigits(String(n)) : String(n));
 
-export function hintFor(round: Round, rand: () => number = Math.random): Hint {
-  if (round.kind === "duel") return { kind: "reveal", id: round.a.id };
-  const ids = round.kind === "world" ? ["earth", "moon", "mars"] : round.options.map((o) => o.id);
-  return { kind: "remove", id: pickOne(rand, ids.filter((id) => id !== round.answer)) };
+  if (round.kind === "world") {
+    const p = round.place;
+    const tags = [...(p.attributes.geology?.tags ?? []), ...(p.attributes.thermal?.tags ?? [])].slice(0, 3);
+    const temp = p.climate?.meanK;
+    const first =
+      temp !== undefined
+        ? both((l) => (l === "km" ? `សីតុណ្ហភាពផ្ទៃជាមធ្យមនៅទីនេះប្រហែល ${num(Math.round(temp - 273.15), l)} °C។` : `The average surface temperature here is about ${Math.round(temp - 273.15)} °C.`))
+        : both((l) => (l === "km" ? `ជម្រាលមធ្យមនៃដីនេះគឺ ${num(+p.terrain!.slopeMedianDeg.toFixed(1), l)}°។` : `The ground here has a median slope of ${p.terrain!.slopeMedianDeg.toFixed(1)}°.`));
+    const second = both((l) => {
+      const list = tags.map((t) => tagLabel(t, l)).join(l === "km" ? " និង " : ", ");
+      return l === "km" ? `អ្នកវិទ្យាសាស្ត្របានកត់ត្រាលក្ខណៈទាំងនេះនៅទីនេះ៖ ${list}។` : `Scientists have documented these features here: ${list}.`;
+    });
+    return [first, second];
+  }
+
+  if (round.kind === "analogue") {
+    const best = round.options.find((o) => o.id === round.answer)!;
+    const top = scoreAll(round.ref, best)
+      .filter((d) => d.score !== null)
+      .sort((x, y) => (y.score ?? 0) - (x.score ?? 0))[0];
+    const first = both((l) =>
+      l === "km"
+        ? `ទីតាំងដែលត្រូវគ្នាបំផុត ស្រដៀងខ្លាំងបំផុតក្នុងផ្នែក «${DIMENSION_LABEL.km[top.id]}»។`
+        : `The best match is most alike in "${DIMENSION_LABEL.en[top.id].toLowerCase()}".`,
+    );
+    const second = both((l) =>
+      best.lat >= 0
+        ? l === "km" ? "វាស្ថិតនៅអឌ្ឍគោលខាងជើង។" : "It lies in the northern hemisphere."
+        : l === "km" ? "វាស្ថិតនៅអឌ្ឍគោលខាងត្បូង។" : "It lies in the southern hemisphere.",
+    );
+    return [first, second];
+  }
+
+  const { a, metric } = round;
+  const win = round.answer === a.id ? a : round.b;
+  const digits = metric === "steeper" || metric === "rougher" ? 1 : 0;
+  const first = both((l) => `${local(a, l).name}: ${num(+round.value(a).toFixed(digits), l)} ${round.unit[l]}`);
+  const traits = (win.attributes.geology?.tags ?? []).slice(0, 3);
+  const second =
+    metric === "colder" || traits.length === 0
+      ? both((l) => {
+          const deg = Math.round(Math.abs(win.lat));
+          return l === "km" ? `ចម្លើយស្ថិតនៅប្រហែល ${num(deg, l)}° ពីខ្សែអេក្វាទ័រ។` : `The answer lies about ${deg}° from the equator.`;
+        })
+      : both((l) => {
+          const list = traits.map((t) => tagLabel(t, l)).join(l === "km" ? " និង " : ", ");
+          return l === "km" ? `ដីរបស់ចម្លើយមាន៖ ${list}។` : `The answer's ground has: ${list}.`;
+        });
+  return [first, second];
 }
+
+const toKmDigits = (s: string) => s.replace(/[0-9]/g, (d) => "០១២៣៤៥៦៧៨៩"[+d]);

@@ -7,7 +7,7 @@ import { fmtCoord, useCountUp } from "@/components/Bits";
 import { ReliefCanvas } from "@/components/ReliefCanvas";
 import { sfx } from "@/lib/audio";
 import { confetti } from "@/lib/fx";
-import { hintFor, makeGame, rankTitle, seeded, type Hint, type Round } from "@/lib/challenge";
+import { cluesFor, makeGame, rankTitle, seeded, type Round } from "@/lib/challenge";
 import { GRAVITY, START, THRUST, THRUST_RANGE, landingScore, step, verdict, type Lander, type LanderWorld } from "@/lib/lander";
 import { local } from "@/data/km";
 import type { Key } from "@/lib/i18n";
@@ -39,27 +39,41 @@ function Score({ value }: { value: number }) {
 
 const optionIds = (r: Round) => (r.kind === "world" ? WORLDS : r.kind === "duel" ? [r.a.id, r.b.id] : r.options.map((o) => o.id));
 
-function HintButton({ used, disabled, onHint, cost }: { used: boolean; disabled: boolean; onHint(): void; cost?: string }) {
-  const { tx } = useApp();
+const MAX_CLUES = 2;
+
+/** Hint button and the clues shown so far: two per round, each a nudge rather than the answer. */
+function Clues({ round, shown, disabled, onHint, cost }: { round: Round; shown: number; disabled: boolean; onHint(): void; cost?: string }) {
+  const { tx, lang } = useApp();
+  const clues = cluesFor(round).slice(0, shown);
+  const left = MAX_CLUES - shown;
   return (
-    <button type="button" className="btn hint-btn" disabled={used || disabled} onClick={onHint} aria-label={tx("Hint: remove one wrong answer or reveal a value", "តម្រុយ៖ ដកចម្លើយខុសមួយចេញ ឬបង្ហាញតម្លៃមួយ")}>
-      <span aria-hidden="true">💡</span> {used ? tx("Hint used", "បានប្រើតម្រុយ") : tx("Hint", "តម្រុយ")}
-      {cost && !used && <span className="text-xs text-muted">{cost}</span>}
-    </button>
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <ol className="min-w-0 flex-1 space-y-1.5" aria-live="polite">
+        {clues.map((c, k) => (
+          <li key={k} className="page-enter flex gap-2 rounded-lg border border-line bg-[var(--panel-2)] px-3 py-2 text-sm">
+            <span className="shrink-0 font-mono text-xs leading-5 text-muted">{tx(`Clue ${k + 1}`, `តម្រុយ ${k + 1}`)}</span>
+            <span>{c[lang]}</span>
+          </li>
+        ))}
+      </ol>
+      <button type="button" className="btn hint-btn" disabled={left === 0 || disabled} onClick={onHint} aria-label={tx("Hint: show a clue", "តម្រុយ៖ បង្ហាញតម្រុយមួយ")}>
+        <span aria-hidden="true">💡</span> {left === 0 ? tx("No hints left", "អស់តម្រុយ") : tx(`Hint (${left} left)`, `តម្រុយ (នៅសល់ ${left})`)}
+        {cost && left > 0 && <span className="text-xs text-muted">{cost}</span>}
+      </button>
+    </div>
   );
 }
 
 /** One question. Shared by the 10-round quiz and the 60-second rush. Keys 1–3 answer. */
-function RoundView({ round, n, choice, hint, onAnswer, after }: { round: Round; n: number; choice: string | null; hint: Hint | null; onAnswer(c: string, at?: { x: number; y: number }): void; after?: ReactNode }) {
+function RoundView({ round, n, choice, onAnswer, after }: { round: Round; n: number; choice: string | null; onAnswer(c: string, at?: { x: number; y: number }): void; after?: ReactNode }) {
   const { t, tx, lang } = useApp();
-  const gone = (id: string) => hint?.kind === "remove" && hint.id === id && !choice;
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if ((e.target as Element).closest?.("input, select, textarea")) return;
       const opts = optionIds(round);
       const k = Number(e.key);
-      if (!choice && k >= 1 && k <= opts.length && !gone(opts[k - 1])) onAnswer(opts[k - 1]);
+      if (!choice && k >= 1 && k <= opts.length) onAnswer(opts[k - 1]);
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
@@ -78,7 +92,7 @@ function RoundView({ round, n, choice, hint, onAnswer, after }: { round: Round; 
           <p className="mt-1 text-sm text-muted">{tx("A 60 km patch of real elevation data, shaded the same way for every world. Look at the craters, slopes and how rough the ground is.", "ផ្ទៃដី ៦០ គ.ម. ពីទិន្នន័យកម្ពស់ពិតប្រាកដ ដែលដាក់ស្រមោលដូចគ្នាសម្រាប់គ្រប់ពិភព។ សូមមើលរណ្តៅ ជម្រាល និងភាពរដិបរដុបនៃដី។")}</p>
           <div className="mt-4 grid gap-2">
             {WORLDS.map((w, k) => (
-              <button key={w} type="button" disabled={!!choice || gone(w)} onClick={(e) => onAnswer(w, { x: e.clientX, y: e.clientY })} className={`btn justify-between py-3 text-base ${mark(w, w === round.answer)} ${gone(w) ? "is-struck" : ""}`}>
+              <button key={w} type="button" disabled={!!choice} onClick={(e) => onAnswer(w, { x: e.clientX, y: e.clientY })} className={`btn justify-between py-3 text-base ${mark(w, w === round.answer)}`}>
                 <span className="flex items-center gap-2">
                   <span className="h-3 w-3 rounded-full" style={{ background: `var(--${w})` }} aria-hidden="true" />
                   {t(w as Key)}
@@ -127,7 +141,7 @@ function RoundView({ round, n, choice, hint, onAnswer, after }: { round: Round; 
               <span className="block text-xs text-muted">
                 {t(p.body as Key)} · {local(p, lang).country ?? local(p, lang).category}
               </span>
-              {(choice || (hint?.kind === "reveal" && hint.id === p.id)) && (
+              {choice && (
                 <span className="mt-3 block font-mono text-2xl">
                   {round.value(p).toFixed(round.metric === "steeper" || round.metric === "rougher" ? 1 : 0)}
                   <span className="ml-1 text-xs text-muted">{round.unit[lang]}</span>
@@ -158,7 +172,7 @@ function RoundView({ round, n, choice, hint, onAnswer, after }: { round: Round; 
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {round.options.map((o, k) => (
-          <button key={o.id} type="button" disabled={!!choice || gone(o.id)} onClick={(e) => onAnswer(o.id, { x: e.clientX, y: e.clientY })} className={`card card-hover p-4 text-left disabled:cursor-default ${mark(o.id, o.id === round.answer)} ${gone(o.id) ? "is-struck" : ""}`}>
+          <button key={o.id} type="button" disabled={!!choice} onClick={(e) => onAnswer(o.id, { x: e.clientX, y: e.clientY })} className={`card card-hover p-4 text-left disabled:cursor-default ${mark(o.id, o.id === round.answer)}`}>
             <span className="flex items-start justify-between gap-2">
               <span className="font-semibold">{local(o, lang).name}</span>
               <span className="font-mono text-xs text-muted">{k + 1}</span>
@@ -199,13 +213,13 @@ function RoundView({ round, n, choice, hint, onAnswer, after }: { round: Round; 
   );
 }
 
-/** The original 10-round quiz, now with one hint per round. */
+/** The original 10-round quiz, with two clue hints per round. */
 function Quiz() {
   const { t, tx, lang } = useApp();
   const [game, setGame] = useState<Round[]>([]);
   const [i, setI] = useState(0);
   const [choice, setChoice] = useState<string | null>(null);
-  const [hint, setHint] = useState<Hint | null>(null);
+  const [hint, setHint] = useState(0);
   const [hints, setHints] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -216,7 +230,7 @@ function Quiz() {
     setGame(makeGame(seeded(Math.floor(Math.random() * 1e9)), ROUNDS));
     setI(0);
     setChoice(null);
-    setHint(null);
+    setHint(0);
     setHints(0);
     setScore(0);
     setStreak(0);
@@ -246,7 +260,7 @@ function Quiz() {
   };
   const next = useCallback(() => {
     setChoice(null);
-    setHint(null);
+    setHint(0);
     setI((x) => x + 1);
   }, []);
 
@@ -318,7 +332,6 @@ function Quiz() {
               round={round}
               n={i + 1}
               choice={choice}
-              hint={hint}
               onAnswer={answer}
               after={
                 <button type="button" className="btn btn-primary mt-3" onClick={next}>
@@ -326,17 +339,16 @@ function Quiz() {
                 </button>
               }
             />
-            <div className="flex justify-end">
-              <HintButton
-                used={!!hint}
-                disabled={!!choice}
-                onHint={() => {
-                  setHint(hintFor(round));
-                  setHints((h) => h + 1);
-                  sfx("open");
-                }}
-              />
-            </div>
+            <Clues
+              round={round}
+              shown={hint}
+              disabled={!!choice}
+              onHint={() => {
+                setHint((h) => Math.min(MAX_CLUES, h + 1));
+                setHints((h) => h + 1);
+                sfx("open");
+              }}
+            />
           </>
         )
       )}
@@ -351,7 +363,7 @@ function Rush() {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [i, setI] = useState(0);
   const [choice, setChoice] = useState<string | null>(null);
-  const [hint, setHint] = useState<Hint | null>(null);
+  const [hint, setHint] = useState(0);
   const [score, setScore] = useState(0);
   const [left, setLeft] = useState(RUSH_SECONDS);
   const [best, setBest] = useState(0);
@@ -364,7 +376,7 @@ function Rush() {
     setRounds(fresh());
     setI(0);
     setChoice(null);
-    setHint(null);
+    setHint(0);
     setScore(0);
     end.current = performance.now() + RUSH_SECONDS * 1000;
     setLeft(RUSH_SECONDS);
@@ -406,7 +418,7 @@ function Rush() {
     // Short look at the answer, then straight on.
     setTimeout(() => {
       setChoice(null);
-      setHint(null);
+      setHint(0);
       setI((x) => x + 1);
     }, right ? 650 : 1300);
   };
@@ -444,19 +456,20 @@ function Rush() {
       <div className="h-1.5 overflow-hidden rounded-full bg-[var(--panel-2)]" aria-hidden="true">
         <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${(left / RUSH_SECONDS) * 100}%`, transition: "width 0.1s linear" }} />
       </div>
-      {round && <RoundView round={round} n={i + 1} choice={choice} hint={hint} onAnswer={answer} />}
-      <div className="flex justify-end">
-        <HintButton
-          used={!!hint}
+      {round && <RoundView round={round} n={i + 1} choice={choice} onAnswer={answer} />}
+      {round && (
+        <Clues
+          round={round}
+          shown={hint}
           disabled={!!choice}
           cost="−5s"
           onHint={() => {
-            setHint(hintFor(round));
+            setHint((h) => Math.min(MAX_CLUES, h + 1));
             end.current -= 5000;
             sfx("open");
           }}
         />
-      </div>
+      )}
     </div>
   );
 }

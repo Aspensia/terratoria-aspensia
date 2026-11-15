@@ -65,13 +65,21 @@ describe("challenge rounds", () => {
 });
 
 describe("hints", () => {
-  test("a hint never removes or gives away the right answer", async () => {
-    const { hintFor } = await import("./challenge");
+  test("every round has two clues in both languages that never name the answer", async () => {
+    const { cluesFor } = await import("./challenge");
+    const { local } = await import("../data/km");
     for (let s = 1; s <= 50; s++) {
       for (const r of makeGame(seeded(s), 10)) {
-        const h = hintFor(r, seeded(s));
-        if (h.kind === "remove") expect(h.id).not.toBe(r.answer);
-        else expect(r.kind).toBe("duel");
+        const clues = cluesFor(r);
+        expect(clues).toHaveLength(2);
+        for (const c of clues) {
+          expect(c.en.length).toBeGreaterThan(10);
+          expect(c.km).toMatch(/[ក-៿]/);
+          if (r.kind === "world") expect(c.en.toLowerCase()).not.toMatch(/(earth|moon|mars)/);
+          if (r.kind === "analogue") expect(c.en).not.toContain(local(r.options.find((o) => o.id === r.answer)!, "en").name);
+        }
+        // Head-to-head: the first clue shows one measured value, the other place stays hidden.
+        if (r.kind === "duel") expect(clues[0].en).not.toContain(local(r.b, "en").name);
       }
     }
   });
