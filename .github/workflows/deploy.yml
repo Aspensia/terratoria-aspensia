@@ -34,7 +34,7 @@ jobs:
       - name: Build Terratoria
         run: npm run build
         env:
-          NEXT_PUBLIC_BASE_PATH: /terratoria-aspensia
+          NEXT_PUBLIC_BASE_PATH: ""
 
       - name: Add nojekyll
         run: touch out/.nojekyll
