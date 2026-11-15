@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { TRACKS } from "@/data/tracks";
 import { useApp, VISIONS, type Perf, type Vision } from "./AppState";
+import { TrackBadge } from "./MusicDock";
 
 const VISION_LABEL: Record<Vision, [string, string]> = {
   default: ["Standard colours", "ពណ៌ធម្មតា"],
@@ -26,7 +28,7 @@ function Gear() {
 
 /** Gear button and panel: Base / Lite Mode, volume and colour vision. */
 export function Settings() {
-  const { tx, perf, setPerf, volume, setVolume, muted, setMuted, vision, setVision, lang } = useApp();
+  const { tx, perf, setPerf, volume, setVolume, muted, setMuted, vision, setVision, lang, music, setMusic, sfx, setSfx, track, setTrack } = useApp();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -51,7 +53,7 @@ export function Settings() {
         <Gear />
       </button>
       {open && (
-        <div id={id} role="dialog" aria-label={tx("Settings", "ការកំណត់")} className="settings-panel card">
+        <div id={id} role="dialog" aria-label={tx("Settings", "ការកំណត់")} className="settings-panel card" data-lenis-prevent>
           <p className="label">{tx("Settings", "ការកំណត់")}</p>
 
           <fieldset className="mt-3">
@@ -67,6 +69,17 @@ export function Settings() {
             </div>
             <p className="mt-1.5 text-[11px] text-muted">{tx("Switching reloads the page.", "ការប្តូរនឹងផ្ទុកទំព័រឡើងវិញ។")}</p>
           </fieldset>
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <label className="settings-switch">
+              <input type="checkbox" checked={music} onChange={(e) => setMusic(e.target.checked)} />
+              <span>{tx("Music", "តន្ត្រី")}</span>
+            </label>
+            <label className="settings-switch">
+              <input type="checkbox" checked={sfx} onChange={(e) => setSfx(e.target.checked)} />
+              <span>{tx("Sound effects", "បែបផែនសំឡេង")}</span>
+            </label>
+          </div>
 
           <div className="mt-4">
             <label htmlFor={`${id}-vol`} className="flex items-center justify-between text-sm font-semibold">
@@ -86,6 +99,40 @@ export function Settings() {
               className="mt-2 w-full"
             />
           </div>
+
+          <fieldset className="mt-4">
+            <legend className="text-sm font-semibold">{tx("Theme song", "បទភ្លេងប្រធានបទ")}</legend>
+            <p className="mt-1 text-[11px] text-muted">
+              {tx("Songs marked with an icon also restyle the home page only; every other page stays the same.", "បទដែលមានរូបសញ្ញា ក៏ប្តូររចនាទំព័រដើមដែរ ប៉ុន្តែទំព័រផ្សេងទៀតនៅដដែល។")}
+            </p>
+            <div className="mt-2 grid gap-1.5">
+              {TRACKS.map((tr) => (
+                <label key={tr.id} className={`settings-track ${track === tr.id ? "is-on" : ""}`}>
+                  <input
+                    type="radio"
+                    name="track"
+                    className="sr-only"
+                    checked={track === tr.id}
+                    onChange={() => {
+                      setTrack(tr.id);
+                      if (!music) setMusic(true);
+                    }}
+                  />
+                  <TrackBadge track={tr} size={26} />
+                  <span className="min-w-0">
+                    <span className="block truncate text-xs font-semibold tracking-wide" style={tr.color ? { color: tr.color } : undefined}>
+                      {tr.label}
+                    </span>
+                    <span className="block truncate text-[11px] text-muted">
+                      {tr.title} · {tr.artist}
+                    </span>
+                    {tr.sceneNote && <span className="block text-[11px] leading-snug text-accent">{tr.sceneNote[lang]}</span>}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <p className="mt-1.5 text-[10.5px] leading-snug text-muted">{TRACKS.find((x) => x.id === track)?.credit[lang]}</p>
+          </fieldset>
 
           <div className="mt-4">
             <label htmlFor={`${id}-cv`} className="text-sm font-semibold">

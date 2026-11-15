@@ -126,7 +126,7 @@ function asteroidBelt(inner: number, outer: number, count: number): THREE.Instan
 }
 
 /** The Sun: animated granulation and limb darkening in a small shader. */
-function sunMaterial(): THREE.ShaderMaterial {
+export function sunMaterial(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: { t: { value: 0 } },
     vertexShader: `varying vec3 vP; varying vec3 vN;

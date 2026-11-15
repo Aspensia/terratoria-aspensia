@@ -9,6 +9,7 @@ let master: GainNode | null = null;
 let echo: GainNode | null = null; // send into a short feedback delay, for a little sparkle
 let muted = false;
 let volume = 0.7;
+let sfxOn = true; // Settings: sound effects can be switched off on their own
 const level = () => (muted ? 0 : volume);
 let wantAmbient = false;
 let ambientStop: (() => void) | null = null;
@@ -24,6 +25,10 @@ export function isMuted() {
 export function setMuted(m: boolean) {
   muted = m;
   if (ctx && master) master.gain.setTargetAtTime(level(), ctx.currentTime, 0.08);
+}
+
+export function setSfxOn(on: boolean) {
+  sfxOn = on;
 }
 
 /** Master volume, 0–1 (the Settings slider). */
@@ -80,7 +85,7 @@ function note(freq: number, { dur = 0.18, peak = 0.05, to = freq, delay = 0, typ
 const pick = <T,>(xs: T[]) => xs[Math.floor(Math.random() * xs.length)];
 
 export function sfx(kind: Sfx) {
-  if (muted || !ctx) return;
+  if (muted || !sfxOn || !ctx) return;
   switch (kind) {
     case "hover": {
       const now = performance.now();

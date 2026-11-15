@@ -30,6 +30,7 @@ PROJECT: Terratoria was built by **Aspensia**, a team of six high school student
 - Zoomable image viewer for relief views and NASA imagery; procedural sound and theme music (Web Audio API) with a mute toggle and a volume slider.
 - Settings (gear icon): Base Mode or Lite Mode (smaller textures, fewer polygons, 1x pixel ratio, for low-memory devices), volume, and a colour-vision palette for protan, deutan and tritan colour blindness and for achromatopsia (each with its weaker "-anomaly" form).
 - A short transition with a random space fact on every page change.
+- Theme songs (Settings): ALPHA is synthesised in the browser; BETA to ZETA and three themed songs play through YouTube's embedded player, shown docked and credited (nothing is downloaded or re-hosted). The themed songs restyle the home page only: INTERSTELLAR shows a ray-traced black hole, HAIL MARY the Tau Ceti system with a ship orbiting a green Tau Ceti e, FLOW an original neon geometry run. Music and sound effects can be switched off separately.
 - Site profiles, side-by-side comparison at identical scale, CSV export, printable report, shareable URLs, English and Khmer, Simple and Scientific modes.
 - A Mission Plan page that walks through choosing a lunar base site, with worked examples (Atacama, Haughton, Death Valley).
 - A space backdrop on every page (the real Milky Way, twinkling stars, occasional shooting stars), smooth scrolling (Lenis), GSAP motion and a custom cursor drawn from the Aspensia mark (`src/app/cursor/`; the full-size vector is `public/aspensia-mark.svg`). Everything rests when the visitor's system asks for reduced motion.
@@ -43,7 +44,7 @@ Needs Node.js 20.9 or newer (Next.js 16).
 ```bash
 npm install --legacy-peer-deps
 npm run dev          # http://localhost:3000
-npm test             # 54 unit tests + 6 pipeline tests
+npm test             # 55 unit tests + 6 pipeline tests
 npm run build        # static site in ./out (a postbuild step also runs pipeline/flatten-segments.mjs)
 ```
 
@@ -110,5 +111,7 @@ SUBMISSION.md        draft text for the Space Apps project page
 ## Credits
 
 LOLA Science Team (NASA GSFC); Diviner team (UCLA); MOLA Science Team; NASA Langley POWER Project; Copernicus DEM © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA; NASA GIBS (Blue Marble, VIIRS Black Marble); NASA 3D Resources; Cassini Jupiter map PIA07782 (NASA/JPL/Space Science Institute); Deep Star Maps 2020 (NASA/Goddard Space Flight Center Scientific Visualization Studio; Gaia DR2: ESA/Gaia/DPAC). Not affiliated with or endorsed by NASA or ESA.
+
+Music (embedded from YouTube, played in YouTube's player): "Cosmic Voyager" and "Hidden Layer" by MokkaMusic; "Space Cinematic Ambient" by Tunetank; "Everdream" by Epic Soul Factory (via HDSounDI); "Make Me Move (feat. Karra)" by Culture Code, provided by NCS (NoCopyrightSounds); "Flow" by Creo; Interstellar Main Theme by Hans Zimmer (video uploaded by PowerStanik); "Sign of the Times" by Harry Styles (official video, HarryStylesVEVO). Each remains its owner's work.
 
 The data and imagery above keep their own terms. A licence added to this repository covers the code only.

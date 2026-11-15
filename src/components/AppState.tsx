@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { PLACES } from "@/data/catalog";
 import { STRINGS, type Key, type Lang } from "@/lib/i18n";
 import * as audio from "@/lib/audio";
+import { TRACKS } from "@/data/tracks";
 import { ripple } from "@/lib/fx";
 import { readSaved, toggleId, writeSaved } from "@/lib/storage";
 
@@ -28,6 +29,14 @@ interface AppState {
   /** Base Mode (full quality) or Lite Mode (less memory). Changing it reloads the page so 3D scenes rebuild. */
   perf: Perf;
   setPerf(p: Perf): void;
+  /** Theme music and sound effects can each be switched off. */
+  music: boolean;
+  setMusic(on: boolean): void;
+  sfx: boolean;
+  setSfx(on: boolean): void;
+  /** Theme song id from data/tracks.ts. */
+  track: string;
+  setTrack(id: string): void;
   /** Colour-vision palette for data colours. */
   vision: Vision;
   setVision(v: Vision): void;
@@ -61,6 +70,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [volume, setVolumeState] = useState(0.7);
   const [perf, setPerfState] = useState<Perf>("base");
   const [vision, setVisionState] = useState<Vision>("default");
+  const [music, setMusicState] = useState(true);
+  const [sfxOn, setSfxState] = useState(true);
+  const [track, setTrackState] = useState("alpha");
 
   useEffect(() => {
     if (pref("terratoria.lang") === "km") setLangState("km");
@@ -78,9 +90,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (document.documentElement.dataset.perf === "lite") setPerfState("lite");
     const vis = document.documentElement.dataset.vision as Vision | undefined;
     if (vis && VISIONS.includes(vis)) setVisionState(vis);
+    if (pref("terratoria.music") === "0") setMusicState(false);
+    if (pref("terratoria.sfx") === "0") {
+      setSfxState(false);
+      audio.setSfxOn(false);
+    }
+    const tr = pref("terratoria.track");
+    if (tr && TRACKS.some((x) => x.id === tr)) setTrackState(tr);
     setSaved(readSaved(store(), PLACES.map((p) => p.id)));
-    audio.ambient(true); // site-wide theme music; starts on the first click or key press
   }, []);
+
+  // ALPHA is synthesised here; the other songs play in the YouTube player (components/MusicDock.tsx).
+  useEffect(() => audio.ambient(music && track === "alpha"), [music, track]);
 
   useEffect(() => {
     document.documentElement.dataset.mode = mode; // CSS shows .simple-only / .science-only accordingly
@@ -138,6 +159,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setPref("terratoria.perf", p);
         window.location.reload();
       },
+      music,
+      setMusic: (on) => (setMusicState(on), setPref("terratoria.music", on ? "1" : "0")),
+      sfx: sfxOn,
+      setSfx: (on) => (setSfxState(on), audio.setSfxOn(on), setPref("terratoria.sfx", on ? "1" : "0")),
+      track,
+      setTrack: (id) => (setTrackState(id), setPref("terratoria.track", id)),
       vision,
       setVision: (v) => {
         setVisionState(v);
@@ -148,7 +175,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       t: (key) => STRINGS[lang][key],
       tx: (en, km) => (lang === "km" ? km : en),
     }),
-    [lang, mode, saved, toggleSaved, muted, volume, perf, vision],
+    [lang, mode, saved, toggleSaved, muted, volume, perf, vision, music, sfxOn, track],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

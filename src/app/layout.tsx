@@ -30,7 +30,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: PREFS }} />
       </head>
-      <body className="min-h-screen">
+      {/* Extensions such as Grammarly add attributes to <body> before React loads; ignore those differences. */}
+      <body className="min-h-screen" suppressHydrationWarning>
         <SmoothScroll />
         <AppProvider>
           <Shell>{children}</Shell>

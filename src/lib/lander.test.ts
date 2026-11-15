@@ -34,6 +34,12 @@ describe("touchdown lander", () => {
     }
   });
 
+  test("a stronger engine brakes harder", () => {
+    const weak = step({ alt: 100, v: 10, fuel: 100 }, GRAVITY.mars, true, 1, 8);
+    const strong = step({ alt: 100, v: 10, fuel: 100 }, GRAVITY.mars, true, 1, 20);
+    expect(strong.v).toBeLessThan(weak.v);
+  });
+
   test("scores reward soft landings and spare fuel", () => {
     expect(landingScore(2, 40)).toBe(140);
     expect(landingScore(4, 40)).toBe(70);

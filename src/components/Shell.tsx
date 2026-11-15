@@ -11,6 +11,7 @@ import type { Place } from "@/lib/types";
 import { useApp } from "./AppState";
 import { ScrollProgress, useNavPill, usePageEnter, useSpotlight } from "./motion/Motion";
 import { Cursor } from "./Cursor";
+import { MusicDock } from "./MusicDock";
 import { RouteLoader } from "./RouteLoader";
 import { Settings } from "./Settings";
 import { SpaceBackdrop } from "./SpaceBackdrop";
@@ -179,6 +180,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <SpaceBackdrop />
       <Cursor />
       <RouteLoader />
+      <MusicDock />
       <a href="#main" className="btn btn-primary sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50">
         {t("skip")}
       </a>

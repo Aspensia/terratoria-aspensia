@@ -8,7 +8,7 @@ import { ReliefCanvas } from "@/components/ReliefCanvas";
 import { sfx } from "@/lib/audio";
 import { confetti } from "@/lib/fx";
 import { hintFor, makeGame, rankTitle, seeded, type Hint, type Round } from "@/lib/challenge";
-import { GRAVITY, START, landingScore, step, verdict, type Lander, type LanderWorld } from "@/lib/lander";
+import { GRAVITY, START, THRUST, THRUST_RANGE, landingScore, step, verdict, type Lander, type LanderWorld } from "@/lib/lander";
 import { local } from "@/data/km";
 import type { Key } from "@/lib/i18n";
 import type { Body } from "@/lib/types";
@@ -474,6 +474,7 @@ const GROUND: Record<LanderWorld, string> = { moon: "#8d8d8d", mars: "#a4532e", 
 function Touchdown() {
   const { t, tx, lang } = useApp();
   const [world, setWorld] = useState<LanderWorld>("moon");
+  const [power, setPower] = useState(THRUST);
   const [phase, setPhase] = useState<"ready" | "flying" | "landed">("ready");
   const [hud, setHud] = useState<Lander>(START);
   const [best, setBest] = useState(0);
@@ -548,7 +549,7 @@ function Touchdown() {
     const loop = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      sim.current = step(sim.current, GRAVITY[world], thrust.current, dt);
+      sim.current = step(sim.current, GRAVITY[world], thrust.current, dt, power);
       draw(sim.current, thrust.current);
       if (++tick % 4 === 0) setHud(sim.current);
       if (sim.current.alt <= 0) {
@@ -581,7 +582,7 @@ function Touchdown() {
       window.removeEventListener("keydown", kd);
       window.removeEventListener("keyup", ku);
     };
-  }, [phase, world, draw]);
+  }, [phase, world, draw, power]);
 
   const launch = () => {
     sim.current = START;
@@ -603,6 +604,18 @@ function Touchdown() {
             </button>
           ))}
         </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        <label htmlFor="thrust" className="font-semibold">
+          {tx("Engine thrust", "កម្លាំងរុញម៉ាស៊ីន")}
+        </label>
+        <input id="thrust" type="range" min={THRUST_RANGE[0]} max={THRUST_RANGE[1]} step={0.5} value={power} disabled={phase === "flying"} onChange={(e) => setPower(Number(e.target.value))} className="w-48" />
+        <span className="font-mono tabular-nums">{power.toFixed(1)} m/s²</span>
+        {power <= GRAVITY[world] ? (
+          <span className="text-[var(--warn)]">{tx("Weaker than this world's gravity: the lander cannot slow down!", "ខ្សោយជាងទំនាញនៃពិភពនេះ៖ យានមិនអាចបន្ថយល្បឿនបានទេ!")}</span>
+        ) : (
+          <span className="text-muted">{tx(`Net braking ${(power - GRAVITY[world]).toFixed(1)} m/s²`, `ការហ្វ្រាំងសុទ្ធ ${(power - GRAVITY[world]).toFixed(1)} m/s²`)}</span>
+        )}
       </div>
       <div className="relative overflow-hidden rounded-xl border border-line">
         <canvas ref={canvas} width={720} height={360} className="block h-auto w-full touch-none select-none" aria-label={tx("Landing game", "ល្បែងចុះចត")} {...hold} />

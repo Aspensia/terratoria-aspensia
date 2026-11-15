@@ -14,11 +14,16 @@ import { WorldTour } from "@/components/WorldTour";
 import { textureUrl } from "@/components/three/space";
 import { EARTH_SITES, REFERENCES } from "@/data/catalog";
 import { DATASETS } from "@/data/datasets";
+import { trackById } from "@/data/tracks";
 import { DATASET_KM } from "@/data/km";
 import type { Key } from "@/lib/i18n";
 import { DIMENSIONS } from "@/lib/types";
 
 const SolarSystem = dynamic(() => import("@/components/three/SolarSystem").then((m) => m.SolarSystem), { ssr: false });
+// Theme-song backdrops (Settings → Theme song). They replace the solar system on this page only.
+const BlackHole = dynamic(() => import("@/components/three/BlackHole").then((m) => m.BlackHole), { ssr: false });
+const TauCeti = dynamic(() => import("@/components/three/TauCeti").then((m) => m.TauCeti), { ssr: false });
+const GeoRunner = dynamic(() => import("@/components/GeoRunner").then((m) => m.GeoRunner), { ssr: false });
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -104,7 +109,8 @@ const ARCHIVE: { src: string; alt: Bi; caption: Bi }[] = [
 ];
 
 export default function Home() {
-  const { t, lang } = useApp();
+  const { t, lang, track } = useApp();
+  const scene = trackById(track).scene;
   const hero = useRef<HTMLElement>(null);
   const archive = useRef<HTMLDivElement>(null);
 
@@ -150,7 +156,7 @@ export default function Home() {
 
   return (
     <>
-      <SolarSystem />
+      {scene === "blackhole" ? <BlackHole /> : scene === "tauceti" ? <TauCeti /> : scene === "runner" ? <GeoRunner /> : <SolarSystem />}
       <div className="relative z-10 space-y-20 pb-10">
         <section ref={hero} data-own-enter className="flex min-h-[calc(100svh-11rem)] max-w-3xl flex-col justify-center pt-6">
           <p data-hero="kicker" className="label !text-accent">
@@ -161,7 +167,8 @@ export default function Home() {
               PROJECT:
             </span>
             <SplitText
-              text="Terratoria"
+              key={scene === "tauceti" ? "hail" : "terra"}
+              text={scene === "tauceti" ? "HAIL MARY" : "Terratoria"}
               tag="span"
               trigger="load"
               textAlign="left"
