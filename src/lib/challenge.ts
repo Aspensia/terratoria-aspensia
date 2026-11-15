@@ -190,8 +190,11 @@ export function cluesFor(round: Round): [Text, Text] {
 
 const toKmDigits = (s: string) => s.replace(/[0-9]/g, (d) => "០១២៣៤៥៦៧៨៩"[+d]);
 
-/** Hints per round: 1 a clue, 2 crosses out a wrong option (head to head: shows a value), 3 reveals the answer for no point. */
-export const MAX_HINTS = 3;
+/**
+ * Hints per round. Three-option rounds: 1 a clue, 2 crosses out a wrong option, 3 reveals the answer for
+ * no point. Head-to-head rounds have only two options, so: 1 a clue, 2 reveals the answer for no point.
+ */
+export const hintCount = (round: Round) => (round.kind === "duel" ? 2 : 3);
 
 /** The wrong option the second hint crosses out. Head-to-head rounds have only two options, so none. */
 export function strikeFor(round: Round, rand: () => number = Math.random): string | null {

@@ -84,13 +84,13 @@ describe("hints", () => {
     }
   });
 
-  test("the cross-out hint never strikes the right answer, and never on head-to-head rounds", async () => {
-    const { strikeFor } = await import("./challenge");
+  test("the cross-out hint never strikes the right answer; two-option rounds get two hints and no cross-out", async () => {
+    const { strikeFor, hintCount } = await import("./challenge");
     for (let s = 1; s <= 50; s++) {
       for (const r of makeGame(seeded(s), 10)) {
         const id = strikeFor(r, seeded(s));
-        if (r.kind === "duel") expect(id).toBeNull();
-        else expect(id).not.toBe(r.answer);
+        if (r.kind === "duel") expect([id, hintCount(r)]).toEqual([null, 2]);
+        else expect([id === r.answer, hintCount(r)]).toEqual([false, 3]);
       }
     }
   });

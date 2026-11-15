@@ -7,7 +7,7 @@ import { fmtCoord, useCountUp } from "@/components/Bits";
 import { ReliefCanvas } from "@/components/ReliefCanvas";
 import { sfx } from "@/lib/audio";
 import { confetti } from "@/lib/fx";
-import { cluesFor, makeGame, MAX_HINTS, rankTitle, seeded, strikeFor, type Round } from "@/lib/challenge";
+import { cluesFor, hintCount, makeGame, rankTitle, seeded, strikeFor, type Round } from "@/lib/challenge";
 import { GRAVITY, START, THRUST, THRUST_RANGE, landingScore, step, verdict, type Lander, type LanderWorld } from "@/lib/lander";
 import { local } from "@/data/km";
 import { makeFlashcards, type Flashcard } from "@/lib/flashcards";
@@ -41,37 +41,35 @@ function Score({ value }: { value: number }) {
 const optionIds = (r: Round) => (r.kind === "world" ? WORLDS : r.kind === "duel" ? [r.a.id, r.b.id] : r.options.map((o) => o.id));
 
 /**
- * Hint panel. Hint 1 gives a clue, hint 2 crosses out a wrong option (head to head: shows one measured
- * value plus a second clue), hint 3 shows the answer and its explanation but the round scores no point.
+ * Hint panel. Three-option rounds: a clue, then a wrong option crossed out, then the answer and its
+ * explanation for no point. Head-to-head rounds (two options): a clue, then the answer for no point.
  */
 function Hints({ round, level, disabled, onHint, cost }: { round: Round; level: number; disabled: boolean; onHint(): void; cost?: string }) {
   const { tx, lang } = useApp();
   const [c1, c2] = cluesFor(round);
   const duel = round.kind === "duel";
+  const max = hintCount(round);
   const lines: string[] = [];
   if (level >= 1) lines.push((duel ? c2 : c1)[lang]);
-  if (level >= 2)
-    lines.push(duel ? c1[lang] : `${tx("One wrong answer is crossed out.", "ចម្លើយខុសមួយត្រូវបានគូសចេញ។")} ${c2[lang]}`);
-  if (level >= 3) lines.push(tx("Answer shown with its explanation. No point for this round.", "បានបង្ហាញចម្លើយ និងការពន្យល់។ ជុំនេះមិនបានពិន្ទុទេ។"));
+  if (level >= 2 && !duel) lines.push(`${tx("One wrong answer is crossed out.", "ចម្លើយខុសមួយត្រូវបានគូសចេញ។")} ${c2[lang]}`);
+  if (level >= max) lines.push(tx("Answer shown with its explanation. No point for this round.", "បានបង្ហាញចម្លើយ និងការពន្យល់។ ជុំនេះមិនបានពិន្ទុទេ។"));
   const nextLabel =
     level === 0
       ? tx("Hint 1 · a clue", "តម្រុយ ១ · តម្រុយមួយ")
-      : level === 1
-        ? duel
-          ? tx("Hint 2 · show a value", "តម្រុយ ២ · បង្ហាញតម្លៃមួយ")
-          : tx("Hint 2 · cross one out", "តម្រុយ ២ · គូសចេញមួយ")
-        : tx("Hint 3 · show the answer (no point)", "តម្រុយ ៣ · បង្ហាញចម្លើយ (គ្មានពិន្ទុ)");
+      : level + 1 === max
+        ? tx(`Hint ${max} · show the answer (no point)`, `តម្រុយ ${max === 2 ? "២" : "៣"} · បង្ហាញចម្លើយ (គ្មានពិន្ទុ)`)
+        : tx("Hint 2 · cross one out", "តម្រុយ ២ · គូសចេញមួយ");
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <ol className="min-w-0 flex-1 space-y-1.5" aria-live="polite">
         {lines.map((line, k) => (
-          <li key={k} className={`page-enter flex gap-2 rounded-lg border px-3 py-2 text-sm ${k === 2 ? "border-[var(--warn)]" : "border-line"} bg-[var(--panel-2)]`}>
+          <li key={k} className={`page-enter flex gap-2 rounded-lg border px-3 py-2 text-sm ${k === max - 1 ? "border-[var(--warn)]" : "border-line"} bg-[var(--panel-2)]`}>
             <span className="shrink-0 font-mono text-xs leading-5 text-muted">{tx(`Hint ${k + 1}`, `តម្រុយ ${k + 1}`)}</span>
             <span>{line}</span>
           </li>
         ))}
       </ol>
-      {level < MAX_HINTS && (
+      {level < max && (
         <button type="button" className="btn hint-btn" disabled={disabled} onClick={onHint} aria-label={nextLabel}>
           <span aria-hidden="true">💡</span> {nextLabel}
           {cost && <span className="text-xs text-muted">{cost}</span>}
@@ -82,7 +80,7 @@ function Hints({ round, level, disabled, onHint, cost }: { round: Round; level: 
 }
 
 /** One question. Shared by the 10-round quiz and the 60-second rush. Keys 1–3 answer. */
-function RoundView({ round, n, choice, onAnswer, after, struck = null, peek = false, revealed = false }: { round: Round; n: number; choice: string | null; struck?: string | null; peek?: boolean; revealed?: boolean; onAnswer(c: string, at?: { x: number; y: number }): void; after?: ReactNode }) {
+function RoundView({ round, n, choice, onAnswer, after, struck = null, revealed = false }: { round: Round; n: number; choice: string | null; struck?: string | null; revealed?: boolean; onAnswer(c: string, at?: { x: number; y: number }): void; after?: ReactNode }) {
   const { t, tx, lang } = useApp();
   const gone = (id: string) => struck === id && !choice;
   const verdict = (right: boolean) =>
@@ -161,7 +159,7 @@ function RoundView({ round, n, choice, onAnswer, after, struck = null, peek = fa
               <span className="block text-xs text-muted">
                 {t(p.body as Key)} · {local(p, lang).country ?? local(p, lang).category}
               </span>
-              {(choice || (peek && p.id === round.a.id)) && (
+              {choice && (
                 <span className="mt-3 block font-mono text-2xl">
                   {round.value(p).toFixed(round.metric === "steeper" || round.metric === "rougher" ? 1 : 0)}
                   <span className="ml-1 text-xs text-muted">{round.unit[lang]}</span>
@@ -357,8 +355,7 @@ function Quiz() {
               n={i + 1}
               choice={choice}
               struck={struck}
-              peek={hint >= 2}
-              revealed={hint >= 3}
+              revealed={hint >= hintCount(round)}
               onAnswer={answer}
               after={
                 <button type="button" className="btn btn-primary mt-3" onClick={next}>
@@ -374,8 +371,8 @@ function Quiz() {
                 const lvl = hint + 1;
                 setHint(lvl);
                 setHints((h) => h + 1);
-                if (lvl === 2) setStruck(strikeFor(round));
-                if (lvl === 3) answer(round.answer, undefined, true);
+                if (lvl === hintCount(round)) answer(round.answer, undefined, true);
+                else if (lvl === 2) setStruck(strikeFor(round));
                 else sfx("open");
               }}
             />
@@ -489,7 +486,7 @@ function Rush() {
       <div className="h-1.5 overflow-hidden rounded-full bg-[var(--panel-2)]" aria-hidden="true">
         <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${(left / RUSH_SECONDS) * 100}%`, transition: "width 0.1s linear" }} />
       </div>
-      {round && <RoundView round={round} n={i + 1} choice={choice} struck={struck} peek={hint >= 2} revealed={hint >= 3} onAnswer={answer} />}
+      {round && <RoundView round={round} n={i + 1} choice={choice} struck={struck} revealed={hint >= hintCount(round)} onAnswer={answer} />}
       {round && (
         <Hints
           round={round}
@@ -500,8 +497,8 @@ function Rush() {
             const lvl = hint + 1;
             setHint(lvl);
             end.current -= 5000;
-            if (lvl === 2) setStruck(strikeFor(round));
-            if (lvl === 3) answer(round.answer, undefined, true);
+            if (lvl === hintCount(round)) answer(round.answer, undefined, true);
+            else if (lvl === 2) setStruck(strikeFor(round));
             else sfx("open");
           }}
         />
