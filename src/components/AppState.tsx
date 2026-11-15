@@ -23,9 +23,12 @@ interface AppState {
   toggleSaved(id: string): void;
   muted: boolean;
   setMuted(m: boolean): void;
-  /** 0–1. */
+  /** Music volume, 0–1 (theme and YouTube songs). */
   volume: number;
   setVolume(v: number): void;
+  /** Sound-effects volume, 0–1. */
+  sfxVolume: number;
+  setSfxVolume(v: number): void;
   /** Base Mode (full quality) or Lite Mode (less memory). Changing it reloads the page so 3D scenes rebuild. */
   perf: Perf;
   setPerf(p: Perf): void;
@@ -71,6 +74,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [saved, setSaved] = useState<string[]>([]);
   const [muted, setMutedState] = useState(false);
   const [volume, setVolumeState] = useState(0.7);
+  const [sfxVolume, setSfxVolumeState] = useState(0.7);
   const [perf, setPerfState] = useState<Perf>("base");
   const [vision, setVisionState] = useState<Vision>("default");
   const [music, setMusicState] = useState(true);
@@ -89,7 +93,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const v = Number(pref("terratoria.volume") ?? "0.7");
     if (Number.isFinite(v) && v >= 0 && v <= 1) {
       setVolumeState(v);
-      audio.setVolume(v);
+      audio.setMusicVolume(v);
+    }
+    const sv = Number(pref("terratoria.sfxVolume") ?? "0.7");
+    if (Number.isFinite(sv) && sv >= 0 && sv <= 1) {
+      setSfxVolumeState(sv);
+      audio.setSfxVolume(sv);
     }
     // The inline script in layout.tsx already applied these to <html>; mirror them into state.
     if (document.documentElement.dataset.perf === "lite") setPerfState("lite");
@@ -159,7 +168,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       muted,
       setMuted: (m) => (setMutedState(m), audio.setMuted(m), setPref("terratoria.muted", m ? "1" : "0")),
       volume,
-      setVolume: (v) => (setVolumeState(v), audio.setVolume(v), setPref("terratoria.volume", String(v))),
+      setVolume: (v) => (setVolumeState(v), audio.setMusicVolume(v), setPref("terratoria.volume", String(v))),
+      sfxVolume,
+      setSfxVolume: (v) => (setSfxVolumeState(v), audio.setSfxVolume(v), setPref("terratoria.sfxVolume", String(v))),
       perf,
       setPerf: (p) => {
         setPref("terratoria.perf", p);
@@ -183,7 +194,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       t: (key) => STRINGS[lang][key],
       tx: (en, km) => (lang === "km" ? km : en),
     }),
-    [lang, mode, saved, toggleSaved, muted, volume, perf, vision, music, musicAll, sfxOn, track],
+    [lang, mode, saved, toggleSaved, muted, volume, sfxVolume, perf, vision, music, musicAll, sfxOn, track],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

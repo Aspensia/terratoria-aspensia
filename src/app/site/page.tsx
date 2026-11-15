@@ -6,6 +6,7 @@ import { useApp, useQuery } from "@/components/AppState";
 import { fmtCoord, IndexBadge, PlainSummary, ProvenancePanel, RefList, ScoreBar, StatusBadge } from "@/components/Bits";
 import { ProfileChart, SlopeChart } from "@/components/Charts";
 import { ReliefCanvas } from "@/components/ReliefCanvas";
+import { SitePhotos } from "@/components/SitePhotos";
 import { getPlace, REFERENCES } from "@/data/catalog";
 import { GENERAL_LIMITS, LIMITS } from "@/data/limits";
 import { climateSourceKm, GENERAL_LIMITS_KM, LIMITS_KM, local } from "@/data/km";
@@ -205,6 +206,8 @@ export default function SitePage() {
           <MetricsTable site={site} refPlace={refPlace} />
         </div>
       </section>
+
+      <SitePhotos siteId={site.id} siteName={local(site, lang).name} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="card p-4">

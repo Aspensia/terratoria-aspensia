@@ -5,12 +5,15 @@
 export type Sfx = "hover" | "click" | "open" | "close" | "select" | "correct" | "wrong";
 
 let ctx: AudioContext | null = null;
-let master: GainNode | null = null;
+let master: GainNode | null = null; // global mute only
+let musicBus: GainNode | null = null; // theme music, at the music volume
+let sfxBus: GainNode | null = null; // sound effects and their echo, at the effects volume
 let echo: GainNode | null = null; // send into a short feedback delay, for a little sparkle
 let muted = false;
-let volume = 0.7;
+let musicVolume = 0.7;
+let sfxVolume = 0.7;
 let sfxOn = true; // Settings: sound effects can be switched off on their own
-const level = () => (muted ? 0 : volume);
+const level = () => (muted ? 0 : 1);
 let wantAmbient = false;
 let ambientStop: (() => void) | null = null;
 let lastHover = 0;
@@ -31,10 +34,18 @@ export function setSfxOn(on: boolean) {
   sfxOn = on;
 }
 
-/** Master volume, 0–1 (the Settings slider). */
-export function setVolume(v: number) {
-  volume = Math.min(1, Math.max(0, v));
-  if (ctx && master) master.gain.setTargetAtTime(level(), ctx.currentTime, 0.05);
+const clamp = (v: number) => Math.min(1, Math.max(0, v));
+
+/** Music volume, 0–1. Only the synthesised theme; YouTube songs take the same value in their own player. */
+export function setMusicVolume(v: number) {
+  musicVolume = clamp(v);
+  if (ctx && musicBus) musicBus.gain.setTargetAtTime(musicVolume, ctx.currentTime, 0.05);
+}
+
+/** Sound-effects volume, 0–1. */
+export function setSfxVolume(v: number) {
+  sfxVolume = clamp(v);
+  if (ctx && sfxBus) sfxBus.gain.setTargetAtTime(sfxVolume, ctx.currentTime, 0.05);
 }
 
 /** Creates or resumes the audio context. Must run inside a user gesture. */
@@ -47,6 +58,12 @@ export function unlock() {
     master = ctx.createGain();
     master.gain.value = level();
     master.connect(ctx.destination);
+    musicBus = ctx.createGain();
+    musicBus.gain.value = musicVolume;
+    musicBus.connect(master);
+    sfxBus = ctx.createGain();
+    sfxBus.gain.value = sfxVolume;
+    sfxBus.connect(master);
     // Echo: delay with soft feedback, high frequencies rolled off so repeats stay gentle.
     echo = ctx.createGain();
     echo.gain.value = 0.28;
@@ -58,7 +75,7 @@ export function unlock() {
     damp.type = "lowpass";
     damp.frequency.value = 3200;
     echo.connect(delay).connect(damp).connect(fb).connect(delay);
-    damp.connect(master);
+    damp.connect(sfxBus);
   }
   if (ctx.state === "suspended") void ctx.resume();
   if (wantAmbient && !ambientStop) startAmbient();
@@ -76,7 +93,7 @@ function note(freq: number, { dur = 0.18, peak = 0.05, to = freq, delay = 0, typ
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(peak, t + 0.012);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  osc.connect(g).connect(master);
+  osc.connect(g).connect(sfxBus!);
   if (wet && echo) g.connect(echo);
   osc.start(t);
   osc.stop(t + dur + 0.05);
@@ -145,7 +162,7 @@ function startAmbient() {
   const out = c.createGain();
   out.gain.value = 0;
   out.gain.setTargetAtTime(AMBIENT_FILE ? 0.5 : 0.09, c.currentTime, 2); // slow fade in
-  out.connect(master);
+  out.connect(musicBus!);
 
   if (AMBIENT_FILE) {
     const el = new Audio(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${AMBIENT_FILE}`);

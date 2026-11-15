@@ -135,6 +135,32 @@ export default function AboutPage() {
             "សណ្ឋានដីព្រះច័ន្ទ៖ ក្រុមវិទ្យាសាស្ត្រ LOLA, NASA GSFC។ សីតុណ្ហភាពព្រះច័ន្ទ៖ ក្រុម Diviner, UCLA។ សណ្ឋានដីភពអង្គារ៖ ក្រុមវិទ្យាសាស្ត្រ MOLA។ អាកាសធាតុផែនដី៖ គម្រោង NASA Langley POWER។ កម្ពស់ផែនដី៖ Copernicus DEM © DLR e.V. 2010–2014 និង © Airbus Defence and Space GmbH 2014–2018 ផ្តល់ក្រោមកម្មវិធី COPERNICUS ដោយសហភាពអឺរ៉ុប និង ESA។ ផែនទីមូលដ្ឋាន៖ NASA Global Imagery Browse Services។ Terratoria មិនមានទំនាក់ទំនង ឬការគាំទ្រពី NASA ឬ ESA ទេ។",
           )}
         </p>
+        <p className="mt-2 text-muted">
+          {tx(
+            "Other imagery: Apollo Moon photographs and planet maps from NASA 3D Resources (public domain); Jupiter map from Cassini PIA07782 (NASA/JPL/Space Science Institute); star and Milky Way sky from Deep Star Maps 2020 (NASA/Goddard SVS; Gaia DR2: ESA/Gaia/DPAC). Site photographs: Wikimedia Commons contributors, each credited with its own licence and source under the photo. The Aspensia logo and cursor are the team's own.",
+            "រូបភាពផ្សេងទៀត៖ រូបថតព្រះច័ន្ទ Apollo និងផែនទីភពពី NASA 3D Resources (សាធារណៈ); ផែនទីភពព្រហស្បតិ៍ពី Cassini PIA07782 (NASA/JPL/Space Science Institute); មេឃផ្កាយ និងមីលគីវ៉េពី Deep Star Maps 2020 (NASA/Goddard SVS; Gaia DR2: ESA/Gaia/DPAC)។ រូបថតទីតាំង៖ អ្នករួមចំណែក Wikimedia Commons ដែលនីមួយៗមានឈ្មោះ អាជ្ញាប័ណ្ណ និងប្រភពនៅក្រោមរូប។ ឡូហ្គោ និងទស្សន៍ទ្រនិច Aspensia ជារបស់ក្រុមផ្ទាល់។",
+          )}
+        </p>
+      </section>
+
+      <section className="card p-5">
+        <h2 className="text-lg font-semibold">{tx("Fonts and software", "ពុម្ពអក្សរ និងកម្មវិធី")}</h2>
+        <p className="mt-2 text-muted">
+          {tx(
+            "Fonts: Geist and Geist Mono (Vercel), Space Grotesk (Florian Karsten) and Noto Sans Khmer (Google), all under the SIL Open Font License 1.1. Software: Next.js, React, Three.js, Lenis and Recharts (MIT), MapLibre GL JS (BSD-3-Clause), GSAP (GreenSock standard no-charge licence). Each library keeps its own licence.",
+            "ពុម្ពអក្សរ៖ Geist និង Geist Mono (Vercel), Space Grotesk (Florian Karsten) និង Noto Sans Khmer (Google) ក្រោមអាជ្ញាប័ណ្ណ SIL Open Font License 1.1។ កម្មវិធី៖ Next.js, React, Three.js, Lenis និង Recharts (MIT), MapLibre GL JS (BSD-3-Clause), GSAP (អាជ្ញាប័ណ្ណឥតគិតថ្លៃរបស់ GreenSock)។ បណ្ណាល័យនីមួយៗរក្សាអាជ្ញាប័ណ្ណរបស់ខ្លួន។",
+          )}
+        </p>
+      </section>
+
+      <section className="card p-5">
+        <h2 className="text-lg font-semibold">{tx("Home page themes: fan tributes", "ប្រធានបទទំព័រដើម៖ ការគោរពរបស់អ្នកគាំទ្រ")}</h2>
+        <p className="mt-2 text-muted">
+          {tx(
+            "The three themed songs restyle the home page as non-commercial fan tributes. Every scene is drawn by our own code; no film frame, game asset or artwork is copied. HAIL MARY nods to Project Hail Mary, the 2021 novel by Andy Weir, and its 2026 film directed by Phil Lord and Christopher Miller, written by Drew Goddard and released by Amazon MGM Studios. The Petrova line, Tau Ceti e as Astrophage's home and the ship Hail Mary are Andy Weir's ideas; our ship is an original design, and Tau Ceti e is also a real candidate planet (Feng et al., 2017). INTERSTELLAR nods to Interstellar (2014), directed by Christopher Nolan, written by Jonathan Nolan and Christopher Nolan, with physicist Kip Thorne as scientific adviser and executive producer, released by Paramount Pictures and Warner Bros. with Legendary Pictures; its black hole Gargantua was rendered by Double Negative. Our black hole is our own ray tracer using the Schwarzschild light-bending equation. FLOW | NULLSCAPE nods to Geometry Dash, made by Robert Topala (RobTop Games), and the community level Nullscapes by ItzKiba (verified by Zoink); the runner is an original scene. Songs are credited to their artists in the Music section above. All names and marks belong to their owners, and none of them is affiliated with or endorses Terratoria.",
+            "បទទាំងបីដែលមានប្រធានបទ ប្តូររចនាទំព័រដើមជាការគោរពរបស់អ្នកគាំទ្រ មិនមែនពាណិជ្ជកម្ម។ ឈុតនីមួយៗគូរដោយកូដរបស់យើងផ្ទាល់ គ្មានរូបភាពភាពយន្ត ធនធានហ្គេម ឬស្នាដៃសិល្បៈណាមួយត្រូវបានចម្លងទេ។ HAIL MARY គោរពដល់ Project Hail Mary ប្រលោមលោកឆ្នាំ ២០២១ ដោយ Andy Weir និងភាពយន្តឆ្នាំ ២០២៦ ដឹកនាំដោយ Phil Lord និង Christopher Miller សរសេរដោយ Drew Goddard ចេញផ្សាយដោយ Amazon MGM Studios។ បន្ទាត់ Petrova, Tau Ceti e និងយាន Hail Mary ជាគំនិតរបស់ Andy Weir; យានរបស់យើងជាការរចនាដើម ហើយ Tau Ceti e ក៏ជាភពបេក្ខភាពពិតដែរ (Feng et al., 2017)។ INTERSTELLAR គោរពដល់ Interstellar (2014) ដឹកនាំដោយ Christopher Nolan សរសេរដោយ Jonathan Nolan និង Christopher Nolan មានរូបវិទូ Kip Thorne ជាទីប្រឹក្សាវិទ្យាសាស្ត្រ និងផលិតករប្រតិបត្តិ ចេញផ្សាយដោយ Paramount Pictures និង Warner Bros. ជាមួយ Legendary Pictures; រន្ធខ្មៅ Gargantua បង្កើតដោយ Double Negative។ រន្ធខ្មៅរបស់យើងជាកម្មវិធីតាមដានកាំរស្មីរបស់យើងផ្ទាល់ ដោយប្រើសមីការពត់ពន្លឺ Schwarzschild។ FLOW | NULLSCAPE គោរពដល់ Geometry Dash បង្កើតដោយ Robert Topala (RobTop Games) និងកម្រិតសហគមន៍ Nullscapes ដោយ ItzKiba (ផ្ទៀងផ្ទាត់ដោយ Zoink); ការរត់គឺជាឈុតដើម។ បទភ្លេងមានឈ្មោះសិល្បករនៅក្នុងផ្នែកតន្ត្រីខាងលើ។ ឈ្មោះ និងសញ្ញាទាំងអស់ជាកម្មសិទ្ធិរបស់ម្ចាស់ ហើយគ្មាននរណាម្នាក់មានទំនាក់ទំនង ឬគាំទ្រ Terratoria ទេ។",
+          )}
+        </p>
       </section>
     </div>
   );

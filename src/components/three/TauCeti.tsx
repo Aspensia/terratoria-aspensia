@@ -57,8 +57,8 @@ function worldMaterial(octaves: number) {
         vec3 col = mix(green, lime, smoothstep(0.3, 0.75, f + band * 0.12));
         col = mix(col, amber, smoothstep(0.5, 0.85, r.z + band * 0.08) * 0.9);
         col *= 0.65 + 0.7 * fine; // fine eddies, the planet's signature marbling
-        // AMAZE: hot pink-red, with dense glints that twinkle at their own pace.
-        vec3 pink = mix(vec3(0.95, 0.02, 0.28), vec3(1.0, 0.25, 0.5), smoothstep(0.25, 0.8, f)) * (0.8 + 0.4 * fine);
+        // AMAZE: red-leaning hot pink, with dense glints that twinkle at their own pace.
+        vec3 pink = mix(vec3(0.82, 0.015, 0.035), vec3(1.0, 0.16, 0.12), smoothstep(0.25, 0.8, f)) * (0.8 + 0.4 * fine);
         vec3 cell = floor(sp * 420.0);
         float ph = h3(cell);
         float glint = step(0.965, ph) * pow(0.5 + 0.5 * sin(t * (3.0 + ph * 9.0) + ph * 40.0), 6.0);
@@ -71,8 +71,8 @@ function worldMaterial(octaves: number) {
         // AMAZE: hot pink that glows on its own (the infested world shines), brightest on the day side.
         c = mix(c, pink * (0.12 + 1.25 * max(ndl, 0.0) * lit), amaze);
         float rim = pow(1.0 - max(dot(N, V), 0.0), 2.6);
-        c += mix(vec3(0.55, 0.75, 0.25), vec3(1.0, 0.18, 0.4), amaze) * rim * (0.08 + 0.6 * lit) * 0.6;
-        c += amaze * glint * vec3(1.0, 0.7, 0.85) * (0.6 + 1.4 * lit);
+        c += mix(vec3(0.55, 0.75, 0.25), vec3(1.0, 0.07, 0.08), amaze) * rim * (0.08 + 0.6 * lit) * 0.6;
+        c += amaze * glint * vec3(1.0, 0.6, 0.55) * (0.6 + 1.4 * lit);
         gl_FragColor = vec4(c, 1.0);
         #include <colorspace_fragment>
       }`,
@@ -108,6 +108,40 @@ function sparkleMaterial(color: string, size: number) {
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
+  });
+}
+
+/**
+ * AMAZE glitter hugging the planet: small soft discs (bokeh) with a brighter rim when `disc` is 1, tiny sharp
+ * twinkles when 0. All drift slightly and fade with AMAZE.
+ */
+function glitterMaterial(color: string, size: number, disc: number) {
+  return new THREE.ShaderMaterial({
+    uniforms: { t: { value: 0 }, k: { value: 0 }, c: { value: new THREE.Color(color) }, size: { value: size }, scale: { value: 1000 }, disc: { value: disc } },
+    vertexShader: `attribute float seed; uniform float t; uniform float size; uniform float scale; varying float vTw; varying float vS;
+      void main(){
+        vec3 p = position;
+        p += vec3(sin(t * 0.07 + seed * 40.0), cos(t * 0.05 + seed * 23.0), sin(t * 0.06 + seed * 31.0)) * 0.006;
+        vS = fract(seed * 17.3);
+        vTw = 0.55 + 0.45 * sin(t * (0.6 + vS * 2.5) + seed * 50.0);
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_PointSize = min(36.0, size * (0.35 + 1.3 * vS * vS) * scale / -mv.z);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `uniform vec3 c; uniform float k; uniform float disc; varying float vTw; varying float vS;
+      void main(){
+        float r = length(gl_PointCoord - 0.5) * 2.0;
+        if (r > 1.0) discard;
+        float a = disc > 0.5
+          ? (smoothstep(1.0, 0.86, r) * (0.55 + 0.4 * smoothstep(0.6, 0.92, r))) * (0.45 + 0.55 * vTw)
+          : (exp(-r * r * 14.0) * 1.6 + exp(-r * r * 3.0) * 0.35) * vTw * vTw;
+        vec3 col = mix(c, vec3(1.0, 0.72, 0.6), disc > 0.5 ? 0.12 * vS : 0.45 * vTw);
+        gl_FragColor = vec4(col * a * k, a * k);
+      }`,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: false,
   });
 }
 
@@ -222,19 +256,27 @@ export function TauCeti({ amaze = false }: { amaze?: boolean }) {
     scene.add(craft);
 
     // AMAZE sparkles: a twinkling shell of glints hugging the planet.
-    const glitterMat = sparkleMaterial("#ff5c8f", 0.005);
+    const glitterMat = sparkleMaterial("#ff3b3b", 0.005);
     const glitter = new THREE.Points(
-      points(lowSpec ? 600 : 2200, (_, v) => v.randomDirection().multiplyScalar(R * (1.005 + Math.pow(Math.random(), 3) * 0.25))),
+      points(lowSpec ? 900 : 4000, (_, v) => v.randomDirection().multiplyScalar(R * (1.005 + Math.pow(Math.random(), 3) * 0.25))),
       glitterMat,
     );
     e.add(glitter);
 
     // Petrova line: a soft stream of red-pink glints flowing from Tau Ceti into the planet.
-    const streamMat = sparkleMaterial("#ff3d6e", 0.045);
+    const streamMat = sparkleMaterial("#ff2626", 0.045);
     streamMat.uniforms.flow.value = 1;
     const stream = new THREE.Points(points(lowSpec ? 900 : 3200, (_, v) => v.randomDirection().multiplyScalar(Math.pow(Math.random(), 2) * 0.22)), streamMat);
     stream.frustumCulled = false;
     scene.add(stream);
+
+    // AMAZE glitter on the planet itself: small soft bokeh discs and fine dust in a thin shell around Tau Ceti e.
+    const shell = (v: THREE.Vector3, h: number) => v.randomDirection().multiplyScalar(R * (1.01 + Math.pow(Math.random(), 2.5) * h));
+    const bokehMat = glitterMaterial("#ff3a2e", 0.015, 1);
+    const bokeh = new THREE.Points(points(lowSpec ? 60 : 180, (_, v) => shell(v, 0.04)), bokehMat);
+    const dustMat = glitterMaterial("#ff5a40", 0.006, 0);
+    const dust = new THREE.Points(points(lowSpec ? 400 : 1400, (_, v) => shell(v, 0.05)), dustMat);
+    e.add(bokeh, dust);
 
     const lite = isLite() || window.innerWidth < 700 || window.matchMedia("(hover: none)").matches;
     const composer = lite ? null : new EffectComposer(renderer);
@@ -252,7 +294,7 @@ export function TauCeti({ amaze = false }: { amaze?: boolean }) {
       composer?.setSize(w, h);
       camera.aspect = w / h;
       const px = (renderer.getDrawingBufferSize(new THREE.Vector2()).y * 0.5) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-      glitterMat.uniforms.scale.value = streamMat.uniforms.scale.value = px;
+      glitterMat.uniforms.scale.value = streamMat.uniforms.scale.value = bokehMat.uniforms.scale.value = dustMat.uniforms.scale.value = px;
       // Shift the picture right on wide screens so the hero text keeps the left side.
       if (w > 900) camera.setViewOffset(w, h, -w * 0.16, 0, w, h);
       else camera.clearViewOffset();
@@ -304,12 +346,12 @@ export function TauCeti({ amaze = false }: { amaze?: boolean }) {
 
       worldMat.uniforms.t.value = t;
       worldMat.uniforms.amaze.value = k;
-      airColor.setRGB(0.56 + 0.44 * k, 0.75 - 0.57 * k, 0.29 + 0.11 * k);
-      for (const mat of [glitterMat, streamMat]) {
+      airColor.setRGB(0.56 + 0.44 * k, 0.75 - 0.6 * k, 0.29 - 0.17 * k);
+      for (const mat of [glitterMat, streamMat, bokehMat, dustMat]) {
         mat.uniforms.t.value = t;
         mat.uniforms.k.value = k;
       }
-      glitter.visible = stream.visible = k > 0.01;
+      glitter.visible = stream.visible = bokeh.visible = dust.visible = k > 0.01;
       // The stream runs from the star's surface to the planet's sunlit face.
       streamMat.uniforms.from.value.copy(toStar).multiplyScalar(-1.3);
       streamMat.uniforms.to.value.copy(e.position).addScaledVector(toStar, R * 0.95);

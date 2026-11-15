@@ -93,7 +93,7 @@ export const TRACKS: Track[] = [
     credit: { en: "Music: \"Flow\" by Creo.", km: "តន្ត្រី៖ \"Flow\" ដោយ Creo។" },
     youtube: "MM87r7GjzW8",
     scene: "runner",
-    sceneNote: { en: "Home page becomes an animated neon geometry run.", km: "ទំព័រដើមប្រែជាការរត់ធរណីមាត្រភ្លឺមានចលនា។" },
+    sceneNote: { en: "Home page becomes a black-and-white geometry run: a cube leaps spike after spike under a glowing orb, pulsing to the beat.", km: "ទំព័រដើមប្រែជាការរត់ធរណីមាត្រពណ៌ស-ខ្មៅ៖ គូបលោតរំលងបន្លាម្តងមួយៗ ក្រោមដួងពន្លឺ តាមចង្វាក់ភ្លេង។" },
   },
   {
     id: "interstellar",

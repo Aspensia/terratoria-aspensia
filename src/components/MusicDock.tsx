@@ -28,9 +28,12 @@ export function TrackBadge({ track, size = 28 }: { track: Track; size?: number }
   if (track.icon === "runner")
     return (
       <svg {...box} viewBox="0 0 32 32" aria-hidden="true" className="shrink-0">
-        <rect x="5" y="8" width="11" height="11" rx="1.5" fill="none" stroke="#5ff2ff" strokeWidth="2.2" transform="rotate(-12 10.5 13.5)" />
-        <path d="M18 26l4-8 4 8z" fill="none" stroke="#ff4fd8" strokeWidth="2" strokeLinejoin="round" />
-        <path d="M3 26h26" stroke="#5ff2ff" strokeWidth="1.6" />
+        <rect width="32" height="32" rx="7" fill="#262c3b" />
+        <circle cx="24" cy="9" r="4" fill="#eef2fa" opacity="0.85" />
+        <rect x="6" y="9.5" width="9" height="9" fill="#eef2fa" transform="rotate(-14 10.5 14)" />
+        <rect x="8.75" y="12.25" width="3.5" height="3.5" fill="#161a24" transform="rotate(-14 10.5 14)" />
+        <path d="M17 25l3.5-7 3.5 7zM24 25l3.5-7 3.5 7z" fill="#454e64" stroke="#d6deee" strokeWidth="0.9" strokeLinejoin="round" />
+        <path d="M2 25h28" stroke="#eef2fa" strokeWidth="1.6" />
       </svg>
     );
   return (
@@ -70,6 +73,7 @@ export function MusicDock() {
   const file = !!track.audio;
   const yt = !file && !!track.youtube;
   const level = muted ? 0 : volume;
+  const lastVol = useRef(0.7);
 
   // New song: start fresh and playing.
   useEffect(() => {
@@ -211,8 +215,18 @@ export function MusicDock() {
             style={{ ["--p" as string]: `${time.dur ? (time.cur / time.dur) * 100 : 0}%` }}
           />
           <div className="mt-1.5 flex items-center gap-2">
-            <button type="button" className="music-btn" aria-label={muted ? tx("Unmute", "បើកសំឡេង") : tx("Mute", "បិទសំឡេង")} onClick={() => setMuted(!muted)}>
-              <Icon d={muted ? "M2 6h3l4-3v10l-4-3H2zM11 6l4 4M15 6l-4 4" : "M2 6h3l4-3v10l-4-3H2zM11.5 5.5a3.5 3.5 0 010 5"} />
+            <button
+              type="button"
+              className="music-btn"
+              aria-label={level === 0 ? tx("Unmute music", "បើកសំឡេងតន្ត្រី") : tx("Mute music", "បិទសំឡេងតន្ត្រី")}
+              onClick={() => {
+                // Music only: sound effects keep their own volume.
+                if (muted) setMuted(false);
+                if (level > 0) (lastVol.current = volume), setVolume(0);
+                else setVolume(lastVol.current || 0.7);
+              }}
+            >
+              <Icon d={level === 0 ? "M2 6h3l4-3v10l-4-3H2zM11 6l4 4M15 6l-4 4" : "M2 6h3l4-3v10l-4-3H2zM11.5 5.5a3.5 3.5 0 010 5"} />
             </button>
             <input
               type="range"
@@ -224,7 +238,7 @@ export function MusicDock() {
                 setVolume(Number(e.target.value) / 100);
                 if (muted) setMuted(false);
               }}
-              aria-label={tx("Volume", "កម្រិតសំឡេង")}
+              aria-label={tx("Music volume", "កម្រិតសំឡេងតន្ត្រី")}
               style={{ ["--p" as string]: `${level * 100}%` }}
             />
           </div>

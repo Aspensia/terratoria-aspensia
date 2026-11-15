@@ -28,7 +28,7 @@ function Gear() {
 
 /** Gear button and panel: Base / Lite Mode, volume and colour vision. */
 export function Settings() {
-  const { tx, perf, setPerf, volume, setVolume, muted, setMuted, vision, setVision, lang, music, setMusic, musicAll, setMusicAll, sfx, setSfx, track, setTrack } = useApp();
+  const { tx, perf, setPerf, volume, setVolume, sfxVolume, setSfxVolume, muted, setMuted, vision, setVision, lang, music, setMusic, musicAll, setMusicAll, sfx, setSfx, track, setTrack } = useApp();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -85,23 +85,33 @@ export function Settings() {
             </label>
           </div>
 
-          <div className="mt-4">
-            <label htmlFor={`${id}-vol`} className="flex items-center justify-between text-sm font-semibold">
-              {tx("Volume", "កម្រិតសំឡេង")}
-              <span className="font-mono text-xs text-muted">{muted ? tx("muted", "បិទសំឡេង") : `${Math.round(volume * 100)}%`}</span>
-            </label>
-            <input
-              id={`${id}-vol`}
-              type="range"
-              min={0}
-              max={100}
-              value={Math.round(volume * 100)}
-              onChange={(e) => {
-                setVolume(Number(e.target.value) / 100);
-                if (muted) setMuted(false);
-              }}
-              className="mt-2 w-full"
-            />
+          <div className="mt-4 space-y-3">
+            {(
+              [
+                ["vol", tx("Music volume", "កម្រិតសំឡេងតន្ត្រី"), volume, setVolume, music],
+                ["sfxvol", tx("Sound effects volume", "កម្រិតសំឡេងបែបផែន"), sfxVolume, setSfxVolume, sfx],
+              ] as const
+            ).map(([key, label, v, set, on]) => (
+              <div key={key}>
+                <label htmlFor={`${id}-${key}`} className="flex items-center justify-between text-sm font-semibold">
+                  {label}
+                  <span className="font-mono text-xs text-muted">{muted || !on ? tx("off", "បិទ") : `${Math.round(v * 100)}%`}</span>
+                </label>
+                <input
+                  id={`${id}-${key}`}
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={Math.round(v * 100)}
+                  disabled={!on}
+                  onChange={(e) => {
+                    set(Number(e.target.value) / 100);
+                    if (muted) setMuted(false);
+                  }}
+                  className="mt-1.5 w-full"
+                />
+              </div>
+            ))}
           </div>
 
           <fieldset className="mt-4">

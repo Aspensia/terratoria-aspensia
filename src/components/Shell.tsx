@@ -281,8 +281,8 @@ export function Shell({ children }: { children: ReactNode }) {
         <p className="mt-3">{t("screening_note")} {t("coverage_note")} {t("archived_note")}</p>
         <p className="mt-1">
           {tx(
-            "Data: NASA LRO LOLA and Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM. Imagery: NASA GIBS Blue Marble and Black Marble, NASA 3D Resources, NASA/Goddard SVS Deep Star Maps 2020 (Gaia DR2: ESA/Gaia/DPAC). Code written with AI assistance (Claude) from the team's concept.",
-            "ទិន្នន័យ៖ NASA LRO LOLA និង Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM។ រូបភាព៖ NASA GIBS Blue Marble និង Black Marble, NASA 3D Resources, NASA/Goddard SVS Deep Star Maps 2020 (Gaia DR2: ESA/Gaia/DPAC)។ កូដត្រូវបានសរសេរដោយមានជំនួយពី AI (Claude) តាមគំនិតរបស់ក្រុម។",
+            "Data: NASA LRO LOLA and Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM. Imagery: NASA GIBS Blue Marble and Black Marble, NASA 3D Resources, NASA/Goddard SVS Deep Star Maps 2020 (Gaia DR2: ESA/Gaia/DPAC); site photographs by Wikimedia Commons contributors (credited on each photo). Music, fonts, software and theme credits: see About. Code written with AI assistance (Claude) from the team's concept.",
+            "ទិន្នន័យ៖ NASA LRO LOLA និង Diviner, MGS MOLA, NASA POWER; ESA Copernicus DEM។ រូបភាព៖ NASA GIBS Blue Marble និង Black Marble, NASA 3D Resources, NASA/Goddard SVS Deep Star Maps 2020 (Gaia DR2: ESA/Gaia/DPAC); រូបថតទីតាំងដោយអ្នករួមចំណែក Wikimedia Commons (មានឈ្មោះលើរូបនីមួយៗ)។ ឥណទានតន្ត្រី ពុម្ពអក្សរ កម្មវិធី និងប្រធានបទ៖ សូមមើលទំព័រអំពី។ កូដត្រូវបានសរសេរដោយមានជំនួយពី AI (Claude) តាមគំនិតរបស់ក្រុម។",
           )}
         </p>
         <span aria-hidden="true" className="footer-word">
