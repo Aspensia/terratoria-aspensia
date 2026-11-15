@@ -189,3 +189,13 @@ export function cluesFor(round: Round): [Text, Text] {
 }
 
 const toKmDigits = (s: string) => s.replace(/[0-9]/g, (d) => "០១២៣៤៥៦៧៨៩"[+d]);
+
+/** Hints per round: 1 a clue, 2 crosses out a wrong option (head to head: shows a value), 3 reveals the answer for no point. */
+export const MAX_HINTS = 3;
+
+/** The wrong option the second hint crosses out. Head-to-head rounds have only two options, so none. */
+export function strikeFor(round: Round, rand: () => number = Math.random): string | null {
+  if (round.kind === "duel") return null;
+  const ids = round.kind === "world" ? ["earth", "moon", "mars"] : round.options.map((o) => o.id);
+  return pickOne(rand, ids.filter((id) => id !== round.answer));
+}

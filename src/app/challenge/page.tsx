@@ -7,9 +7,10 @@ import { fmtCoord, useCountUp } from "@/components/Bits";
 import { ReliefCanvas } from "@/components/ReliefCanvas";
 import { sfx } from "@/lib/audio";
 import { confetti } from "@/lib/fx";
-import { cluesFor, makeGame, rankTitle, seeded, type Round } from "@/lib/challenge";
+import { cluesFor, makeGame, MAX_HINTS, rankTitle, seeded, strikeFor, type Round } from "@/lib/challenge";
 import { GRAVITY, START, THRUST, THRUST_RANGE, landingScore, step, verdict, type Lander, type LanderWorld } from "@/lib/lander";
 import { local } from "@/data/km";
+import { makeFlashcards, type Flashcard } from "@/lib/flashcards";
 import type { Key } from "@/lib/i18n";
 import type { Body } from "@/lib/types";
 
@@ -39,41 +40,60 @@ function Score({ value }: { value: number }) {
 
 const optionIds = (r: Round) => (r.kind === "world" ? WORLDS : r.kind === "duel" ? [r.a.id, r.b.id] : r.options.map((o) => o.id));
 
-const MAX_CLUES = 2;
-
-/** Hint button and the clues shown so far: two per round, each a nudge rather than the answer. */
-function Clues({ round, shown, disabled, onHint, cost }: { round: Round; shown: number; disabled: boolean; onHint(): void; cost?: string }) {
+/**
+ * Hint panel. Hint 1 gives a clue, hint 2 crosses out a wrong option (head to head: shows one measured
+ * value plus a second clue), hint 3 shows the answer and its explanation but the round scores no point.
+ */
+function Hints({ round, level, disabled, onHint, cost }: { round: Round; level: number; disabled: boolean; onHint(): void; cost?: string }) {
   const { tx, lang } = useApp();
-  const clues = cluesFor(round).slice(0, shown);
-  const left = MAX_CLUES - shown;
+  const [c1, c2] = cluesFor(round);
+  const duel = round.kind === "duel";
+  const lines: string[] = [];
+  if (level >= 1) lines.push((duel ? c2 : c1)[lang]);
+  if (level >= 2)
+    lines.push(duel ? c1[lang] : `${tx("One wrong answer is crossed out.", "ចម្លើយខុសមួយត្រូវបានគូសចេញ។")} ${c2[lang]}`);
+  if (level >= 3) lines.push(tx("Answer shown with its explanation. No point for this round.", "បានបង្ហាញចម្លើយ និងការពន្យល់។ ជុំនេះមិនបានពិន្ទុទេ។"));
+  const nextLabel =
+    level === 0
+      ? tx("Hint 1 · a clue", "តម្រុយ ១ · តម្រុយមួយ")
+      : level === 1
+        ? duel
+          ? tx("Hint 2 · show a value", "តម្រុយ ២ · បង្ហាញតម្លៃមួយ")
+          : tx("Hint 2 · cross one out", "តម្រុយ ២ · គូសចេញមួយ")
+        : tx("Hint 3 · show the answer (no point)", "តម្រុយ ៣ · បង្ហាញចម្លើយ (គ្មានពិន្ទុ)");
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <ol className="min-w-0 flex-1 space-y-1.5" aria-live="polite">
-        {clues.map((c, k) => (
-          <li key={k} className="page-enter flex gap-2 rounded-lg border border-line bg-[var(--panel-2)] px-3 py-2 text-sm">
-            <span className="shrink-0 font-mono text-xs leading-5 text-muted">{tx(`Clue ${k + 1}`, `តម្រុយ ${k + 1}`)}</span>
-            <span>{c[lang]}</span>
+        {lines.map((line, k) => (
+          <li key={k} className={`page-enter flex gap-2 rounded-lg border px-3 py-2 text-sm ${k === 2 ? "border-[var(--warn)]" : "border-line"} bg-[var(--panel-2)]`}>
+            <span className="shrink-0 font-mono text-xs leading-5 text-muted">{tx(`Hint ${k + 1}`, `តម្រុយ ${k + 1}`)}</span>
+            <span>{line}</span>
           </li>
         ))}
       </ol>
-      <button type="button" className="btn hint-btn" disabled={left === 0 || disabled} onClick={onHint} aria-label={tx("Hint: show a clue", "តម្រុយ៖ បង្ហាញតម្រុយមួយ")}>
-        <span aria-hidden="true">💡</span> {left === 0 ? tx("No hints left", "អស់តម្រុយ") : tx(`Hint (${left} left)`, `តម្រុយ (នៅសល់ ${left})`)}
-        {cost && left > 0 && <span className="text-xs text-muted">{cost}</span>}
-      </button>
+      {level < MAX_HINTS && (
+        <button type="button" className="btn hint-btn" disabled={disabled} onClick={onHint} aria-label={nextLabel}>
+          <span aria-hidden="true">💡</span> {nextLabel}
+          {cost && <span className="text-xs text-muted">{cost}</span>}
+        </button>
+      )}
     </div>
   );
 }
 
 /** One question. Shared by the 10-round quiz and the 60-second rush. Keys 1–3 answer. */
-function RoundView({ round, n, choice, onAnswer, after }: { round: Round; n: number; choice: string | null; onAnswer(c: string, at?: { x: number; y: number }): void; after?: ReactNode }) {
+function RoundView({ round, n, choice, onAnswer, after, struck = null, peek = false, revealed = false }: { round: Round; n: number; choice: string | null; struck?: string | null; peek?: boolean; revealed?: boolean; onAnswer(c: string, at?: { x: number; y: number }): void; after?: ReactNode }) {
   const { t, tx, lang } = useApp();
+  const gone = (id: string) => struck === id && !choice;
+  const verdict = (right: boolean) =>
+    revealed ? tx("Answer shown: no point this round.", "បានបង្ហាញចម្លើយ៖ ជុំនេះគ្មានពិន្ទុ។") : right ? tx("Correct!", "ត្រឹមត្រូវ!") : null;
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if ((e.target as Element).closest?.("input, select, textarea")) return;
       const opts = optionIds(round);
       const k = Number(e.key);
-      if (!choice && k >= 1 && k <= opts.length) onAnswer(opts[k - 1]);
+      if (!choice && k >= 1 && k <= opts.length && !gone(opts[k - 1])) onAnswer(opts[k - 1]);
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
@@ -92,7 +112,7 @@ function RoundView({ round, n, choice, onAnswer, after }: { round: Round; n: num
           <p className="mt-1 text-sm text-muted">{tx("A 60 km patch of real elevation data, shaded the same way for every world. Look at the craters, slopes and how rough the ground is.", "ផ្ទៃដី ៦០ គ.ម. ពីទិន្នន័យកម្ពស់ពិតប្រាកដ ដែលដាក់ស្រមោលដូចគ្នាសម្រាប់គ្រប់ពិភព។ សូមមើលរណ្តៅ ជម្រាល និងភាពរដិបរដុបនៃដី។")}</p>
           <div className="mt-4 grid gap-2">
             {WORLDS.map((w, k) => (
-              <button key={w} type="button" disabled={!!choice} onClick={(e) => onAnswer(w, { x: e.clientX, y: e.clientY })} className={`btn justify-between py-3 text-base ${mark(w, w === round.answer)}`}>
+              <button key={w} type="button" disabled={!!choice || gone(w)} onClick={(e) => onAnswer(w, { x: e.clientX, y: e.clientY })} className={`btn justify-between py-3 text-base ${mark(w, w === round.answer)} ${gone(w) ? "is-struck" : ""}`}>
                 <span className="flex items-center gap-2">
                   <span className="h-3 w-3 rounded-full" style={{ background: `var(--${w})` }} aria-hidden="true" />
                   {t(w as Key)}
@@ -103,7 +123,7 @@ function RoundView({ round, n, choice, onAnswer, after }: { round: Round; n: num
           </div>
           {choice && (
             <div className="page-enter mt-4 rounded-xl border border-line p-4 text-sm" role="status">
-              <p className="text-base font-semibold">{choice === round.answer ? tx("Correct!", "ត្រឹមត្រូវ!") : tx(`Not quite: this is ${t(round.answer as Key)}.`, `មិនទាន់ត្រូវទេ៖ នេះគឺ${t(round.answer as Key)}។`)}</p>
+              <p className="text-base font-semibold">{verdict(choice === round.answer) ?? tx(`Not quite: this is ${t(round.answer as Key)}.`, `មិនទាន់ត្រូវទេ៖ នេះគឺ${t(round.answer as Key)}។`)}</p>
               <p className="mt-1">
                 <strong>{local(round.place, lang).name}</strong> <span className="text-muted">({fmtCoord(round.place)})</span>
               </p>
@@ -141,7 +161,7 @@ function RoundView({ round, n, choice, onAnswer, after }: { round: Round; n: num
               <span className="block text-xs text-muted">
                 {t(p.body as Key)} · {local(p, lang).country ?? local(p, lang).category}
               </span>
-              {choice && (
+              {(choice || (peek && p.id === round.a.id)) && (
                 <span className="mt-3 block font-mono text-2xl">
                   {round.value(p).toFixed(round.metric === "steeper" || round.metric === "rougher" ? 1 : 0)}
                   <span className="ml-1 text-xs text-muted">{round.unit[lang]}</span>
@@ -153,7 +173,7 @@ function RoundView({ round, n, choice, onAnswer, after }: { round: Round; n: num
         {choice && (
           <div className="page-enter flex flex-wrap items-center justify-between gap-3" role="status">
             <p className="font-semibold">
-              {choice === round.answer ? tx("Correct!", "ត្រឹមត្រូវ!") : tx("Not quite.", "មិនទាន់ត្រូវទេ។")} {tx("The numbers come straight from the Terratoria data pipeline.", "តួលេខទាំងនេះមកពីប្រព័ន្ធដំណើរការទិន្នន័យរបស់ Terratoria ផ្ទាល់។")}
+              {verdict(choice === round.answer) ?? tx("Not quite.", "មិនទាន់ត្រូវទេ។")} {tx("The numbers come straight from the Terratoria data pipeline.", "តួលេខទាំងនេះមកពីប្រព័ន្ធដំណើរការទិន្នន័យរបស់ Terratoria ផ្ទាល់។")}
             </p>
             {after}
           </div>
@@ -172,7 +192,7 @@ function RoundView({ round, n, choice, onAnswer, after }: { round: Round; n: num
       </div>
       <div className="grid gap-3 md:grid-cols-3">
         {round.options.map((o, k) => (
-          <button key={o.id} type="button" disabled={!!choice} onClick={(e) => onAnswer(o.id, { x: e.clientX, y: e.clientY })} className={`card card-hover p-4 text-left disabled:cursor-default ${mark(o.id, o.id === round.answer)}`}>
+          <button key={o.id} type="button" disabled={!!choice || gone(o.id)} onClick={(e) => onAnswer(o.id, { x: e.clientX, y: e.clientY })} className={`card card-hover p-4 text-left disabled:cursor-default ${mark(o.id, o.id === round.answer)} ${gone(o.id) ? "is-struck" : ""}`}>
             <span className="flex items-start justify-between gap-2">
               <span className="font-semibold">{local(o, lang).name}</span>
               <span className="font-mono text-xs text-muted">{k + 1}</span>
@@ -199,7 +219,7 @@ function RoundView({ round, n, choice, onAnswer, after }: { round: Round; n: num
       {choice && (
         <div className="page-enter flex flex-wrap items-center justify-between gap-3" role="status">
           <p className="font-semibold">
-            {choice === round.answer ? tx("Correct!", "ត្រឹមត្រូវ!") : tx("Not quite.", "មិនទាន់ត្រូវទេ។")} {tx("Scores use balanced weights across all eight dimensions.", "ពិន្ទុប្រើទម្ងន់ស្មើគ្នាលើវិមាត្រទាំងប្រាំបី។")}
+            {verdict(choice === round.answer) ?? tx("Not quite.", "មិនទាន់ត្រូវទេ។")} {tx("Scores use balanced weights across all eight dimensions.", "ពិន្ទុប្រើទម្ងន់ស្មើគ្នាលើវិមាត្រទាំងប្រាំបី។")}
           </p>
           <div className="flex flex-wrap gap-2">
             <Link className="btn" href={`/site/?id=${round.answer}&ref=${round.ref.id}`}>
@@ -213,13 +233,14 @@ function RoundView({ round, n, choice, onAnswer, after }: { round: Round; n: num
   );
 }
 
-/** The original 10-round quiz, with two clue hints per round. */
+/** The original 10-round quiz, with three hints per round. */
 function Quiz() {
   const { t, tx, lang } = useApp();
   const [game, setGame] = useState<Round[]>([]);
   const [i, setI] = useState(0);
   const [choice, setChoice] = useState<string | null>(null);
   const [hint, setHint] = useState(0);
+  const [struck, setStruck] = useState<string | null>(null);
   const [hints, setHints] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -231,6 +252,7 @@ function Quiz() {
     setI(0);
     setChoice(null);
     setHint(0);
+    setStruck(null);
     setHints(0);
     setScore(0);
     setStreak(0);
@@ -245,11 +267,12 @@ function Quiz() {
   const round = game[i];
   const done = game.length > 0 && i >= game.length;
 
-  const answer = (c: string, at?: { x: number; y: number }) => {
+  // `revealed`: hint 3 showed the answer, so the round counts as no point.
+  const answer = (c: string, at?: { x: number; y: number }, revealed = false) => {
     if (!round || choice) return;
     setChoice(c);
-    const right = c === round.answer;
-    sfx(right ? "correct" : "wrong");
+    const right = c === round.answer && !revealed;
+    sfx(revealed ? "open" : right ? "correct" : "wrong");
     if (right) confetti(at?.x ?? window.innerWidth / 2, at?.y ?? window.innerHeight / 2);
     setScore((s) => s + (right ? 1 : 0));
     setStreak((s) => {
@@ -261,6 +284,7 @@ function Quiz() {
   const next = useCallback(() => {
     setChoice(null);
     setHint(0);
+    setStruck(null);
     setI((x) => x + 1);
   }, []);
 
@@ -332,6 +356,9 @@ function Quiz() {
               round={round}
               n={i + 1}
               choice={choice}
+              struck={struck}
+              peek={hint >= 2}
+              revealed={hint >= 3}
               onAnswer={answer}
               after={
                 <button type="button" className="btn btn-primary mt-3" onClick={next}>
@@ -339,14 +366,17 @@ function Quiz() {
                 </button>
               }
             />
-            <Clues
+            <Hints
               round={round}
-              shown={hint}
+              level={hint}
               disabled={!!choice}
               onHint={() => {
-                setHint((h) => Math.min(MAX_CLUES, h + 1));
+                const lvl = hint + 1;
+                setHint(lvl);
                 setHints((h) => h + 1);
-                sfx("open");
+                if (lvl === 2) setStruck(strikeFor(round));
+                if (lvl === 3) answer(round.answer, undefined, true);
+                else sfx("open");
               }}
             />
           </>
@@ -364,6 +394,7 @@ function Rush() {
   const [i, setI] = useState(0);
   const [choice, setChoice] = useState<string | null>(null);
   const [hint, setHint] = useState(0);
+  const [struck, setStruck] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [left, setLeft] = useState(RUSH_SECONDS);
   const [best, setBest] = useState(0);
@@ -377,6 +408,7 @@ function Rush() {
     setI(0);
     setChoice(null);
     setHint(0);
+    setStruck(null);
     setScore(0);
     end.current = performance.now() + RUSH_SECONDS * 1000;
     setLeft(RUSH_SECONDS);
@@ -406,21 +438,22 @@ function Rush() {
   }, [state, i, rounds.length]);
 
   const round = rounds[i];
-  const answer = (c: string, at?: { x: number; y: number }) => {
+  const answer = (c: string, at?: { x: number; y: number }, revealed = false) => {
     if (!round || choice || state !== "running") return;
     setChoice(c);
-    const right = c === round.answer;
-    sfx(right ? "correct" : "wrong");
+    const right = c === round.answer && !revealed;
+    sfx(revealed ? "open" : right ? "correct" : "wrong");
     if (right) {
       setScore((s) => s + 1);
       confetti(at?.x ?? window.innerWidth / 2, at?.y ?? window.innerHeight / 2);
-    } else end.current -= 3000;
+    } else if (!revealed) end.current -= 3000;
     // Short look at the answer, then straight on.
     setTimeout(() => {
       setChoice(null);
       setHint(0);
+      setStruck(null);
       setI((x) => x + 1);
-    }, right ? 650 : 1300);
+    }, right ? 650 : revealed ? 2200 : 1300);
   };
 
   if (state === "ready" || state === "over")
@@ -456,17 +489,20 @@ function Rush() {
       <div className="h-1.5 overflow-hidden rounded-full bg-[var(--panel-2)]" aria-hidden="true">
         <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${(left / RUSH_SECONDS) * 100}%`, transition: "width 0.1s linear" }} />
       </div>
-      {round && <RoundView round={round} n={i + 1} choice={choice} onAnswer={answer} />}
+      {round && <RoundView round={round} n={i + 1} choice={choice} struck={struck} peek={hint >= 2} revealed={hint >= 3} onAnswer={answer} />}
       {round && (
-        <Clues
+        <Hints
           round={round}
-          shown={hint}
+          level={hint}
           disabled={!!choice}
           cost="−5s"
           onHint={() => {
-            setHint((h) => Math.min(MAX_CLUES, h + 1));
+            const lvl = hint + 1;
+            setHint(lvl);
             end.current -= 5000;
-            sfx("open");
+            if (lvl === 2) setStruck(strikeFor(round));
+            if (lvl === 3) answer(round.answer, undefined, true);
+            else sfx("open");
           }}
         />
       )}
@@ -672,7 +708,116 @@ function Touchdown() {
   );
 }
 
-type Game = "quiz" | "rush" | "landing";
+/**
+ * Flashcards: tap or press Space to flip. "Got it" (→) files the card away, "Again" (←) sends it to the back
+ * of the deck, until every card is learned.
+ */
+function Flashcards() {
+  const { tx, lang, t } = useApp();
+  const [deck, setDeck] = useState<Flashcard[]>([]);
+  const [total, setTotal] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [again, setAgain] = useState(0);
+
+  const shuffle = useCallback(() => {
+    const cards = makeFlashcards().sort(() => Math.random() - 0.5);
+    setDeck(cards);
+    setTotal(cards.length);
+    setFlipped(false);
+    setAgain(0);
+  }, []);
+  useEffect(shuffle, [shuffle]);
+
+  const card = deck[0];
+  const learned = total - deck.length;
+  const flip = useCallback(() => {
+    setFlipped((f) => !f);
+    sfx("hover");
+  }, []);
+  const gotIt = useCallback(() => {
+    setFlipped(false);
+    setDeck((d) => d.slice(1));
+    sfx("correct");
+  }, []);
+  const later = useCallback(() => {
+    setFlipped(false);
+    setAgain((a) => a + 1);
+    setDeck((d) => [...d.slice(1), d[0]]);
+    sfx("select");
+  }, []);
+
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if ((e.target as Element).closest?.("input, select, textarea")) return;
+      if (e.key === " ") (e.preventDefault(), flip());
+      if (flipped && e.key === "ArrowRight") gotIt();
+      if (flipped && e.key === "ArrowLeft") later();
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [flip, gotIt, later, flipped]);
+
+  if (!total) return <div className="card h-96 animate-pulse" />;
+
+  if (!card)
+    return (
+      <section className="card page-enter p-8 text-center">
+        <p className="label">{tx("Deck complete", "បានរៀនគ្រប់កាត")}</p>
+        <p className="mt-2 font-mono text-6xl">{total}</p>
+        <p className="mt-1 text-sm text-muted">{tx(`cards learned · ${again} sent back for another look`, `កាតដែលបានរៀន · ${again} ត្រូវបានមើលម្តងទៀត`)}</p>
+        <button type="button" className="btn btn-primary mt-6 px-5 py-2.5 text-base" onClick={shuffle}>
+          {tx("Shuffle and start again", "សាប់ ហើយចាប់ផ្តើមម្តងទៀត")}
+        </button>
+      </section>
+    );
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <p className="text-sm text-muted">{tx("Tap the card or press Space to flip it. Then → Got it, or ← Again to see it later.", "ចុចលើកាត ឬចុច Space ដើម្បីបង្វិល។ បន្ទាប់មក → ចាំបានហើយ ឬ ← ម្តងទៀត ដើម្បីមើលពេលក្រោយ។")}</p>
+        <p className="text-sm">
+          <span className="label">{tx("Learned", "បានរៀន")}</span>{" "}
+          <span className="font-mono text-2xl">{learned}</span>
+          <span className="text-sm text-muted"> / {total}</span>
+        </p>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-[var(--panel-2)]" aria-hidden="true">
+        <div className="bar-fill h-full rounded-full" style={{ width: `${(learned / total) * 100}%`, animation: "none" }} />
+      </div>
+
+      <button type="button" key={card.id + again} className={`flashcard page-enter ${flipped ? "is-flipped" : ""}`} onClick={flip} aria-label={flipped ? tx("Show the question", "បង្ហាញសំណួរ") : tx("Flip to see the answer", "បង្វិលដើម្បីមើលចម្លើយ")}>
+        <span className="flashcard-inner">
+          <span className="flashcard-face flashcard-front">
+            <span className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-muted">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: `var(--${card.body})` }} aria-hidden="true" />
+              {t(card.body as Key)}
+            </span>
+            <span className="mt-3 block text-2xl font-semibold sm:text-3xl">{card.title[lang]}</span>
+            <span className="mt-4 block text-lg text-muted">{card.question[lang]}</span>
+            <span className="mt-auto pt-6 text-xs text-muted">↻ {tx("Tap to flip", "ចុចដើម្បីបង្វិល")}</span>
+          </span>
+          <span className="flashcard-face flashcard-back" aria-hidden={!flipped}>
+            <span className="text-xs uppercase tracking-[0.16em] text-muted">{tx("Answer", "ចម្លើយ")}</span>
+            <span className="mt-3 block text-2xl font-semibold sm:text-3xl">{card.answer[lang]}</span>
+            <span className="mt-4 block text-base text-muted">{card.detail[lang]}</span>
+            <span className="mt-auto pt-6 text-xs text-muted">{tx("Scores use balanced weights, the same as the rankings.", "ពិន្ទុប្រើទម្ងន់ស្មើគ្នា ដូចចំណាត់ថ្នាក់។")}</span>
+          </span>
+        </span>
+      </button>
+
+      <div className="flex flex-wrap justify-center gap-3">
+        <button type="button" className="btn btn-lg" disabled={!flipped} onClick={later}>
+          ← {tx("Again", "ម្តងទៀត")}
+        </button>
+        <button type="button" className="btn btn-primary btn-lg" disabled={!flipped} onClick={gotIt}>
+          {tx("Got it", "ចាំបានហើយ")} →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type Game = "quiz" | "rush" | "cards" | "landing";
 
 export default function ChallengePage() {
   const { t, tx } = useApp();
@@ -680,6 +825,7 @@ export default function ChallengePage() {
   const games: { id: Game; name: string; blurb: string }[] = [
     { id: "quiz", name: tx("Quiz", "សំណួរ"), blurb: tx("10 rounds", "១០ ជុំ") },
     { id: "rush", name: tx("Rush", "ប្រញាប់"), blurb: tx("60 seconds", "៦០ វិនាទី") },
+    { id: "cards", name: tx("Flashcards", "កាតរៀន"), blurb: tx("Flip and learn", "បង្វិល ហើយរៀន") },
     { id: "landing", name: tx("Touchdown", "ចុះចត"), blurb: tx("Land a rocket", "ចុះចតរ៉ុក្កែត") },
   ];
   return (
@@ -688,7 +834,7 @@ export default function ChallengePage() {
         <p className="label">{t("nav_challenge")}</p>
         <h1 className="text-3xl font-semibold tracking-tight">{tx("Can you read another world?", "តើអ្នកអាចអានពិភពផ្សេងបានទេ?")}</h1>
       </header>
-      <div role="group" aria-label={tx("Choose a game", "ជ្រើសរើសល្បែង")} className="grid grid-cols-3 gap-2">
+      <div role="group" aria-label={tx("Choose a game", "ជ្រើសរើសល្បែង")} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {games.map((g) => (
           <button key={g.id} type="button" aria-pressed={game === g.id} onClick={() => setGame(g.id)} className="game-pick">
             <span className="block font-semibold">{g.name}</span>
@@ -696,7 +842,7 @@ export default function ChallengePage() {
           </button>
         ))}
       </div>
-      {game === "quiz" ? <Quiz /> : game === "rush" ? <Rush /> : <Touchdown />}
+      {game === "quiz" ? <Quiz /> : game === "rush" ? <Rush /> : game === "cards" ? <Flashcards /> : <Touchdown />}
     </div>
   );
 }

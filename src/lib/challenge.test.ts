@@ -83,4 +83,15 @@ describe("hints", () => {
       }
     }
   });
+
+  test("the cross-out hint never strikes the right answer, and never on head-to-head rounds", async () => {
+    const { strikeFor } = await import("./challenge");
+    for (let s = 1; s <= 50; s++) {
+      for (const r of makeGame(seeded(s), 10)) {
+        const id = strikeFor(r, seeded(s));
+        if (r.kind === "duel") expect(id).toBeNull();
+        else expect(id).not.toBe(r.answer);
+      }
+    }
+  });
 });
