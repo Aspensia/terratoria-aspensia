@@ -1445,6 +1445,11 @@ html.has-cursor .cursor-ring { opacity: 0.55; }
 
 /* Settings: switches and the theme-song list */
 .settings-panel { max-height: min(80vh, 44rem); overflow-y: auto; overscroll-behavior: contain; }
+/* The panel scrolls, and the card's corner marks and hairline are absolutely placed, so they would scroll
+   with the content and cut across the list. Use a plain border instead. */
+.settings-panel::before,
+.settings-panel::after { display: none; }
+.settings-panel { border: 1px solid var(--line-strong); scrollbar-width: thin; scrollbar-gutter: stable; }
 .settings-switch {
   display: flex;
   align-items: center;
