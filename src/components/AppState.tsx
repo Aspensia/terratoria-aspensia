@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { PLACES } from "@/data/catalog";
 import { STRINGS, type Key, type Lang } from "@/lib/i18n";
 import * as audio from "@/lib/audio";
@@ -32,6 +32,9 @@ interface AppState {
   /** Theme music and sound effects can each be switched off. */
   music: boolean;
   setMusic(on: boolean): void;
+  /** Music on every page (true) or on the home page only. */
+  musicAll: boolean;
+  setMusicAll(on: boolean): void;
   sfx: boolean;
   setSfx(on: boolean): void;
   /** Theme song id from data/tracks.ts. */
@@ -71,6 +74,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [perf, setPerfState] = useState<Perf>("base");
   const [vision, setVisionState] = useState<Vision>("default");
   const [music, setMusicState] = useState(true);
+  const [musicAll, setMusicAllState] = useState(true);
+  const home = usePathname() === "/";
   const [sfxOn, setSfxState] = useState(true);
   const [track, setTrackState] = useState("alpha");
 
@@ -91,6 +96,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const vis = document.documentElement.dataset.vision as Vision | undefined;
     if (vis && VISIONS.includes(vis)) setVisionState(vis);
     if (pref("terratoria.music") === "0") setMusicState(false);
+    if (pref("terratoria.musicAll") === "0") setMusicAllState(false);
     if (pref("terratoria.sfx") === "0") {
       setSfxState(false);
       audio.setSfxOn(false);
@@ -101,7 +107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ALPHA is synthesised here; the other songs play in the YouTube player (components/MusicDock.tsx).
-  useEffect(() => audio.ambient(music && track === "alpha"), [music, track]);
+  useEffect(() => audio.ambient(music && track === "alpha" && (musicAll || home)), [music, track, musicAll, home]);
 
   useEffect(() => {
     document.documentElement.dataset.mode = mode; // CSS shows .simple-only / .science-only accordingly
@@ -161,6 +167,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
       music,
       setMusic: (on) => (setMusicState(on), setPref("terratoria.music", on ? "1" : "0")),
+      musicAll,
+      setMusicAll: (on) => (setMusicAllState(on), setPref("terratoria.musicAll", on ? "1" : "0")),
       sfx: sfxOn,
       setSfx: (on) => (setSfxState(on), audio.setSfxOn(on), setPref("terratoria.sfx", on ? "1" : "0")),
       track,
@@ -175,7 +183,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       t: (key) => STRINGS[lang][key],
       tx: (en, km) => (lang === "km" ? km : en),
     }),
-    [lang, mode, saved, toggleSaved, muted, volume, perf, vision, music, sfxOn, track],
+    [lang, mode, saved, toggleSaved, muted, volume, perf, vision, music, musicAll, sfxOn, track],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

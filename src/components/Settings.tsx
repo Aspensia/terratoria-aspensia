@@ -28,7 +28,7 @@ function Gear() {
 
 /** Gear button and panel: Base / Lite Mode, volume and colour vision. */
 export function Settings() {
-  const { tx, perf, setPerf, volume, setVolume, muted, setMuted, vision, setVision, lang, music, setMusic, sfx, setSfx, track, setTrack } = useApp();
+  const { tx, perf, setPerf, volume, setVolume, muted, setMuted, vision, setVision, lang, music, setMusic, musicAll, setMusicAll, sfx, setSfx, track, setTrack } = useApp();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -78,6 +78,10 @@ export function Settings() {
             <label className="settings-switch">
               <input type="checkbox" checked={sfx} onChange={(e) => setSfx(e.target.checked)} />
               <span>{tx("Sound effects", "បែបផែនសំឡេង")}</span>
+            </label>
+            <label className="settings-switch col-span-2">
+              <input type="checkbox" checked={musicAll} disabled={!music} onChange={(e) => setMusicAll(e.target.checked)} />
+              <span>{tx("Play music on every page (off: home page only)", "ចាក់តន្ត្រីគ្រប់ទំព័រ (បិទ៖ តែទំព័រដើម)")}</span>
             </label>
           </div>
 

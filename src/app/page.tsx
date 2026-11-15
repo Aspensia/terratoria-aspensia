@@ -16,6 +16,7 @@ import { EARTH_SITES, REFERENCES } from "@/data/catalog";
 import { DATASETS } from "@/data/datasets";
 import { trackById } from "@/data/tracks";
 import { DATASET_KM } from "@/data/km";
+import { sfx } from "@/lib/audio";
 import type { Key } from "@/lib/i18n";
 import { DIMENSIONS } from "@/lib/types";
 
@@ -111,6 +112,7 @@ const ARCHIVE: { src: string; alt: Bi; caption: Bi }[] = [
 export default function Home() {
   const { t, lang, track } = useApp();
   const scene = trackById(track).scene;
+  const [amaze, setAmaze] = useState(false);
   const hero = useRef<HTMLElement>(null);
   const archive = useRef<HTMLDivElement>(null);
 
@@ -156,7 +158,7 @@ export default function Home() {
 
   return (
     <>
-      {scene === "blackhole" ? <BlackHole /> : scene === "tauceti" ? <TauCeti /> : scene === "runner" ? <GeoRunner /> : <SolarSystem />}
+      {scene === "blackhole" ? <BlackHole /> : scene === "tauceti" ? <TauCeti amaze={amaze} /> : scene === "runner" ? <GeoRunner /> : <SolarSystem />}
       <div className="relative z-10 space-y-20 pb-10">
         <section ref={hero} data-own-enter className="flex min-h-[calc(100svh-11rem)] max-w-3xl flex-col justify-center pt-6">
           <p data-hero="kicker" className="label !text-accent">
@@ -197,6 +199,11 @@ export default function Home() {
             <Link href="/challenge/" className="btn btn-lg">
               ▶ {t("nav_challenge")}
             </Link>
+            {scene === "tauceti" && (
+              <button type="button" className={`btn btn-lg amaze-btn ${amaze ? "is-on" : ""}`} aria-pressed={amaze} onClick={() => (setAmaze(!amaze), sfx("open"))}>
+                ✦ AMAZE
+              </button>
+            )}
           </div>
           <dl className="mt-10 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
             {stats.map(([n, k], i) => (

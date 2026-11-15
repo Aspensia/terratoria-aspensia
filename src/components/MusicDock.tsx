@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { trackById, type Track } from "@/data/tracks";
 import { useApp } from "./AppState";
@@ -47,14 +48,36 @@ const cmd = (f: HTMLIFrameElement | null, func: string, args: unknown[] = []) =>
  * so the dock never shrinks below that; collapsing it pauses the song.
  */
 export function MusicDock() {
-  const { music, setMusic, track: id, volume, muted, tx, lang } = useApp();
+  const { music, setMusic, musicAll, track: id, volume, muted, tx, lang } = useApp();
   const track = trackById(id);
   const frame = useRef<HTMLIFrameElement>(null);
   const [open, setOpen] = useState(true);
+  const home = usePathname() === "/";
+
+  // Loop by restarting at the end. (YouTube's own loop needs a one-song playlist, which pops up a playlist panel.)
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      if (e.source !== frame.current?.contentWindow || typeof e.data !== "string") return;
+      try {
+        const d = JSON.parse(e.data);
+        const state = d.event === "onStateChange" ? d.info : d.info?.playerState;
+        if (state === 0) {
+          cmd(frame.current, "seekTo", [0, true]);
+          cmd(frame.current, "playVideo");
+        }
+      } catch {
+        // not a player message
+      }
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
 
   // Keep the player in step with the volume slider and the mute button.
   useEffect(() => {
     const apply = () => {
+      // Ask the player to report its state, so the loop above hears when the song ends.
+      frame.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "https://www.youtube-nocookie.com");
       cmd(frame.current, "setVolume", [Math.round((muted ? 0 : volume) * 100)]);
       cmd(frame.current, open ? "playVideo" : "pauseVideo");
     };
@@ -64,7 +87,7 @@ export function MusicDock() {
     return () => f?.removeEventListener("load", apply);
   }, [volume, muted, open, track.youtube]);
 
-  if (!music || !track.youtube) return null;
+  if (!music || !track.youtube || (!musicAll && !home)) return null;
   const origin = typeof window === "undefined" ? "" : `&origin=${encodeURIComponent(window.location.origin)}`;
 
   return (
@@ -77,8 +100,14 @@ export function MusicDock() {
             {track.title} · {track.artist}
           </span>
         </span>
-        <button type="button" className="btn h-8 min-h-0 px-2 text-xs" aria-expanded={open} onClick={() => setOpen(!open)}>
-          {open ? tx("Hide", "លាក់") : tx("Show", "បង្ហាញ")}
+        <button
+          type="button"
+          className="btn h-8 min-h-0 px-2 text-xs"
+          aria-expanded={open}
+          title={tx("YouTube only allows its player to play while it is visible, so hiding it pauses the song.", "YouTube អនុញ្ញាតឱ្យចាក់បានតែពេលកម្មវិធីចាក់អាចមើលឃើញ ដូច្នេះការលាក់វានឹងផ្អាកបទចម្រៀង។")}
+          onClick={() => setOpen(!open)}
+        >
+          {open ? tx("Pause & hide", "ផ្អាក និងលាក់") : tx("Play", "ចាក់")}
         </button>
         <button type="button" className="btn h-8 min-h-0 w-8 justify-center p-0" aria-label={tx("Turn music off", "បិទតន្ត្រី")} onClick={() => setMusic(false)}>
           ×
@@ -90,7 +119,7 @@ export function MusicDock() {
           key={track.youtube}
           ref={frame}
           title={`${track.title} · ${track.artist}`}
-          src={`https://www.youtube-nocookie.com/embed/${track.youtube}?autoplay=1&loop=1&playlist=${track.youtube}&enablejsapi=1&playsinline=1&rel=0${origin}`}
+          src={`https://www.youtube-nocookie.com/embed/${track.youtube}?autoplay=1&enablejsapi=1&playsinline=1&rel=0&iv_load_policy=3${origin}`}
           allow="autoplay; encrypted-media; picture-in-picture"
           referrerPolicy="strict-origin-when-cross-origin"
         />
